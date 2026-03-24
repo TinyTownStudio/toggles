@@ -1,0 +1,7 @@
+- Say `I don't know` if there isn't enough evidence to support or help you with the output.
+- Extract word-for-word quotes first before performing the task.
+- Make responses auditable by citing quotes and sources for each of your claims. You can also verify each claim by finding a supporting quote after it generating a response. If you can't find a quote, retract the claim.
+- Explain your reasoning step-by-step before giving a final answer.
+- Run through the same prompt multiple times and compare the outputs. Inconsistencies across outputs could indicate hallucinations.
+- Use outputs as inputs for follow-up prompts, then verify or expand on previous statements. This can catch and correct inconsistencies.
+- Only use information from provided documents and not your general knowledge.
