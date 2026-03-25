@@ -1,7 +1,12 @@
 {
   "nodeModulesDir": "auto",
   "imports": {
-    "sqlite":"https://deno.land/x/sqlite@v3.9.1/mod.ts"
+    "sqlite": "https://deno.land/x/sqlite@v3.9.1/mod.ts",
+    "hono": "jsr:@hono/hono",
+    "@std/assert": "jsr:@std/assert"
   },
-  "tasks": {}
+  "tasks": {
+    "start": "deno run --allow-read --allow-write --allow-net src/index.ts",
+    "test": "deno test --allow-read --allow-write src/tests/"
+  }
 }
