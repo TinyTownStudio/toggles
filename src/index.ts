@@ -1,4 +1,4 @@
-import { app } from "./app.ts";
+import { app } from "./app.tsx";
 import { openDb } from "./db.ts";
 
 openDb("test.db")
