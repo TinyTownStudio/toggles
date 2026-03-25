@@ -1,0 +1,162 @@
+@import "tailwindcss";
+
+/* ----------------------------------------------------------------
+   Semantic design tokens
+   :root  = light mode (default)
+   .dark  = dark mode
+   ---------------------------------------------------------------- */
+
+:root {
+  color-scheme: light;
+
+  /* Backgrounds */
+  --t-page: #ffffff;
+  --t-surface: #fafafa;
+  --t-surface-alt: #f5f5f5;
+  --t-raised: #f5f5f5;
+  --t-raised-hover: #e5e5e5;
+  --t-overlay: rgb(255 255 255 / 80%);
+  --t-overlay-heavy: rgb(255 255 255 / 95%);
+
+  /* Text */
+  --t-content: #0a0a0a;
+  --t-content-secondary: #525252;
+  --t-content-tertiary: #737373;
+  --t-content-faint: #a3a3a3;
+
+  /* Borders */
+  --t-edge: #e5e5e5;
+  --t-edge-hover: #d4d4d4;
+
+  /* Accent */
+  --t-accent: #7c3aed;
+  --t-accent-hover: #6d28d9;
+  --t-accent-text: #7c3aed;
+  --t-accent-surface: #f5f3ff;
+
+  /* Status: Error */
+  --t-error-surface: #fef2f2;
+  --t-error-edge: #fecaca;
+  --t-error-text: #dc2626;
+
+  /* Status: Success */
+  --t-success-surface: #f0fdf4;
+  --t-success-edge: #bbf7d0;
+  --t-success-text: #16a34a;
+
+  /* Hero CTA (inverted) */
+  --t-cta: #0a0a0a;
+  --t-cta-text: #ffffff;
+  --t-cta-hover: #262626;
+
+  /* Misc */
+  --t-delete: #a3a3a3;
+  --t-delete-hover: #ef4444;
+  --t-note-bg: rgb(245 245 245 / 50%);
+}
+
+.dark {
+  color-scheme: dark;
+
+  /* Backgrounds */
+  --t-page: #0a0a0a;
+  --t-surface: #171717;
+  --t-surface-alt: rgb(23 23 23 / 50%);
+  --t-raised: #262626;
+  --t-raised-hover: #404040;
+  --t-overlay: rgb(10 10 10 / 80%);
+  --t-overlay-heavy: rgb(10 10 10 / 95%);
+
+  /* Text */
+  --t-content: #ffffff;
+  --t-content-secondary: #d4d4d4;
+  --t-content-tertiary: #a3a3a3;
+  --t-content-faint: #737373;
+
+  /* Borders */
+  --t-edge: #262626;
+  --t-edge-hover: #404040;
+
+  /* Accent */
+  --t-accent: #7c3aed;
+  --t-accent-hover: #8b5cf6;
+  --t-accent-text: #a78bfa;
+  --t-accent-surface: rgb(124 58 237 / 20%);
+
+  /* Status: Error */
+  --t-error-surface: rgb(127 29 29 / 20%);
+  --t-error-edge: #991b1b;
+  --t-error-text: #f87171;
+
+  /* Status: Success */
+  --t-success-surface: rgb(20 83 45 / 20%);
+  --t-success-edge: #166534;
+  --t-success-text: #4ade80;
+
+  /* Hero CTA (inverted) */
+  --t-cta: #ffffff;
+  --t-cta-text: #0a0a0a;
+  --t-cta-hover: #f5f5f5;
+
+  /* Misc */
+  --t-delete: #525252;
+  --t-delete-hover: #f87171;
+  --t-note-bg: rgb(38 38 38 / 50%);
+}
+
+@theme {
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+
+  --color-page: var(--t-page);
+  --color-surface: var(--t-surface);
+  --color-surface-alt: var(--t-surface-alt);
+  --color-raised: var(--t-raised);
+  --color-raised-hover: var(--t-raised-hover);
+  --color-overlay: var(--t-overlay);
+  --color-overlay-heavy: var(--t-overlay-heavy);
+
+  --color-content: var(--t-content);
+  --color-content-secondary: var(--t-content-secondary);
+  --color-content-tertiary: var(--t-content-tertiary);
+  --color-content-faint: var(--t-content-faint);
+
+  --color-edge: var(--t-edge);
+  --color-edge-hover: var(--t-edge-hover);
+
+  --color-accent: var(--t-accent);
+  --color-accent-hover: var(--t-accent-hover);
+  --color-accent-text: var(--t-accent-text);
+  --color-accent-surface: var(--t-accent-surface);
+
+  --color-error-surface: var(--t-error-surface);
+  --color-error-edge: var(--t-error-edge);
+  --color-error-text: var(--t-error-text);
+
+  --color-success-surface: var(--t-success-surface);
+  --color-success-edge: var(--t-success-edge);
+  --color-success-text: var(--t-success-text);
+
+  --color-cta: var(--t-cta);
+  --color-cta-text: var(--t-cta-text);
+  --color-cta-hover: var(--t-cta-hover);
+
+  --color-delete: var(--t-delete);
+  --color-delete-hover: var(--t-delete-hover);
+  --color-note-bg: var(--t-note-bg);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}

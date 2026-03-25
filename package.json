@@ -1,0 +1,60 @@
+{
+  "name": "toggles",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "deploy": "wrangler deploy --minify",
+    "preview": "vite preview",
+    "cf-typegen": "wrangler types --env-interface CloudflareBindings",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate:local": "wrangler d1 migrations apply app-db --local",
+    "db:migrate:remote": "wrangler d1 migrations apply app-db --remote",
+    "db:studio": "drizzle-kit studio",
+    "lint": "oxlint --fix",
+    "format": "oxfmt --write .",
+    "format:check": "oxfmt --check .",
+    "check": "oxlint && oxfmt --check ."
+  },
+  "dependencies": {
+    "@polar-sh/better-auth": "^1.6.4",
+    "@polar-sh/sdk": "^0.42.5",
+    "@preact/signals": "^2.7.0",
+    "@tabler/icons-react": "^3.36.1",
+    "@tailwindcss/vite": "^4.1.18",
+    "better-auth": "^1.4.18",
+    "drizzle-orm": "^0.45.1",
+    "hono": "^4.11.7",
+    "preact": "^10.28.3",
+    "preact-iso": "^2.11.1",
+    "preact-render-to-string": "^6.6.5",
+    "tailwindcss": "^4.1.18"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.23.1",
+    "@cloudflare/workers-types": "^4.20260207.0",
+    "@eslint/js": "^9.39.1",
+    "@preact/preset-vite": "^2.10.3",
+    "@tailwindcss/vite": "^4.1.18",
+    "@types/node": "^24.10.1",
+    "@types/react": "^19.2.5",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.1",
+    "drizzle-kit": "^0.31.8",
+    "eslint": "^9.39.1",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.4.24",
+    "globals": "^16.5.0",
+    "oxfmt": "^0.28.0",
+    "oxlint": "^1.43.0",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.46.4",
+    "vite": "npm:rolldown-vite@7.2.5",
+    "wrangler": "^4.63.0"
+  },
+  "overrides": {
+    "vite": "npm:rolldown-vite@7.2.5"
+  }
+}
