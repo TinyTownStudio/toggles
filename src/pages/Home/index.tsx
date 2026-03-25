@@ -26,7 +26,7 @@ export function Home() {
 
         {/* Main content */}
         <div class="relative z-10 text-center px-6">
-          <h1 class="text-8xl md:text-9xl font-bold mb-6 text-content">ACME</h1>
+          <h1 class="text-8xl md:text-9xl font-bold mb-6 text-content">TOGGLES</h1>
           <p class="text-lg md:text-xl text-content-tertiary mb-12 max-w-[45ch] mx-auto leading-relaxed">
             Ship your next idea faster. Auth, billing, and a dashboard — all wired up and ready to
             go.

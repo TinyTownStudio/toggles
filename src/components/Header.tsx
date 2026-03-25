@@ -35,7 +35,7 @@ export function Header() {
     >
       <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
         <a href="/" class="text-xl font-bold text-content tracking-tight">
-          Acme
+          Toggles
         </a>
 
         {/* Desktop nav */}
