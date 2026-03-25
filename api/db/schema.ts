@@ -56,6 +56,43 @@ export const verification = sqliteTable("verification", {
   updatedAt: integer("updated_at", { mode: "timestamp" }),
 });
 
+// ── Projects ──────────────────────────────────────────────────
+
+export const project = sqliteTable(
+  "project",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
+  },
+  (t) => [index("project_user_idx").on(t.userId)],
+);
+
+// ── Toggles ────────────────────────────────────────────────────
+
+export const toggle = sqliteTable(
+  "toggle",
+  {
+    id: text("id").primaryKey(),
+    projectId: text("project_id")
+      .notNull()
+      .references(() => project.id, { onDelete: "cascade" }),
+    key: text("key").notNull(),
+    enabled: integer("enabled", { mode: "boolean" }).notNull().default(false),
+    meta: text("meta", { mode: "json" }), // optional JSON metadata
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
+  },
+  (t) => [
+    index("toggle_project_idx").on(t.projectId),
+    index("toggle_project_key_idx").on(t.projectId, t.key),
+  ],
+);
+
 // ── Subscriptions ─────────────────────────────────────────────
 
 export const subscription = sqliteTable(
