@@ -4,6 +4,7 @@ import { drizzle } from "drizzle-orm/d1";
 import { Polar } from "@polar-sh/sdk";
 import { createAuth } from "./lib/auth";
 import { subscription } from "./routes/subscription";
+import { projects } from "./routes/projects";
 import type { Bindings, Variables } from "./types";
 import { isProduction } from "./utils/isProduction";
 import * as schema from "./db/schema";
@@ -142,5 +143,8 @@ app.get("/api/v1/me", (c) => {
 
 // Subscription
 app.route("/api/v1/subscription", subscription);
+
+// Projects
+app.route("/api/v1/projects", projects);
 
 export default app;
