@@ -29,18 +29,18 @@ export function AuthForm({ onSuccess, compact = false }: AuthFormProps) {
 			class={
 				compact
 					? "w-full"
-					: "min-h-screen flex items-center justify-center px-4 pt-16"
+					: "min-h-screen bg-surface flex items-center justify-center px-4 pt-16"
 			}
 		>
 			<div class="w-full max-w-md mx-auto">
-				{/* Tab toggle */}
-				<div class="flex rounded-lg bg-surface border border-edge p-1 mb-6">
+				{/* Tab toggle — underline style */}
+				<div class="flex border-b border-edge mb-8">
 					<button
 						type="button"
-						class={`flex-1 text-sm font-medium py-2 rounded-md transition-colors ${
+						class={`py-2 px-1 mr-6 text-sm font-medium border-b-2 -mb-px transition-colors ${
 							form.tab.value === "signin"
-								? "bg-raised text-content"
-								: "text-content-tertiary hover:text-content"
+								? "border-content text-content"
+								: "border-transparent text-content-tertiary hover:text-content"
 						}`}
 						onClick={() => form.switchTab("signin")}
 					>
@@ -48,10 +48,10 @@ export function AuthForm({ onSuccess, compact = false }: AuthFormProps) {
 					</button>
 					<button
 						type="button"
-						class={`flex-1 text-sm font-medium py-2 rounded-md transition-colors ${
+						class={`py-2 px-1 text-sm font-medium border-b-2 -mb-px transition-colors ${
 							form.tab.value === "signup"
-								? "bg-raised text-content"
-								: "text-content-tertiary hover:text-content"
+								? "border-content text-content"
+								: "border-transparent text-content-tertiary hover:text-content"
 						}`}
 						onClick={() => form.switchTab("signup")}
 					>
@@ -60,12 +60,17 @@ export function AuthForm({ onSuccess, compact = false }: AuthFormProps) {
 				</div>
 
 				{/* Form card */}
-				<div class="bg-surface border border-edge rounded-xl p-6">
-					<h1 class="text-xl font-semibold text-content mb-6">
+				<div class="bg-page border border-edge rounded-md p-6 shadow-sm">
+					<h1 class="text-lg font-medium text-content mb-1">
 						{form.tab.value === "signin"
 							? "Welcome back"
 							: "Create your account"}
 					</h1>
+					<p class="text-sm text-content-tertiary mb-6">
+						{form.tab.value === "signin"
+							? "Sign in to continue to Toggles."
+							: "Start with a free account."}
+					</p>
 
 					{form.tab.value === "signin" ? (
 						<form onSubmit={handleSignIn} class="flex flex-col gap-4">

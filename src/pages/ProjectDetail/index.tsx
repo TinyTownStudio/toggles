@@ -4,6 +4,8 @@ import { useEffect, useState } from "preact/hooks";
 import { AuthModel } from "../../models/auth";
 import { ProjectsModel } from "../../models/projects";
 import { TogglesModel } from "../../models/toggles";
+import { Button } from "../../components/ui/Button";
+import { Input } from "../../components/ui/Input";
 
 export function ProjectDetail({ id }: { id: string }) {
 	const auth = useModel(AuthModel);
@@ -53,41 +55,40 @@ export function ProjectDetail({ id }: { id: string }) {
 					>
 						← Projects
 					</a>
-					<h1 class="text-2xl font-bold text-content">
+					<h1 class="text-2xl font-semibold tracking-tight text-content">
 						{project?.name ?? "Project"}
 					</h1>
 				</div>
 
 				{togglesModel.error.value && (
-					<p class="text-sm text-red-500 mb-4">{togglesModel.error.value}</p>
+					<p class="text-sm text-error-text mb-4">{togglesModel.error.value}</p>
 				)}
 
 				<form onSubmit={handleCreate} class="flex gap-2 mb-8">
-					<input
+					<Input
 						type="text"
 						value={newKey}
 						onInput={(e) => setNewKey((e.target as HTMLInputElement).value)}
 						placeholder="Flag key (e.g. dark-mode)"
 						disabled={togglesModel.creating.value}
-						class="flex-1 px-3 py-2 rounded-md border border-border bg-surface text-content text-sm placeholder:text-content-tertiary focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
+						class="flex-1"
 					/>
-					<button
+					<Button
 						type="submit"
 						disabled={togglesModel.creating.value || !newKey.trim()}
-						class="px-4 py-2 rounded-md bg-primary text-white text-sm font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
 					>
 						{togglesModel.creating.value ? "Adding…" : "Add flag"}
-					</button>
+					</Button>
 				</form>
 
 				{togglesModel.toggles.value.length === 0 ? (
 					<p class="text-content-tertiary text-sm">No flags yet.</p>
 				) : (
-					<ul class="space-y-3">
+					<ul class="space-y-2">
 						{togglesModel.toggles.value.map((t) => (
 							<li
 								key={t.id}
-								class="flex items-center justify-between px-4 py-3 rounded-lg border border-border bg-surface"
+								class="flex items-center justify-between px-4 py-3 rounded-md border border-edge bg-page hover:border-edge-hover transition-colors"
 							>
 								<span class="text-content text-sm font-mono">{t.key}</span>
 								<div class="flex items-center gap-3">
@@ -96,8 +97,8 @@ export function ProjectDetail({ id }: { id: string }) {
 										role="switch"
 										aria-checked={t.enabled}
 										onClick={() => togglesModel.toggle(id, t.id, !t.enabled)}
-										class={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary ${
-											t.enabled ? "bg-primary" : "bg-border"
+										class={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-accent/20 ${
+											t.enabled ? "bg-accent" : "bg-raised-hover"
 										}`}
 									>
 										<span
@@ -109,7 +110,7 @@ export function ProjectDetail({ id }: { id: string }) {
 									<button
 										type="button"
 										onClick={() => togglesModel.remove(id, t.id)}
-										class="text-xs text-content-tertiary hover:text-red-500 transition-colors"
+										class="text-xs text-content-faint hover:text-error-text transition-colors"
 									>
 										Delete
 									</button>

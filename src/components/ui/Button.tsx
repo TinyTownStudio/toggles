@@ -9,14 +9,14 @@ type ButtonProps = JSX.IntrinsicElements["button"] & {
 
 const variantClasses: Record<ButtonVariant, string> = {
 	primary:
-		"bg-accent hover:bg-accent-hover text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed",
+		"bg-cta text-cta-text font-medium rounded-md shadow-btn-dark border border-black/10 hover:bg-cta-hover active:translate-y-px active:shadow-none transition-all duration-100 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none disabled:active:translate-y-0",
 	secondary:
-		"bg-raised text-content-secondary hover:bg-raised-hover hover:text-content rounded-lg transition-colors disabled:opacity-50",
+		"bg-raised text-content-secondary font-medium rounded-md border border-edge shadow-btn hover:bg-raised-hover hover:text-content hover:border-edge-hover active:translate-y-px active:shadow-none transition-all duration-100 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none disabled:active:translate-y-0",
 	ghost:
-		"text-content-secondary hover:text-content transition-colors disabled:opacity-50",
-	icon: "p-1.5 rounded-md text-content-tertiary hover:text-content hover:bg-raised-hover transition-all cursor-pointer",
+		"text-content-secondary font-medium rounded-md hover:text-content hover:bg-raised transition-colors duration-100 disabled:opacity-40 disabled:cursor-not-allowed",
+	icon: "p-1.5 rounded-md text-content-tertiary hover:text-content hover:bg-raised transition-all duration-100 cursor-pointer",
 	"danger-icon":
-		"p-1.5 text-content-tertiary hover:text-delete-hover transition-colors cursor-pointer",
+		"p-1.5 rounded-md text-content-tertiary hover:text-error-text hover:bg-error-surface transition-all duration-100 cursor-pointer",
 };
 
 const sizeClasses: Record<string, string> = {

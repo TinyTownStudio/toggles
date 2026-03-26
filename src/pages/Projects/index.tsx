@@ -3,6 +3,8 @@ import { useModel } from "@preact/signals";
 import { useEffect, useState } from "preact/hooks";
 import { AuthModel } from "../../models/auth";
 import { ProjectsModel } from "../../models/projects";
+import { Button } from "../../components/ui/Button";
+import { Input } from "../../components/ui/Input";
 
 export function Projects() {
 	const auth = useModel(AuthModel);
@@ -40,39 +42,38 @@ export function Projects() {
 		<div class="min-h-screen bg-page pt-16">
 			<div class="max-w-4xl mx-auto px-6 py-12">
 				<div class="flex items-center justify-between mb-6">
-					<h1 class="text-2xl font-bold text-content">Projects</h1>
+					<h1 class="text-2xl font-semibold tracking-tight text-content">Projects</h1>
 				</div>
 
 				{projectsModel.error.value && (
-					<p class="text-sm text-red-500 mb-4">{projectsModel.error.value}</p>
+					<p class="text-sm text-error-text mb-4">{projectsModel.error.value}</p>
 				)}
 
 				<form onSubmit={handleCreate} class="flex gap-2 mb-8">
-					<input
+					<Input
 						type="text"
 						value={newName}
 						onInput={(e) => setNewName((e.target as HTMLInputElement).value)}
 						placeholder="New project name"
 						disabled={projectsModel.creating.value}
-						class="flex-1 px-3 py-2 rounded-md border border-border bg-surface text-content text-sm placeholder:text-content-tertiary focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
+						class="flex-1"
 					/>
-					<button
+					<Button
 						type="submit"
 						disabled={projectsModel.creating.value || !newName.trim()}
-						class="px-4 py-2 rounded-md bg-primary text-white text-sm font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
 					>
 						{projectsModel.creating.value ? "Creating…" : "Create"}
-					</button>
+					</Button>
 				</form>
 
 				{projectsModel.projects.value.length === 0 ? (
 					<p class="text-content-tertiary text-sm">No projects yet.</p>
 				) : (
-					<ul class="space-y-3">
+					<ul class="space-y-2">
 						{projectsModel.projects.value.map((project) => (
 							<li
 								key={project.id}
-								class="flex items-center justify-between px-4 py-3 rounded-lg border border-border bg-surface"
+								class="flex items-center justify-between px-4 py-3 rounded-md border border-edge bg-page hover:border-edge-hover transition-colors"
 							>
 								<a
 									href={`/projects/${project.id}`}
@@ -83,7 +84,7 @@ export function Projects() {
 								<button
 									type="button"
 									onClick={() => projectsModel.remove(project.id)}
-									class="text-xs text-content-tertiary hover:text-red-500 transition-colors"
+									class="text-xs text-content-faint hover:text-error-text transition-colors"
 								>
 									Delete
 								</button>

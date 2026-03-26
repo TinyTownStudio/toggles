@@ -36,7 +36,7 @@ export function Header() {
 			}`}
 		>
 			<div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-				<a href="/" class="text-xl font-bold text-content tracking-tight">
+				<a href="/" class="text-xl font-semibold text-content tracking-tight">
 					Toggles
 				</a>
 
@@ -54,7 +54,7 @@ export function Header() {
 					<ThemeToggle />
 					<a
 						href={auth.authenticated.value ? "/dashboard" : "/auth"}
-						class="text-sm font-medium px-4 py-2 rounded-lg bg-accent text-white hover:bg-accent-hover transition-colors"
+						class="text-sm font-medium px-4 py-1.5 rounded-md bg-cta text-cta-text shadow-btn-dark border border-black/10 hover:bg-cta-hover active:translate-y-px active:shadow-none transition-all duration-100"
 					>
 						{auth.authenticated.value ? "Dashboard" : "Sign in"}
 					</a>
@@ -108,7 +108,7 @@ export function Header() {
 					</div>
 					<a
 						href={auth.authenticated.value ? "/dashboard" : "/auth"}
-						class="text-sm font-medium px-4 py-2 rounded-lg bg-accent text-white hover:bg-accent-hover transition-colors text-center"
+						class="text-sm font-medium px-4 py-1.5 rounded-md bg-cta text-cta-text shadow-btn-dark border border-black/10 hover:bg-cta-hover transition-all duration-100 text-center"
 						onClick={() => (mobileOpen.value = false)}
 					>
 						{auth.authenticated.value ? "Dashboard" : "Sign in"}
