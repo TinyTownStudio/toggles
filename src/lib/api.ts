@@ -1,5 +1,15 @@
 import { API_BASE_URL } from "./constants";
 
+export interface Toggle {
+	id: string;
+	key: string;
+	enabled: boolean;
+	projectId: string;
+	meta: unknown;
+	createdAt: number;
+	updatedAt: number;
+}
+
 export interface Project {
 	id: string;
 	name: string;
@@ -53,4 +63,26 @@ export async function createProject(name: string): Promise<Project> {
 
 export async function deleteProject(id: string): Promise<void> {
 	await fetchApi<void>(`/api/v1/projects/${id}`, { method: "DELETE" });
+}
+
+export async function getToggles(projectId: string): Promise<Toggle[]> {
+	return fetchApi<Toggle[]>(`/api/v1/projects/${projectId}/toggles`);
+}
+
+export async function createToggle(projectId: string, key: string): Promise<Toggle> {
+	return fetchApi<Toggle>(`/api/v1/projects/${projectId}/toggles`, {
+		method: "POST",
+		body: JSON.stringify({ key }),
+	});
+}
+
+export async function updateToggle(projectId: string, id: string, enabled: boolean): Promise<Toggle> {
+	return fetchApi<Toggle>(`/api/v1/projects/${projectId}/toggles/${id}`, {
+		method: "PATCH",
+		body: JSON.stringify({ enabled }),
+	});
+}
+
+export async function deleteToggle(projectId: string, id: string): Promise<void> {
+	await fetchApi<void>(`/api/v1/projects/${projectId}/toggles/${id}`, { method: "DELETE" });
 }

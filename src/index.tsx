@@ -31,6 +31,9 @@ const Billing = lazy(() =>
 const Projects = lazy(() =>
   import("./pages/Projects/index").then((module) => module.Projects),
 );
+const ProjectDetail = lazy(() =>
+  import("./pages/ProjectDetail/index").then((module) => module.ProjectDetail),
+);
 const NotFound = lazy(() =>
   import("./pages/_404").then((module) => module.NotFound),
 );
@@ -55,6 +58,7 @@ function AppContent() {
           <Route path="/auth" component={Auth} />
           <Route path="/dashboard" component={Dashboard} />
           <Route path="/projects" component={Projects} />
+          <Route path="/projects/:id" component={ProjectDetail} />
           <Route path="/billing" component={Billing} />
           <Route default component={NotFound} />
         </Router>

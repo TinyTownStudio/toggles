@@ -74,7 +74,12 @@ export function Projects() {
 								key={project.id}
 								class="flex items-center justify-between px-4 py-3 rounded-lg border border-border bg-surface"
 							>
-								<span class="text-content text-sm font-medium">{project.name}</span>
+								<a
+									href={`/projects/${project.id}`}
+									class="text-content text-sm font-medium hover:underline"
+								>
+									{project.name}
+								</a>
 								<button
 									type="button"
 									onClick={() => projectsModel.remove(project.id)}
