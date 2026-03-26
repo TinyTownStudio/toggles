@@ -7,75 +7,82 @@ import { Button } from "../../components/ui/Button";
 import { Alert } from "../../components/ui/Alert";
 
 export function Billing() {
-  const { route, query } = useLocation();
-  const auth = useModel(AuthModel);
-  const billing = useModel(BillingModel);
+	const { route, query } = useLocation();
+	const auth = useModel(AuthModel);
+	const billing = useModel(BillingModel);
 
-  const success = query.success === "true";
+	const success = query.success === "true";
 
-  useEffect(() => {
-    auth.checkSession().then(() => {
-      if (!auth.authenticated.value) {
-        route("/auth");
-        return;
-      }
-      billing.fetch();
-    });
-  }, []);
+	useEffect(() => {
+		auth.checkSession().then(() => {
+			if (!auth.authenticated.value) {
+				route("/auth");
+				return;
+			}
+			billing.fetch();
+		});
+	}, []);
 
-  if (billing.loading.value) {
-    return (
-      <div class="min-h-screen bg-page flex items-center justify-center">
-        <p class="text-content-tertiary text-sm">Loading...</p>
-      </div>
-    );
-  }
+	if (billing.loading.value) {
+		return (
+			<div class="min-h-screen bg-page flex items-center justify-center">
+				<p class="text-content-tertiary text-sm">Loading...</p>
+			</div>
+		);
+	}
 
-  return (
-    <div class="min-h-screen mt-12 bg-page">
-      <div class="max-w-2xl mx-auto px-4 py-12">
-        <div class="flex items-center justify-between mb-8">
-          <h1 class="text-2xl font-bold text-content">Billing</h1>
-          <Button variant="ghost" size="sm" onClick={() => route("/dashboard")}>
-            Back to Dashboard
-          </Button>
-        </div>
+	return (
+		<div class="min-h-screen mt-12 bg-page">
+			<div class="max-w-2xl mx-auto px-4 py-12">
+				<div class="flex items-center justify-between mb-8">
+					<h1 class="text-2xl font-bold text-content">Billing</h1>
+					<Button variant="ghost" size="sm" onClick={() => route("/dashboard")}>
+						Back to Dashboard
+					</Button>
+				</div>
 
-        {success && (
-          <Alert variant="success" class="mb-6">
-            Your subscription has been updated successfully.
-          </Alert>
-        )}
+				{success && (
+					<Alert variant="success" class="mb-6">
+						Your subscription has been updated successfully.
+					</Alert>
+				)}
 
-        {billing.error.value && <Alert class="mb-6">{billing.error.value}</Alert>}
+				{billing.error.value && (
+					<Alert class="mb-6">{billing.error.value}</Alert>
+				)}
 
-        {/* Current Plan */}
-        <div class="bg-surface border border-edge rounded-xl p-6">
-          <div class="flex items-center justify-between">
-            <div>
-              <h2 class="text-lg font-semibold text-content">Current Plan</h2>
-              <p class="text-sm text-content-tertiary mt-1">
-                You are on the{" "}
-                <span
-                  class={`font-medium ${billing.isPro.value ? "text-accent-text" : "text-content-secondary"}`}
-                >
-                  {billing.isPro.value ? "Pro" : "Free"}
-                </span>{" "}
-                plan.
-              </p>
-            </div>
-            {billing.isPro.value ? (
-              <Button variant="secondary" onClick={() => billing.manage()}>
-                Manage Subscription
-              </Button>
-            ) : (
-              <Button onClick={() => billing.upgrade()} disabled={billing.upgradeLoading.value}>
-                {billing.upgradeLoading.value ? "Redirecting..." : "Upgrade to Pro"}
-              </Button>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+				{/* Current Plan */}
+				<div class="bg-surface border border-edge rounded-xl p-6">
+					<div class="flex items-center justify-between">
+						<div>
+							<h2 class="text-lg font-semibold text-content">Current Plan</h2>
+							<p class="text-sm text-content-tertiary mt-1">
+								You are on the{" "}
+								<span
+									class={`font-medium ${billing.isPro.value ? "text-accent-text" : "text-content-secondary"}`}
+								>
+									{billing.isPro.value ? "Pro" : "Free"}
+								</span>{" "}
+								plan.
+							</p>
+						</div>
+						{billing.isPro.value ? (
+							<Button variant="secondary" onClick={() => billing.manage()}>
+								Manage Subscription
+							</Button>
+						) : (
+							<Button
+								onClick={() => billing.upgrade()}
+								disabled={billing.upgradeLoading.value}
+							>
+								{billing.upgradeLoading.value
+									? "Redirecting..."
+									: "Upgrade to Pro"}
+							</Button>
+						)}
+					</div>
+				</div>
+			</div>
+		</div>
+	);
 }
