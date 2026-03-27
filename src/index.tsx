@@ -16,27 +16,16 @@ import { DashboardHeader } from "./components/DashboardHeader";
 import { ThemeModel } from "./models/theme";
 import "./style.css";
 
-const Home = lazy(() =>
-  import("./pages/Home/index").then((module) => module.Home),
-);
-const Auth = lazy(() =>
-  import("./pages/Auth/index").then((module) => module.Auth),
-);
-const Dashboard = lazy(() =>
-  import("./pages/Dashboard/index").then((module) => module.Dashboard),
-);
-const Billing = lazy(() =>
-  import("./pages/Billing/index").then((module) => module.Billing),
-);
-const Projects = lazy(() =>
-  import("./pages/Projects/index").then((module) => module.Projects),
-);
+const Home = lazy(() => import("./pages/Home/index").then((module) => module.Home));
+const Auth = lazy(() => import("./pages/Auth/index").then((module) => module.Auth));
+const Dashboard = lazy(() => import("./pages/Dashboard/index").then((module) => module.Dashboard));
+const Billing = lazy(() => import("./pages/Billing/index").then((module) => module.Billing));
+const Projects = lazy(() => import("./pages/Projects/index").then((module) => module.Projects));
 const ProjectDetail = lazy(() =>
   import("./pages/ProjectDetail/index").then((module) => module.ProjectDetail),
 );
-const NotFound = lazy(() =>
-  import("./pages/_404").then((module) => module.NotFound),
-);
+const ApiKeys = lazy(() => import("./pages/ApiKeys/index").then((module) => module.ApiKeys));
+const NotFound = lazy(() => import("./pages/_404").then((module) => module.NotFound));
 
 function AppContent() {
   const { url } = useLocation();
@@ -60,6 +49,7 @@ function AppContent() {
           <Route path="/projects" component={Projects} />
           <Route path="/projects/:id" component={ProjectDetail} />
           <Route path="/billing" component={Billing} />
+          <Route path="/api-keys" component={ApiKeys} />
           <Route default component={NotFound} />
         </Router>
       </main>
