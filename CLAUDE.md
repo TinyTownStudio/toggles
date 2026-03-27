@@ -14,6 +14,7 @@ pnpm run check        # Full lint + format check (for CI)
 ```
 
 **Database:**
+
 ```bash
 pnpm run db:generate        # Generate migrations from schema changes
 pnpm run db:migrate:local   # Apply migrations to local D1
@@ -24,6 +25,7 @@ pnpm run db:studio          # Open Drizzle Studio
 ## Architecture
 
 Full-stack SaaS app running entirely on Cloudflare infrastructure:
+
 - **Frontend:** Preact + Vite + Tailwind CSS v4, served as SPA
 - **Backend:** Hono on Cloudflare Workers (`api/`)
 - **Database:** Drizzle ORM + Cloudflare D1 (SQLite)
@@ -35,6 +37,7 @@ The Vite build (`vite.config.ts`) combines frontend and API into a single deploy
 ### Frontend (`src/`)
 
 State is managed via **Preact Signals** in `src/models/`:
+
 - `auth` — session and user state
 - `billing` — subscription plan and limits
 - `notes` — local-only example model
@@ -45,6 +48,7 @@ Pages live in `src/pages/`, components in `src/components/`. API calls go throug
 ### Backend (`api/`)
 
 `api/index.ts` is the Hono entry point. It sets up CORS (locked to localhost:5173 in dev, configurable for prod), security headers, and mounts routes:
+
 - `GET /api/auth/*` — BetterAuth handler
 - `GET /api/v1/me` — current user (session-protected)
 - `GET /api/v1/subscription` — plan + limits (session-protected)
