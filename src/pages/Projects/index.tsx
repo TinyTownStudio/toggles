@@ -42,11 +42,15 @@ export function Projects() {
     <div class="min-h-screen bg-page pt-16">
       <div class="max-w-4xl mx-auto px-6 py-12">
         <div class="flex items-center justify-between mb-6">
-          <h1 class="text-2xl font-semibold tracking-tight text-content">Projects</h1>
+          <h1 class="text-2xl font-semibold tracking-tight text-content">
+            Projects
+          </h1>
         </div>
 
         {projectsModel.error.value && (
-          <p class="text-sm text-error-text mb-4">{projectsModel.error.value}</p>
+          <p class="text-sm text-error-text mb-4">
+            {projectsModel.error.value}
+          </p>
         )}
 
         <form onSubmit={handleCreate} class="flex gap-2 mb-8">
@@ -58,7 +62,10 @@ export function Projects() {
             disabled={projectsModel.creating.value}
             class="flex-1"
           />
-          <Button type="submit" disabled={projectsModel.creating.value || !newName.trim()}>
+          <Button
+            type="submit"
+            disabled={projectsModel.creating.value || !newName.trim()}
+          >
             {projectsModel.creating.value ? "Creating…" : "Create"}
           </Button>
         </form>
@@ -70,17 +77,24 @@ export function Projects() {
             {projectsModel.projects.value.map((project) => (
               <li
                 key={project.id}
-                class="flex items-center justify-between px-4 py-3 rounded-md border border-edge bg-page hover:border-edge-hover transition-colors"
+                class="flex hover:cursor-pointer items-center justify-between px-4 py-3 rounded-md border border-edge bg-page hover:border-edge-hover transition-colors"
+                onClick={() => {
+                  route(`/projects/${project.id}`);
+                }}
               >
-                <a
-                  href={`/projects/${project.id}`}
-                  class="text-content text-sm font-medium hover:underline"
+                <div
+                  class="text-content text-sm font-medium"
                 >
-                  {project.name}
-                </a>
+                  <p class="m-0 p-0">{project.name}</p>
+                </div>
                 <button
                   type="button"
-                  onClick={() => projectsModel.remove(project.id)}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    projectsModel.remove(project.id)
+                  }
+                  }
                   class="text-xs text-content-faint hover:text-error-text transition-colors"
                 >
                   Delete

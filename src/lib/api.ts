@@ -33,12 +33,16 @@ async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> 
     },
   });
 
+  const isJson = response.headers.get("content-type")?.includes("application/json");
+
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: "Request failed" }));
+    const error = isJson
+      ? await response.json().catch(() => ({ error: "Request failed" }))
+      : { error: "Request failed" };
     throw new Error(error.error || `HTTP ${response.status}`);
   }
 
-  return response.json();
+  return isJson ? response.json() : (undefined as T);
 }
 
 export async function getSubscription(): Promise<SubscriptionResponse> {
