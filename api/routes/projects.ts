@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { drizzle } from "drizzle-orm/d1";
-import { eq, and } from "drizzle-orm";
+import { eq, and, like } from "drizzle-orm";
 import * as schema from "../db/schema";
 import type { Bindings, Variables } from "../types";
 
@@ -50,7 +50,11 @@ projects.post("/", async (c) => {
     updatedAt: now,
   });
 
-  const row = await db.select().from(schema.project).where(eq(schema.project.id, id)).get();
+  const row = await db
+    .select()
+    .from(schema.project)
+    .where(eq(schema.project.id, id))
+    .get();
 
   return c.json(row, 201);
 });
@@ -82,11 +86,17 @@ projects.delete("/:id", async (c) => {
 
 // ── Toggle routes ─────────────────────────────────────────────
 
-async function getOwnedProject(db: ReturnType<typeof drizzle>, projectId: string, userId: string) {
+async function getOwnedProject(
+  db: ReturnType<typeof drizzle>,
+  projectId: string,
+  userId: string,
+) {
   return db
     .select()
     .from(schema.project)
-    .where(and(eq(schema.project.id, projectId), eq(schema.project.userId, userId)))
+    .where(
+      and(eq(schema.project.id, projectId), eq(schema.project.userId, userId)),
+    )
     .get();
 }
 
@@ -136,7 +146,11 @@ projects.post("/:projectId/toggles", async (c) => {
     updatedAt: now,
   });
 
-  const row = await db.select().from(schema.toggle).where(eq(schema.toggle.id, id)).get();
+  const row = await db
+    .select()
+    .from(schema.toggle)
+    .where(eq(schema.toggle.id, id))
+    .get();
 
   return c.json(row, 201);
 });
@@ -162,12 +176,51 @@ projects.patch("/:projectId/toggles/:id", async (c) => {
   await db
     .update(schema.toggle)
     .set({ enabled: body.enabled, updatedAt: now })
-    .where(and(eq(schema.toggle.id, id), eq(schema.toggle.projectId, projectId)));
+    .where(
+      and(eq(schema.toggle.id, id), eq(schema.toggle.projectId, projectId)),
+    );
 
-  const row = await db.select().from(schema.toggle).where(eq(schema.toggle.id, id)).get();
+  const row = await db
+    .select()
+    .from(schema.toggle)
+    .where(eq(schema.toggle.id, id))
+    .get();
 
   if (!row) return c.json({ error: "Not found" }, 404);
   return c.json(row);
+});
+
+// GET /:projectId/toggles/one — get a single toggle
+projects.get("/:projectId/toggles/one", async (c) => {
+  const userId = c.get("user")?.id;
+  if (!userId) return c.json({ error: "Unauthorized" }, 401);
+
+  const { pattern, flag } = c.req.query();
+
+  if (!pattern && !flag) {
+    return c.json({ error: "Need pattern / key query to get a toggle" }, 400);
+  }
+
+  const projectId = c.req.param("projectId");
+  const db = drizzle(c.env.DB, { schema });
+
+  const project = await getOwnedProject(db, projectId, userId);
+  if (!project) return c.json({ error: "Not found" }, 404);
+
+  const query = db.select().from(schema.toggle);
+
+  if (pattern) {
+    const normalizedPattern = `%${String(pattern).replace(/[-_ ]/g, "%")}%`;
+    const rows = await query
+      .where(like(schema.toggle.key, normalizedPattern))
+      .limit(1)
+      .all();
+
+    return c.json(rows.at(-1) ?? {});
+  }
+
+  const rows = await query.where(eq(schema.toggle.key, pattern)).limit(1).all();
+  return c.json(rows.at(-1) ?? {});
 });
 
 // DELETE /:projectId/toggles/:id — delete a toggle
@@ -184,7 +237,9 @@ projects.delete("/:projectId/toggles/:id", async (c) => {
 
   await db
     .delete(schema.toggle)
-    .where(and(eq(schema.toggle.id, id), eq(schema.toggle.projectId, projectId)));
+    .where(
+      and(eq(schema.toggle.id, id), eq(schema.toggle.projectId, projectId)),
+    );
 
   return c.body(null, 204);
 });
