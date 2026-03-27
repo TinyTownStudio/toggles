@@ -6,6 +6,8 @@ export interface ApiKey {
   name: string | null;
   start: string | null;
   createdAt: Date;
+  updatedAt: Date;
+  lastUsedAt: Date | null;
   expiresAt: Date | null;
   enabled: boolean;
 }

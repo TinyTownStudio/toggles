@@ -1,11 +1,13 @@
-import { useEffect, useState } from "preact/hooks";
-import { useLocation } from "preact-iso";
 import { useModel } from "@preact/signals";
-import { AuthModel } from "../../models/auth";
-import { ApiKeysModel } from "../../models/apiKeys";
+import { useLocation } from "preact-iso";
+import { useEffect, useState } from "preact/hooks";
+
+import { Alert } from "../../components/ui/Alert";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
-import { Alert } from "../../components/ui/Alert";
+import { ApiKeysModel } from "../../models/apiKeys";
+import { AuthModel } from "../../models/auth";
+import { timeAgo } from "../../lib/date";
 
 export function ApiKeys() {
   const { route } = useLocation();
@@ -91,6 +93,11 @@ export function ApiKeys() {
                 <div>
                   <p class="text-sm font-medium text-content">{key.name ?? "Unnamed"}</p>
                   <p class="text-xs text-content-tertiary font-mono mt-0.5">{key.start}••••••••</p>
+                  <p class="text-xs text-content-tertiary mt-1">
+                    Created {timeAgo(key.createdAt)}
+                    {" · "}
+                    {key.lastUsedAt ? `Last used ${timeAgo(key.lastUsedAt)}` : "Never used"}
+                  </p>
                 </div>
                 <Button variant="secondary" size="sm" onClick={() => apiKeyModel.revoke(key.id)}>
                   Revoke
