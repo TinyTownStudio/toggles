@@ -5,12 +5,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-pnpm dev              # Start dev server (Vite + Cloudflare Worker)
-pnpm build            # Build for production
-pnpm deploy           # Deploy to Cloudflare (wrangler deploy --minify)
+pnpm dev              # Start dev server (Vite on port 5173)
+pnpm build            # Build for production (client + server)
+pnpm build:check      # Build with TypeScript checking
 pnpm run lint         # Run oxlint with auto-fix
 pnpm run format       # Format with oxfmt
 pnpm run check        # Full lint + format check (for CI)
+```
+
+**Production Server:**
+
+```bash
+NODE_ENV=production node dist/server/index.js  # Run production server on port 3000
 ```
 
 **Database:**
@@ -24,15 +30,19 @@ pnpm run db:studio          # Open Drizzle Studio
 
 ## Architecture
 
-Full-stack SaaS app running entirely on Cloudflare infrastructure:
+Full-stack SaaS application:
 
 - **Frontend:** Preact + Vite + Tailwind CSS v4, served as SPA
-- **Backend:** Hono on Cloudflare Workers (`api/`)
+- **Backend:** Fastify on Node.js (`api/`)
 - **Database:** Drizzle ORM + Cloudflare D1 (SQLite)
 - **Auth:** BetterAuth with email/password
 - **Billing:** Polar (free/pro plans via webhooks)
 
-The Vite build (`vite.config.ts`) combines frontend and API into a single deployment using `@cloudflare/vite-plugin`. The worker handles `/api/*` routes first; everything else serves the SPA.
+The Vite build (`vite.config.ts`) creates two outputs:
+1. `dist/client/` - Frontend SPA assets
+2. `dist/server/` - Fastify Node.js server
+
+The server handles `/api/*` routes and serves the SPA for all other routes.
 
 ### Frontend (`src/`)
 
@@ -47,15 +57,21 @@ Pages live in `src/pages/`, components in `src/components/`. API calls go throug
 
 ### Backend (`api/`)
 
-`api/index.ts` is the Hono entry point. It sets up CORS (locked to localhost:5173 in dev, configurable for prod), security headers, and mounts routes:
+`api/index.ts` is the Fastify entry point. It sets up:
+- **CORS** - Configured for localhost:5173 in dev, app.example.com in prod
+- **Security Headers** - Via `onSend` hook (HSTS, X-Frame-Options, CSP, etc.)
+- **Session Auth** - Via `preHandler` hook for `/api/v1/*` routes
+- **Decorators** - `fastify.env`, `fastify.db`, `fastify.auth` for shared state
 
-- `GET /api/auth/*` — BetterAuth handler
-- `GET /api/v1/me` — current user (session-protected)
-- `GET /api/v1/subscription` — plan + limits (session-protected)
+**Routes:**
+- `ALL /api/auth/*` — BetterAuth handler (converted to Fastify)
+- `GET /api/v1/me` — Current user (session-protected)
+- `GET /api/v1/subscription` — Plan + limits (session-protected)
+- `GET /api/v1/projects` — Projects CRUD (session-protected)
+- `GET /api/v1/projects/:id/toggles` — Toggles CRUD (session-protected)
 - `GET /api/billing-success` — Polar checkout completion redirect
-- BetterAuth also exposes checkout and customer portal endpoints via Polar plugins
 
-Session middleware for `/api/v1/*` is in `api/index.ts` and validates via BetterAuth.
+Session validation is done in the `preHandler` hook and sets `request.user` and `request.session`.
 
 ### Database schema (`api/db/schema.ts`)
 
@@ -67,4 +83,24 @@ Defines per-plan limits (e.g., note count). `getUserPlan` reads subscription sta
 
 ## Environment Setup
 
-Copy `.env.example` → `.env` and `.dev.vars.example` → `.dev.vars` before running locally. The API needs `BETTER_AUTH_SECRET`, `POLAR_ACCESS_TOKEN`, `POLAR_WEBHOOK_SECRET`, and `POLAR_PRO_PRODUCT_ID`.
+Copy `.env.example` → `.env` before running locally. The API needs:
+- `BETTER_AUTH_SECRET`
+- `BETTER_AUTH_URL`
+- `POLAR_ACCESS_TOKEN`
+- `POLAR_WEBHOOK_SECRET`
+- `POLAR_PRO_PRODUCT_ID`
+- `DB` - Database connection
+- `LOCAL` - Set to "true" for local development
+
+## Migration Notes
+
+**2026-03-29:** Migrated API from Hono to Fastify.
+
+**Key Changes:**
+- Framework: Hono → Fastify
+- Pattern: `c.json()` → `reply.send()`
+- Context: `c.get('user')` → `request.user`
+- Middleware: `app.use()` → `addHook()`
+- Bindings: `c.env.DB` → `fastify.db` (decorators)
+
+See `MIGRATION_COMPLETE.md` for full details.

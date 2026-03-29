@@ -22,16 +22,15 @@ export function Header() {
   }, []);
 
   const links = [
-    { label: "Features", href: "#features" },
-    { label: "How it Works", href: "#how-it-works" },
-    { label: "Pricing", href: "#pricing" },
+    { label: "Features", href: "/#features" },
+    { label: "How it Works", href: "/#how-it-works" },
+    { label: "Pricing", href: "/#pricing" },
   ];
 
   return (
     <header
-      class={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled.value ? "bg-overlay backdrop-blur-lg border-b border-edge" : "bg-transparent"
-      }`}
+      class={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled.value ? "bg-overlay backdrop-blur-lg border-b border-edge" : "bg-transparent"
+        }`}
     >
       <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
         <a href="/" class="text-xl font-semibold text-content tracking-tight">

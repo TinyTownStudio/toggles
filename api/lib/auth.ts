@@ -1,21 +1,20 @@
+import { checkout, polar, portal, webhooks } from "@polar-sh/better-auth";
+import { Polar } from "@polar-sh/sdk";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { drizzle } from "drizzle-orm/d1";
+import { apiKey } from "better-auth/plugins";
 import { eq } from "drizzle-orm";
-import { Polar } from "@polar-sh/sdk";
-import { polar, checkout, portal, webhooks } from "@polar-sh/better-auth";
+import type { FastifyInstance } from "fastify";
 import * as schema from "../db/schema";
 import { isProduction } from "../utils/isProduction";
-import { apiKey } from "better-auth/plugins";
 
-type Env = Cloudflare.Env;
-
-export function createAuth(env: Env) {
-  const db = drizzle(env.DB, { schema });
+export function createAuth(fastify: FastifyInstance) {
+  const env = fastify.env;
+  const db = fastify.db
 
   const polarClient = new Polar({
     accessToken: env.POLAR_ACCESS_TOKEN,
-    server: isProduction(env) ? "production" : "sandbox",
+    server: isProduction() ? "production" : "sandbox",
   });
 
   return betterAuth({
@@ -34,7 +33,7 @@ export function createAuth(env: Env) {
     emailAndPassword: {
       enabled: true,
     },
-    trustedOrigins: isProduction(env) ? ["https://app.example.com"] : ["http://localhost:5173"],
+    trustedOrigins: isProduction() ? ["https://app.example.com"] : ["http://localhost:5173"],
     plugins: [
       apiKey(),
       polar({
@@ -53,10 +52,10 @@ export function createAuth(env: Env) {
             ],
             // This success URL is more to support local-dev so we don't have to only use
             // webhooks. All though local webhooks are now possible with https://polar.sh/docs/integrate/webhooks/locally
-            successUrl: isProduction(env)
+            successUrl: isProduction()
               ? "https://api.example.com/api/billing-success?checkout_id={CHECKOUT_ID}"
               : "http://localhost:8787/api/billing-success?checkout_id={CHECKOUT_ID}",
-            returnUrl: isProduction(env)
+            returnUrl: isProduction()
               ? "https://app.example.com/billing"
               : "http://localhost:5173/billing",
           }),
