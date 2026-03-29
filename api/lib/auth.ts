@@ -10,7 +10,7 @@ import { isProduction } from "../utils/isProduction";
 
 export function createAuth(fastify: FastifyInstance) {
   const env = fastify.env;
-  const db = fastify.db
+  const db = fastify.db;
 
   const polarClient = new Polar({
     accessToken: env.POLAR_ACCESS_TOKEN,

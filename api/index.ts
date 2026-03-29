@@ -213,6 +213,7 @@ fastify.get(
 await fastify.register(subscriptionRoutes, { prefix: "/api/v1/subscription" });
 await fastify.register(projectRoutes, { prefix: "/api/v1/projects" });
 
+// TODO: abstract this away to allow other node servers to also be allowed to connect. 
 export const devServer = async (): Promise<typeof fastify> => {
   await fastify.ready();
   return fastify;
@@ -232,8 +233,9 @@ if (import.meta.env.PROD) {
   });
 
   try {
-    await devServer({ port: 3000, host: "0.0.0.0" });
-    console.log("Server listening on http://0.0.0.0:3000");
+    const port = env.PORT ? parseInt(env.PORT) : 3000;
+    const host = env.HOST ?? "0.0.0.0";
+    await fastify.listen({ port, host });
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);
@@ -246,5 +248,3 @@ if (import.meta.env.PROD) {
     });
   });
 }
-
-export default fastify;

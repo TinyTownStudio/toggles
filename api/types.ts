@@ -1,5 +1,7 @@
 // Environment bindings
 export interface Env {
+  PORT?: string
+  HOST?: string
   DATABASE_URL: string;
   BETTER_AUTH_SECRET: string;
   BETTER_AUTH_URL: string;

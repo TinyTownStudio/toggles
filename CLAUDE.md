@@ -39,6 +39,7 @@ Full-stack SaaS application:
 - **Billing:** Polar (free/pro plans via webhooks)
 
 The Vite build (`vite.config.ts`) creates two outputs:
+
 1. `dist/client/` - Frontend SPA assets
 2. `dist/server/` - Fastify Node.js server
 
@@ -58,12 +59,14 @@ Pages live in `src/pages/`, components in `src/components/`. API calls go throug
 ### Backend (`api/`)
 
 `api/index.ts` is the Fastify entry point. It sets up:
+
 - **CORS** - Configured for localhost:5173 in dev, app.example.com in prod
 - **Security Headers** - Via `onSend` hook (HSTS, X-Frame-Options, CSP, etc.)
 - **Session Auth** - Via `preHandler` hook for `/api/v1/*` routes
 - **Decorators** - `fastify.env`, `fastify.db`, `fastify.auth` for shared state
 
 **Routes:**
+
 - `ALL /api/auth/*` — BetterAuth handler (converted to Fastify)
 - `GET /api/v1/me` — Current user (session-protected)
 - `GET /api/v1/subscription` — Plan + limits (session-protected)
@@ -84,6 +87,7 @@ Defines per-plan limits (e.g., note count). `getUserPlan` reads subscription sta
 ## Environment Setup
 
 Copy `.env.example` → `.env` before running locally. The API needs:
+
 - `BETTER_AUTH_SECRET`
 - `BETTER_AUTH_URL`
 - `POLAR_ACCESS_TOKEN`
@@ -97,6 +101,7 @@ Copy `.env.example` → `.env` before running locally. The API needs:
 **2026-03-29:** Migrated API from Hono to Fastify.
 
 **Key Changes:**
+
 - Framework: Hono → Fastify
 - Pattern: `c.json()` → `reply.send()`
 - Context: `c.get('user')` → `request.user`
