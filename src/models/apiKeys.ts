@@ -23,7 +23,7 @@ export const ApiKeysModel = createModel(() => {
     error.value = null;
     try {
       const res = await authClient.apiKey.list();
-      apiKeys.value = (res.data ?? []) as ApiKey[];
+      apiKeys.value = (res.data ?? []) as unknown as ApiKey[];
     } catch (err) {
       error.value = err instanceof Error ? err.message : "Failed to load API keys";
     } finally {
