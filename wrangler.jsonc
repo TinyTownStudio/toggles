@@ -1,6 +1,6 @@
 {
 	"$schema": "./node_modules/wrangler/config-schema.json",
-	"name": "cloudflare-vite-tutorial",
+	"name": "toggles",
 	"compatibility_date": "2026-02-01",
 	"compatibility_flags": [
 		"nodejs_compat"
@@ -12,7 +12,7 @@
 		],
 	},
 	"vars": {
-		"BETTER_AUTH_URL": "https://api.example.com",
+		"BETTER_AUTH_URL": "https://toggles.tinytown.studio",
 		"LOCAL": "false",
 	},
 	"d1_databases": [
@@ -20,7 +20,7 @@
 			"binding": "DB",
 			"database_name": "app-db",
 			"database_id": "fb628396-e48b-42ff-b41c-68d8b9e90185",
-			"migrations_dir": "drizzle/migrations",
+			"migrations_dir": "drizzle/migrations"
 		},
 	],
 	"main": "./api/index.ts",
