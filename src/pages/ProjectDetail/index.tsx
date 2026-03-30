@@ -21,7 +21,9 @@ export function ProjectDetail({ id }: { id: string }) {
         return;
       }
       await Promise.all([
-        projectsModel.projects.value.length === 0 ? projectsModel.fetch() : Promise.resolve(),
+        projectsModel.projects.value.length === 0
+          ? projectsModel.fetch()
+          : Promise.resolve(),
         togglesModel.fetch(id),
       ]);
     });
@@ -35,7 +37,9 @@ export function ProjectDetail({ id }: { id: string }) {
     );
   }
 
-  const project = projectsModel.projects.value.find((p) => p.id === id);
+  const project = projectsModel.projects.value.find(
+    (p: { id: string }) => p.id === id,
+  );
 
   const handleCreate = async (e: Event) => {
     e.preventDefault();
@@ -73,7 +77,10 @@ export function ProjectDetail({ id }: { id: string }) {
             disabled={togglesModel.creating.value}
             class="flex-1"
           />
-          <Button type="submit" disabled={togglesModel.creating.value || !newKey.trim()}>
+          <Button
+            type="submit"
+            disabled={togglesModel.creating.value || !newKey.trim()}
+          >
             {togglesModel.creating.value ? "Adding…" : "Add flag"}
           </Button>
         </form>
@@ -82,7 +89,7 @@ export function ProjectDetail({ id }: { id: string }) {
           <p class="text-content-tertiary text-sm">No flags yet.</p>
         ) : (
           <ul class="space-y-2">
-            {togglesModel.toggles.value.map((t) => (
+            {togglesModel.toggles.value.map((t:any) => (
               <li
                 key={t.id}
                 class="flex items-center justify-between px-4 py-3 rounded-md border border-edge bg-page hover:border-edge-hover transition-colors"

@@ -36,7 +36,7 @@ export const BillingModel = createModel(() => {
       if ("data" in res && res.data?.url) {
         window.location.href = res.data.url;
       } else if ("url" in res) {
-        window.location.href = res.url;
+        window.location.href = res.url as string;
       }
     } catch {
       upgradeLoading.value = false;
@@ -52,7 +52,7 @@ export const BillingModel = createModel(() => {
       if ("data" in res && res.data?.url) {
         window.location.href = res.data.url;
       } else if ("url" in res) {
-        window.location.href = res.url;
+        window.location.href = res.url as string;
       }
     } catch {
       error.value = "Failed to open customer portal";

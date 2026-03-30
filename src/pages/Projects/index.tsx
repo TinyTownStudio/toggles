@@ -42,11 +42,15 @@ export function Projects() {
     <div class="min-h-screen bg-page pt-16">
       <div class="max-w-4xl mx-auto px-6 py-12">
         <div class="flex items-center justify-between mb-6">
-          <h1 class="text-2xl font-semibold tracking-tight text-content">Projects</h1>
+          <h1 class="text-2xl font-semibold tracking-tight text-content">
+            Projects
+          </h1>
         </div>
 
         {projectsModel.error.value && (
-          <p class="text-sm text-error-text mb-4">{projectsModel.error.value}</p>
+          <p class="text-sm text-error-text mb-4">
+            {projectsModel.error.value}
+          </p>
         )}
 
         <form onSubmit={handleCreate} class="flex gap-2 mb-8">
@@ -58,7 +62,10 @@ export function Projects() {
             disabled={projectsModel.creating.value}
             class="flex-1"
           />
-          <Button type="submit" disabled={projectsModel.creating.value || !newName.trim()}>
+          <Button
+            type="submit"
+            disabled={projectsModel.creating.value || !newName.trim()}
+          >
             {projectsModel.creating.value ? "Creating…" : "Create"}
           </Button>
         </form>
@@ -67,7 +74,7 @@ export function Projects() {
           <p class="text-content-tertiary text-sm">No projects yet.</p>
         ) : (
           <ul class="space-y-2">
-            {projectsModel.projects.value.map((project) => (
+            {projectsModel.projects.value.map((project: any) => (
               <li
                 key={project.id}
                 class="flex hover:cursor-pointer items-center justify-between px-4 py-3 rounded-md border border-edge bg-page hover:border-edge-hover transition-colors"

@@ -19,13 +19,8 @@
 		{
 			"binding": "DB",
 			"database_name": "app-db",
-			"database_id": "00000000-0000-0000-0000-000000000000",
+			"database_id": "fb628396-e48b-42ff-b41c-68d8b9e90185",
 			"migrations_dir": "drizzle/migrations",
-		},
-		{
-			"binding": "toggles_db",
-			"database_name": "toggles-db",
-			"database_id": "fb628396-e48b-42ff-b41c-68d8b9e90185"
 		},
 	],
 	"main": "./api/index.ts",

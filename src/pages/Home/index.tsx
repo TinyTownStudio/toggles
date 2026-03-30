@@ -7,8 +7,8 @@ import {
   IconDatabase,
   IconBolt,
   IconWorld,
+  type Icon
 } from "@tabler/icons-react";
-import type { ComponentType } from "preact";
 
 export function Home() {
   const { route } = useLocation();
@@ -52,7 +52,7 @@ function Features() {
   const features: {
     title: string;
     desc: string;
-    icon: ComponentType<{ size?: number; stroke?: number }>;
+    icon: Icon
   }[] = [
     {
       title: "Authentication",
