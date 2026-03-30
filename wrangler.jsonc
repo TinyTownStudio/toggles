@@ -1,0 +1,32 @@
+{
+	"$schema": "./node_modules/wrangler/config-schema.json",
+	"name": "cloudflare-vite-tutorial",
+	"compatibility_date": "2026-02-01",
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+	"assets": {
+		"not_found_handling": "single-page-application",
+		"run_worker_first": [
+			"/api/*"
+		],
+	},
+	"vars": {
+		"BETTER_AUTH_URL": "https://api.example.com",
+		"LOCAL": "false",
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "app-db",
+			"database_id": "00000000-0000-0000-0000-000000000000",
+			"migrations_dir": "drizzle/migrations",
+		},
+		{
+			"binding": "toggles_db",
+			"database_name": "toggles-db",
+			"database_id": "fb628396-e48b-42ff-b41c-68d8b9e90185"
+		},
+	],
+	"main": "./api/index.ts",
+}

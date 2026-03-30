@@ -1,5 +1,3 @@
-import process from "node:process";
-
-export const isProduction = (): boolean => {
-  return process.env.LOCAL !== "true";
+export const isProduction = (env: Cloudflare.Env): boolean => {
+  return env.LOCAL !== "true";
 };

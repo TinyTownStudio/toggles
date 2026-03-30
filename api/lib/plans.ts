@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
+import type { DrizzleD1Database } from "drizzle-orm/d1";
 import * as schema from "../db/schema";
 
 type Plan = "free" | "pro";
@@ -14,7 +14,7 @@ export const PLAN_LIMITS = {
 } as const;
 
 export async function getUserPlan(
-  db: BetterSQLite3Database<typeof schema>,
+  db: DrizzleD1Database<typeof schema>,
   userId: string,
 ): Promise<Plan> {
   const row = await db

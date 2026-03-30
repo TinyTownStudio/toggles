@@ -22,9 +22,9 @@ export function Header() {
   }, []);
 
   const links = [
-    { label: "Features", href: "/#features" },
-    { label: "How it Works", href: "/#how-it-works" },
-    { label: "Pricing", href: "/#pricing" },
+    { label: "Features", href: "#features" },
+    { label: "How it Works", href: "#how-it-works" },
+    { label: "Pricing", href: "#pricing" },
   ];
 
   return (

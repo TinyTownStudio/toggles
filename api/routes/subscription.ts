@@ -1,16 +1,27 @@
-import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
+import { Hono } from "hono";
+import { drizzle } from "drizzle-orm/d1";
+import * as schema from "../db/schema";
 import { getUserPlan, PLAN_LIMITS } from "../lib/plans";
+import type { Bindings, Variables } from "../types";
 
-export async function subscriptionRoutes(fastify: FastifyInstance) {
-  fastify.get("/", async (request: FastifyRequest, reply: FastifyReply) => {
-    const userId = request.user?.id;
-    if (!userId) {
-      return reply.code(401).send({ error: "Unauthorized" });
-    }
+export const subscription = new Hono<{
+  Bindings: Bindings;
+  Variables: Variables;
+}>();
 
-    const plan = await getUserPlan(fastify.db, userId);
-    const limits = PLAN_LIMITS[plan];
+// GET / — returns user's current plan and limits
+subscription.get("/", async (c) => {
+  const db = drizzle(c.env.DB, { schema });
+  const userId = c.get("user")?.id;
+  if (!userId) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
 
-    return reply.send({ plan, limits });
+  const plan = await getUserPlan(db, userId);
+  const limits = PLAN_LIMITS[plan];
+
+  return c.json({
+    plan,
+    limits,
   });
-}
+});

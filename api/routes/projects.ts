@@ -1,232 +1,220 @@
-import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
+import { Hono } from "hono";
+import { drizzle } from "drizzle-orm/d1";
 import { eq, and, like } from "drizzle-orm";
 import * as schema from "../db/schema";
+import type { Bindings, Variables } from "../types";
 
-export async function projectRoutes(fastify: FastifyInstance) {
-  const db = fastify.db;
+export const projects = new Hono<{
+  Bindings: Bindings;
+  Variables: Variables;
+}>();
 
-  // Helper to get owned project
-  async function getOwnedProject(projectId: string, userId: string) {
-    return db
-      .select()
-      .from(schema.project)
-      .where(and(eq(schema.project.id, projectId), eq(schema.project.userId, userId)))
-      .get();
+// GET / — list all projects for the authenticated user
+projects.get("/", async (c) => {
+  const userId = c.get("user")?.id;
+  if (!userId) {
+    return c.json({ error: "Unauthorized" }, 401);
   }
 
-  // ── Project Routes ────────────────────────────────────────────
+  const db = drizzle(c.env.DB, { schema });
+  const rows = await db
+    .select()
+    .from(schema.project)
+    .where(eq(schema.project.userId, userId))
+    .all();
 
-  // GET / — list projects
-  fastify.get("/", async (request: FastifyRequest, reply: FastifyReply) => {
-    const userId = request.user?.id;
-    if (!userId) {
-      return reply.code(401).send({ error: "Unauthorized" });
-    }
+  return c.json(rows);
+});
 
-    const rows = await db
-      .select()
-      .from(schema.project)
-      .where(eq(schema.project.userId, userId))
-      .all();
+// POST / — create a new project
+projects.post("/", async (c) => {
+  const userId = c.get("user")?.id;
+  if (!userId) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
 
-    return reply.send(rows);
+  const body = await c.req.json<{ name?: string }>();
+  if (!body.name?.trim()) {
+    return c.json({ error: "name is required" }, 400);
+  }
+
+  const db = drizzle(c.env.DB, { schema });
+  const now = new Date();
+  const id = crypto.randomUUID();
+
+  await db.insert(schema.project).values({
+    id,
+    userId,
+    name: body.name.trim(),
+    createdAt: now,
+    updatedAt: now,
   });
 
-  // POST / — create project
-  fastify.post<{ Body: { name?: string } }>(
-    "/",
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      const userId = request.user?.id;
-      if (!userId) {
-        return reply.code(401).send({ error: "Unauthorized" });
-      }
+  const row = await db.select().from(schema.project).where(eq(schema.project.id, id)).get();
 
-      const { name } = request.body as { name?: string };
-      if (!name?.trim()) {
-        return reply.code(400).send({ error: "name is required" });
-      }
+  return c.json(row, 201);
+});
 
-      const now = new Date();
-      const id = crypto.randomUUID();
+// DELETE /:id — delete a project (must be owned by user)
+projects.delete("/:id", async (c) => {
+  const userId = c.get("user")?.id;
+  if (!userId) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
 
-      await db.insert(schema.project).values({
-        id,
-        userId,
-        name: name.trim(),
-        createdAt: now,
-        updatedAt: now,
-      });
+  const id = c.req.param("id");
+  const db = drizzle(c.env.DB, { schema });
 
-      const row = await db.select().from(schema.project).where(eq(schema.project.id, id)).get();
+  const row = await db
+    .select()
+    .from(schema.project)
+    .where(and(eq(schema.project.id, id), eq(schema.project.userId, userId)))
+    .get();
 
-      return reply.code(201).send(row);
-    },
-  );
+  if (!row) {
+    return c.json({ error: "Not found" }, 404);
+  }
 
-  // DELETE /:id — delete project
-  fastify.delete<{ Params: { id: string } }>(
-    "/:id",
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      const userId = request.user?.id;
-      if (!userId) {
-        return reply.code(401).send({ error: "Unauthorized" });
-      }
+  await db.delete(schema.project).where(eq(schema.project.id, id));
 
-      const { id } = request.params as { id: string };
+  return c.body(null, 204);
+});
 
-      const row = await db
-        .select()
-        .from(schema.project)
-        .where(and(eq(schema.project.id, id), eq(schema.project.userId, userId)))
-        .get();
+// ── Toggle routes ─────────────────────────────────────────────
 
-      if (!row) {
-        return reply.code(404).send({ error: "Not found" });
-      }
-
-      await db.delete(schema.project).where(eq(schema.project.id, id));
-
-      return reply.code(204).send();
-    },
-  );
-
-  // ── Toggle Routes ─────────────────────────────────────────────
-
-  // GET /:projectId/toggles — list toggles
-  fastify.get<{ Params: { projectId: string } }>(
-    "/:projectId/toggles",
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      const userId = request.user?.id;
-      if (!userId) return reply.code(401).send({ error: "Unauthorized" });
-
-      const { projectId } = request.params as { projectId: string };
-
-      const project = await getOwnedProject(projectId, userId);
-      if (!project) return reply.code(404).send({ error: "Not found" });
-
-      const rows = await db
-        .select()
-        .from(schema.toggle)
-        .where(eq(schema.toggle.projectId, projectId))
-        .all();
-
-      return reply.send(rows);
-    },
-  );
-
-  // POST /:projectId/toggles — create toggle
-  fastify.post<{ Params: { projectId: string }; Body: { key?: string; enabled?: boolean } }>(
-    "/:projectId/toggles",
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      const userId = request.user?.id;
-      if (!userId) return reply.code(401).send({ error: "Unauthorized" });
-
-      const { projectId } = request.params as { projectId: string };
-      const { key, enabled } = request.body as { key?: string; enabled?: boolean };
-
-      const project = await getOwnedProject(projectId, userId);
-      if (!project) return reply.code(404).send({ error: "Not found" });
-
-      if (!key?.trim()) return reply.code(400).send({ error: "key is required" });
-
-      const now = new Date();
-      const id = crypto.randomUUID();
-
-      await db.insert(schema.toggle).values({
-        id,
-        projectId,
-        key: key.trim(),
-        enabled: enabled ?? false,
-        createdAt: now,
-        updatedAt: now,
-      });
-
-      const row = await db.select().from(schema.toggle).where(eq(schema.toggle.id, id)).get();
-
-      return reply.code(201).send(row);
-    },
-  );
-
-  // PATCH /:projectId/toggles/:id — update toggle
-  fastify.patch<{ Params: { projectId: string; id: string }; Body: { enabled?: boolean } }>(
-    "/:projectId/toggles/:id",
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      const userId = request.user?.id;
-      if (!userId) return reply.code(401).send({ error: "Unauthorized" });
-
-      const { projectId, id } = request.params as { projectId: string; id: string };
-      const { enabled } = request.body as { enabled?: boolean };
-
-      const project = await getOwnedProject(projectId, userId);
-      if (!project) return reply.code(404).send({ error: "Not found" });
-
-      if (typeof enabled !== "boolean") {
-        return reply.code(400).send({ error: "enabled (boolean) is required" });
-      }
-
-      const now = new Date();
-      await db
-        .update(schema.toggle)
-        .set({ enabled, updatedAt: now })
-        .where(and(eq(schema.toggle.id, id), eq(schema.toggle.projectId, projectId)));
-
-      const row = await db.select().from(schema.toggle).where(eq(schema.toggle.id, id)).get();
-
-      if (!row) return reply.code(404).send({ error: "Not found" });
-      return reply.send(row);
-    },
-  );
-
-  // GET /:projectId/toggles/one — get single toggle
-  fastify.get<{ Params: { projectId: string }; Querystring: { pattern?: string; flag?: string } }>(
-    "/:projectId/toggles/one",
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      const userId = request.user?.id;
-      if (!userId) return reply.code(401).send({ error: "Unauthorized" });
-
-      const { projectId } = request.params as { projectId: string };
-      const { pattern, flag } = request.query as { pattern?: string; flag?: string };
-
-      if (!pattern && !flag) {
-        return reply.code(400).send({ error: "Need pattern / key query to get a toggle" });
-      }
-
-      const project = await getOwnedProject(projectId, userId);
-      if (!project) return reply.code(404).send({ error: "Not found" });
-
-      const query = db.select().from(schema.toggle);
-
-      if (pattern) {
-        const normalizedPattern = `%${String(pattern).replace(/[-_ ]/g, "%")}%`;
-        const rows = await query.where(like(schema.toggle.key, normalizedPattern)).limit(1).all();
-        return reply.send(rows.at(-1) ?? {});
-      }
-
-      const rows = await query
-        .where(eq(schema.toggle.key, flag as string))
-        .limit(1)
-        .all();
-      return reply.send(rows.at(-1) ?? {});
-    },
-  );
-
-  // DELETE /:projectId/toggles/:id — delete toggle
-  fastify.delete<{ Params: { projectId: string; id: string } }>(
-    "/:projectId/toggles/:id",
-    async (request: FastifyRequest, reply: FastifyReply) => {
-      const userId = request.user?.id;
-      if (!userId) return reply.code(401).send({ error: "Unauthorized" });
-
-      const { projectId, id } = request.params as { projectId: string; id: string };
-
-      const project = await getOwnedProject(projectId, userId);
-      if (!project) return reply.code(404).send({ error: "Not found" });
-
-      await db
-        .delete(schema.toggle)
-        .where(and(eq(schema.toggle.id, id), eq(schema.toggle.projectId, projectId)));
-
-      return reply.code(204).send();
-    },
-  );
+async function getOwnedProject(db: ReturnType<typeof drizzle>, projectId: string, userId: string) {
+  return db
+    .select()
+    .from(schema.project)
+    .where(and(eq(schema.project.id, projectId), eq(schema.project.userId, userId)))
+    .get();
 }
+
+// GET /:projectId/toggles — list toggles for a project
+projects.get("/:projectId/toggles", async (c) => {
+  const userId = c.get("user")?.id;
+  if (!userId) return c.json({ error: "Unauthorized" }, 401);
+
+  const projectId = c.req.param("projectId");
+  const db = drizzle(c.env.DB, { schema });
+
+  const project = await getOwnedProject(db, projectId, userId);
+  if (!project) return c.json({ error: "Not found" }, 404);
+
+  const rows = await db
+    .select()
+    .from(schema.toggle)
+    .where(eq(schema.toggle.projectId, projectId))
+    .all();
+
+  return c.json(rows);
+});
+
+// POST /:projectId/toggles — create a toggle
+projects.post("/:projectId/toggles", async (c) => {
+  const userId = c.get("user")?.id;
+  if (!userId) return c.json({ error: "Unauthorized" }, 401);
+
+  const projectId = c.req.param("projectId");
+  const db = drizzle(c.env.DB, { schema });
+
+  const project = await getOwnedProject(db, projectId, userId);
+  if (!project) return c.json({ error: "Not found" }, 404);
+
+  const body = await c.req.json<{ key?: string; enabled?: boolean }>();
+  if (!body.key?.trim()) return c.json({ error: "key is required" }, 400);
+
+  const now = new Date();
+  const id = crypto.randomUUID();
+
+  await db.insert(schema.toggle).values({
+    id,
+    projectId,
+    key: body.key.trim(),
+    enabled: body.enabled ?? false,
+    createdAt: now,
+    updatedAt: now,
+  });
+
+  const row = await db.select().from(schema.toggle).where(eq(schema.toggle.id, id)).get();
+
+  return c.json(row, 201);
+});
+
+// PATCH /:projectId/toggles/:id — update enabled state
+projects.patch("/:projectId/toggles/:id", async (c) => {
+  const userId = c.get("user")?.id;
+  if (!userId) return c.json({ error: "Unauthorized" }, 401);
+
+  const projectId = c.req.param("projectId");
+  const id = c.req.param("id");
+  const db = drizzle(c.env.DB, { schema });
+
+  const project = await getOwnedProject(db, projectId, userId);
+  if (!project) return c.json({ error: "Not found" }, 404);
+
+  const body = await c.req.json<{ enabled?: boolean }>();
+  if (typeof body.enabled !== "boolean") {
+    return c.json({ error: "enabled (boolean) is required" }, 400);
+  }
+
+  const now = new Date();
+  await db
+    .update(schema.toggle)
+    .set({ enabled: body.enabled, updatedAt: now })
+    .where(and(eq(schema.toggle.id, id), eq(schema.toggle.projectId, projectId)));
+
+  const row = await db.select().from(schema.toggle).where(eq(schema.toggle.id, id)).get();
+
+  if (!row) return c.json({ error: "Not found" }, 404);
+  return c.json(row);
+});
+
+// GET /:projectId/toggles/one — get a single toggle
+projects.get("/:projectId/toggles/one", async (c) => {
+  const userId = c.get("user")?.id;
+  if (!userId) return c.json({ error: "Unauthorized" }, 401);
+
+  const { pattern, flag } = c.req.query();
+
+  if (!pattern && !flag) {
+    return c.json({ error: "Need pattern / key query to get a toggle" }, 400);
+  }
+
+  const projectId = c.req.param("projectId");
+  const db = drizzle(c.env.DB, { schema });
+
+  const project = await getOwnedProject(db, projectId, userId);
+  if (!project) return c.json({ error: "Not found" }, 404);
+
+  const query = db.select().from(schema.toggle);
+
+  if (pattern) {
+    const normalizedPattern = `%${String(pattern).replace(/[-_ ]/g, "%")}%`;
+    const rows = await query.where(like(schema.toggle.key, normalizedPattern)).limit(1).all();
+
+    return c.json(rows.at(-1) ?? {});
+  }
+
+  const rows = await query.where(eq(schema.toggle.key, pattern)).limit(1).all();
+  return c.json(rows.at(-1) ?? {});
+});
+
+// DELETE /:projectId/toggles/:id — delete a toggle
+projects.delete("/:projectId/toggles/:id", async (c) => {
+  const userId = c.get("user")?.id;
+  if (!userId) return c.json({ error: "Unauthorized" }, 401);
+
+  const projectId = c.req.param("projectId");
+  const id = c.req.param("id");
+  const db = drizzle(c.env.DB, { schema });
+
+  const project = await getOwnedProject(db, projectId, userId);
+  if (!project) return c.json({ error: "Not found" }, 404);
+
+  await db
+    .delete(schema.toggle)
+    .where(and(eq(schema.toggle.id, id), eq(schema.toggle.projectId, projectId)));
+
+  return c.body(null, 204);
+});
