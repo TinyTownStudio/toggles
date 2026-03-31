@@ -25,7 +25,7 @@ app.use(
   "/api/*",
   cors({
     origin: (_origin, c) =>
-      isProduction(c.env) ? "https://app.example.com" : "http://localhost:5173",
+      isProduction(c.env) ? "https://toggles.tinytown.studio" : "http://localhost:5173",
     credentials: true,
     allowHeaders: ["Content-Type", "Authorization"],
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
@@ -93,7 +93,7 @@ app.get("/api/billing-success", async (c) => {
 
   return c.redirect(
     isProduction(c.env)
-      ? "https://app.example.com/billing?success=true"
+      ? "https://toggles.tinytown.studio/billing?success=true"
       : "http://localhost:5173/billing?success=true",
   );
 });
