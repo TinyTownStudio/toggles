@@ -59,8 +59,8 @@ export function createAuth(env: Env) {
               ? "https://toggles.tinytown.studio/api/billing-success?checkout_id={CHECKOUT_ID}"
               : "http://localhost:5173/api/billing-success?checkout_id={CHECKOUT_ID}",
             returnUrl: isProduction(env)
-              ? "https://toggles.tinytown.studio/billing"
-              : "http://localhost:5173/billing",
+              ? "https://toggles.tinytown.studio/app/billing"
+              : "http://localhost:5173/app/billing",
           }),
           portal(),
           webhooks({

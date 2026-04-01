@@ -29,7 +29,7 @@ const NotFound = lazy(() => import("./pages/_404").then((module) => module.NotFo
 
 function AppContent() {
   const { url } = useLocation();
-  const shouldRenderBaseHeader = url === "/" || url === "/auth";
+  const shouldRenderBaseHeader = !url.startsWith("/app") 
   const theme = useModel(ThemeModel);
 
   useEffect(() => {
@@ -45,11 +45,11 @@ function AppContent() {
         <Router>
           <Route path="/" component={Home} />
           <Route path="/auth" component={Auth} />
-          <Route path="/dashboard" component={Dashboard} />
-          <Route path="/projects" component={Projects} />
-          <Route path="/projects/:id" component={ProjectDetail} />
-          <Route path="/billing" component={Billing} />
-          <Route path="/api-keys" component={ApiKeys} />
+          <Route path="/app/dashboard" component={Dashboard} />
+          <Route path="/app/projects" component={Projects} />
+          <Route path="/app/projects/:id" component={ProjectDetail} />
+          <Route path="/app/billing" component={Billing} />
+          <Route path="/app/api-keys" component={ApiKeys} />
           <Route default component={NotFound} />
         </Router>
       </main>

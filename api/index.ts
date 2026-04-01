@@ -93,8 +93,8 @@ app.get("/api/billing-success", async (c) => {
 
   return c.redirect(
     isProduction(c.env)
-      ? "https://toggles.tinytown.studio/billing?success=true"
-      : "http://localhost:5173/billing?success=true",
+      ? "https://toggles.tinytown.studio/app/billing?success=true"
+      : "http://localhost:5173/app/billing?success=true",
   );
 });
 

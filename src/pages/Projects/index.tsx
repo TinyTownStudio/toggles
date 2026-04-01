@@ -79,7 +79,7 @@ export function Projects() {
                 key={project.id}
                 class="flex hover:cursor-pointer items-center justify-between px-4 py-3 rounded-md border border-edge bg-page hover:border-edge-hover transition-colors"
                 onClick={() => {
-                  route(`/projects/${project.id}`);
+                  route(`/app/projects/${project.id}`);
                 }}
               >
                 <div class="text-content text-sm font-medium">

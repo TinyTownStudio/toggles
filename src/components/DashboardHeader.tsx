@@ -16,25 +16,25 @@ export function DashboardHeader() {
         <div class="text-lg sm:text-xl font-semibold text-content tracking-tight">Toggles</div>
         <div class="flex items-center gap-6">
           <a
-            href="/dashboard"
+            href="/app/dashboard"
             class="text-sm text-content-tertiary hover:text-content transition-colors"
           >
             Dashboard
           </a>
           <a
-            href="/projects"
+            href="/app/projects"
             class="text-sm text-content-tertiary hover:text-content transition-colors"
           >
             Projects
           </a>
           <a
-            href="/billing"
+            href="/app/billing"
             class="text-sm text-content-tertiary hover:text-content transition-colors"
           >
             Billing
           </a>
           <a
-            href="/api-keys"
+            href="/app/api-keys"
             class="text-sm text-content-tertiary hover:text-content transition-colors"
           >
             API Keys

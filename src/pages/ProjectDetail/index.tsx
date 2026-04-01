@@ -54,7 +54,7 @@ export function ProjectDetail({ id }: { id: string }) {
       <div class="max-w-4xl mx-auto px-6 py-12">
         <div class="mb-6">
           <a
-            href="/projects"
+            href="/app/projects"
             class="text-xs text-content-tertiary hover:text-content transition-colors mb-2 inline-block"
           >
             ← Projects
