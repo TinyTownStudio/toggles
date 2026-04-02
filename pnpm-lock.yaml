@@ -7,6 +7,15 @@ settings:
 importers:
 
   .:
+    devDependencies:
+      husky:
+        specifier: ^9.1.7
+        version: 9.1.7
+      nano-staged:
+        specifier: ^0.9.0
+        version: 0.9.0
+
+  packages/app:
     dependencies:
       '@polar-sh/better-auth':
         specifier: ^1.6.4
@@ -1813,8 +1822,8 @@ packages:
     peerDependencies:
       react: '>= 16'
 
-  '@tabler/icons@3.36.1':
-    resolution: {integrity: sha512-f4Jg3Fof/Vru5ioix/UO4GX+sdDsF9wQo47FbtvG+utIYYVQ/QVAC0QYgcBbAjQGfbdOh2CCf0BgiFOF9Ixtjw==, tarball: https://registry.npmjs.org/@tabler/icons/-/icons-3.36.1.tgz}
+  '@tabler/icons@3.41.1':
+    resolution: {integrity: sha512-OaRnVbRmH2nHtFeg+RmMJ/7m2oBIF9XCJAUD5gQnMrpK9f05ydj8MZrAf3NZQqOXyxGN1UBL0D5IKLLEUfr74Q==, tarball: https://registry.npmjs.org/@tabler/icons/-/icons-3.41.1.tgz}
 
   '@tailwindcss/node@4.1.18':
     resolution: {integrity: sha512-DoR7U1P7iYhw16qJ49fgXUlry1t4CpXeErJHnQ44JgTSKMaZUdf17cfn5mHchfJ4KRBZRFA/Coo+MUF5+gOaCQ==, tarball: https://registry.npmjs.org/@tailwindcss/node/-/node-4.1.18.tgz}
@@ -4871,10 +4880,10 @@ snapshots:
 
   '@tabler/icons-react@3.36.1(react@19.2.4)':
     dependencies:
-      '@tabler/icons': 3.36.1
+      '@tabler/icons': 3.41.1
       react: 19.2.4
 
-  '@tabler/icons@3.36.1': {}
+  '@tabler/icons@3.41.1': {}
 
   '@tailwindcss/node@4.1.18':
     dependencies:

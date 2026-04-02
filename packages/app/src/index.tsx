@@ -29,7 +29,7 @@ const NotFound = lazy(() => import("./pages/_404").then((module) => module.NotFo
 
 function AppContent() {
   const { url } = useLocation();
-  const shouldRenderBaseHeader = !url.startsWith("/app") 
+  const shouldRenderBaseHeader = !url.startsWith("/app");
   const theme = useModel(ThemeModel);
 
   useEffect(() => {

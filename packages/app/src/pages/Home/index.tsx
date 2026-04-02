@@ -25,8 +25,8 @@ function Hero({ onGetStarted }: { onGetStarted: () => void }) {
           Ship features on your terms.
         </h1>
         <p class="text-base text-content-tertiary leading-relaxed mb-10 max-w-[52ch]">
-          Toggles lets you manage feature flags across your projects. Enable or disable features
-          at runtime — no redeployment needed.
+          Toggles lets you manage feature flags across your projects. Enable or disable features at
+          runtime — no redeployment needed.
         </p>
         <button
           onClick={onGetStarted}
@@ -193,15 +193,20 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
         <span class="text-sm font-medium text-content group-hover:text-content-secondary transition-colors">
           {question}
         </span>
-        <span class={`text-content-faint mt-0.5 flex-shrink-0 transition-transform ${open.value ? "rotate-45" : ""}`}>
+        <span
+          class={`text-content-faint mt-0.5 flex-shrink-0 transition-transform ${open.value ? "rotate-45" : ""}`}
+        >
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+            <path
+              d="M6 1v10M1 6h10"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+            />
           </svg>
         </span>
       </button>
-      {open.value && (
-        <p class="pb-4 text-sm text-content-tertiary leading-relaxed">{answer}</p>
-      )}
+      {open.value && <p class="pb-4 text-sm text-content-tertiary leading-relaxed">{answer}</p>}
     </div>
   );
 }
