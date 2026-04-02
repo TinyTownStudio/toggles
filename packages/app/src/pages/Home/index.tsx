@@ -120,7 +120,7 @@ function Pricing({ onGetStarted }: { onGetStarted: () => void }) {
           <div class="flex flex-col border border-edge rounded-md p-6">
             <h3 class="text-sm font-medium text-content mb-1">Pro</h3>
             <p class="text-2xl font-semibold text-content mb-1">
-              $10
+              $5
               <span class="text-sm font-normal text-content-tertiary"> / month</span>
             </p>
             <p class="text-xs text-content-faint mb-6">Billed monthly. Cancel any time.</p>
