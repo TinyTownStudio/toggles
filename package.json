@@ -3,17 +3,17 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "packageManager": "pnpm@10.19.1-oidc-test.3+sha512.e5961a4b56bb37620f97b65da4ca56216634bf39ed358eda925f0f036534d458fa249d93ed0021410523f8bb7ed8512b61fe5532ed3e81777793366c6be026b5",
+  "scripts": {
+    "prepare": "husky"
+  },
   "devDependencies": {
     "husky": "^9.1.7",
     "nano-staged": "^0.9.0"
   },
-  "scripts": {
-    "prepare": "husky"
-  },
   "nano-staged": {
-    "*.{js,ts,tsx,jsx}": [
+    "*.{js,ts,tsx,jsx,json}": [
       "pnpm -r format:atomic"
     ]
-  }
+  },
+  "packageManager": "pnpm@10.19.1-oidc-test.3+sha512.e5961a4b56bb37620f97b65da4ca56216634bf39ed358eda925f0f036534d458fa249d93ed0021410523f8bb7ed8512b61fe5532ed3e81777793366c6be026b5"
 }
