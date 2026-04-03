@@ -1,11 +1,19 @@
 import { signal, createModel } from "@preact/signals";
-import { getToggles, createToggle, updateToggle, deleteToggle, type Toggle } from "../lib/api";
+import {
+  getToggles,
+  createToggle,
+  updateToggle,
+  updateToggleMeta,
+  deleteToggle,
+  type Toggle,
+} from "../lib/api";
 
 export const TogglesModel = createModel(() => {
   const loading = signal(true);
   const toggles = signal<Toggle[]>([]);
   const error = signal<string | null>(null);
   const creating = signal(false);
+  const saving = signal(false);
 
   const fetch = async (projectId: string) => {
     loading.value = true;
@@ -55,5 +63,20 @@ export const TogglesModel = createModel(() => {
     }
   };
 
-  return { loading, toggles, error, creating, fetch, create, toggle, remove };
+  const saveMeta = async (projectId: string, id: string, meta: Record<string, string>) => {
+    const prev = toggles.value;
+    toggles.value = prev.map((t) => (t.id === id ? { ...t, meta } : t));
+    saving.value = true;
+    try {
+      const updated = await updateToggleMeta(projectId, id, meta);
+      toggles.value = toggles.value.map((t) => (t.id === id ? updated : t));
+    } catch (err) {
+      toggles.value = prev;
+      error.value = err instanceof Error ? err.message : "Failed to save meta";
+    } finally {
+      saving.value = false;
+    }
+  };
+
+  return { loading, toggles, error, creating, saving, fetch, create, toggle, remove, saveMeta };
 });

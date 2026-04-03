@@ -5,7 +5,7 @@ export interface Toggle {
   key: string;
   enabled: boolean;
   projectId: string;
-  meta: unknown;
+  meta: Record<string, string> | null;
   createdAt: number;
   updatedAt: number;
 }
@@ -83,6 +83,17 @@ export async function updateToggle(
   return fetchApi<Toggle>(`/api/v1/projects/${projectId}/toggles/${id}`, {
     method: "PATCH",
     body: JSON.stringify({ enabled }),
+  });
+}
+
+export async function updateToggleMeta(
+  projectId: string,
+  id: string,
+  meta: Record<string, string>,
+): Promise<Toggle> {
+  return fetchApi<Toggle>(`/api/v1/projects/${projectId}/toggles/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify({ meta }),
   });
 }
 

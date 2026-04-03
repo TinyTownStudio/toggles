@@ -141,7 +141,7 @@ projects.post("/:projectId/toggles", async (c) => {
   return c.json(row, 201);
 });
 
-// PATCH /:projectId/toggles/:id — update enabled state
+// PATCH /:projectId/toggles/:id — update enabled state and/or meta
 projects.patch("/:projectId/toggles/:id", async (c) => {
   const userId = c.get("user")?.id;
   if (!userId) return c.json({ error: "Unauthorized" }, 401);
@@ -153,15 +153,19 @@ projects.patch("/:projectId/toggles/:id", async (c) => {
   const project = await getOwnedProject(db, projectId, userId);
   if (!project) return c.json({ error: "Not found" }, 404);
 
-  const body = await c.req.json<{ enabled?: boolean }>();
-  if (typeof body.enabled !== "boolean") {
-    return c.json({ error: "enabled (boolean) is required" }, 400);
+  const body = await c.req.json<{ enabled?: boolean; meta?: Record<string, string> | null }>();
+  if (typeof body.enabled !== "boolean" && !("meta" in body)) {
+    return c.json({ error: "enabled or meta is required" }, 400);
   }
 
   const now = new Date();
   await db
     .update(schema.toggle)
-    .set({ enabled: body.enabled, updatedAt: now })
+    .set({
+      ...(typeof body.enabled === "boolean" ? { enabled: body.enabled } : {}),
+      ...("meta" in body ? { meta: body.meta } : {}),
+      updatedAt: now,
+    })
     .where(and(eq(schema.toggle.id, id), eq(schema.toggle.projectId, projectId)));
 
   const row = await db.select().from(schema.toggle).where(eq(schema.toggle.id, id)).get();
