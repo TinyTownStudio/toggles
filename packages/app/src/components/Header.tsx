@@ -51,7 +51,7 @@ export function Header() {
           ))}
           <ThemeToggle />
           <a
-            href={auth.authenticated.value ? "/dashboard" : "/auth"}
+            href={auth.authenticated.value ? "/app/dashboard" : "/auth"}
             class="text-sm font-medium px-4 py-1.5 rounded-md bg-cta text-cta-text shadow-btn-dark border border-black/10 hover:bg-cta-hover active:translate-y-px active:shadow-none transition-all duration-100"
           >
             {auth.authenticated.value ? "Dashboard" : "Sign in"}
