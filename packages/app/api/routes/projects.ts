@@ -9,7 +9,7 @@ export const projects = new Hono<{
   Variables: Variables;
 }>();
 
-// GET / — list all projects for the authenticated user
+// GET / - list all projects for the authenticated user
 projects.get("/", async (c) => {
   const userId = c.get("user")?.id;
   if (!userId) {
@@ -26,7 +26,7 @@ projects.get("/", async (c) => {
   return c.json(rows);
 });
 
-// POST / — create a new project
+// POST / - create a new project
 projects.post("/", async (c) => {
   const userId = c.get("user")?.id;
   if (!userId) {
@@ -55,7 +55,7 @@ projects.post("/", async (c) => {
   return c.json(row, 201);
 });
 
-// DELETE /:id — delete a project (must be owned by user)
+// DELETE /:id - delete a project (must be owned by user)
 projects.delete("/:id", async (c) => {
   const userId = c.get("user")?.id;
   if (!userId) {
@@ -82,6 +82,14 @@ projects.delete("/:id", async (c) => {
 
 // ── Toggle routes ─────────────────────────────────────────────
 
+// Returns true if the request is an API key auth scoped to a different project
+function isScopeViolation(c: any, projectId: string): boolean {
+  const keyData = c.get("apiKeyData");
+  if (!keyData) return false; // session auth - no scope restriction
+  const scopedId = keyData.meta?.projectId;
+  return scopedId !== null && scopedId !== projectId;
+}
+
 async function getOwnedProject(db: ReturnType<typeof drizzle>, projectId: string, userId: string) {
   return db
     .select()
@@ -90,13 +98,32 @@ async function getOwnedProject(db: ReturnType<typeof drizzle>, projectId: string
     .get();
 }
 
-// GET /:projectId/toggles — list toggles for a project
+// GET /:projectId/toggles - list toggles for a project
 projects.get("/:projectId/toggles", async (c) => {
   const userId = c.get("user")?.id;
   if (!userId) return c.json({ error: "Unauthorized" }, 401);
 
   const projectId = c.req.param("projectId");
+  if (isScopeViolation(c, projectId)) return c.json({ error: "Forbidden" }, 403);
+
   const db = drizzle(c.env.DB, { schema });
+
+  const keyData = c.get("apiKeyData");
+  if (keyData) {
+    const project = await db
+      .select()
+      .from(schema.project)
+      .where(eq(schema.project.id, projectId))
+      .get();
+    if (!project) return c.json({ error: "Not found" }, 404);
+
+    const rows = await db
+      .select()
+      .from(schema.toggle)
+      .where(eq(schema.toggle.projectId, projectId))
+      .all();
+    return c.json(rows);
+  }
 
   const project = await getOwnedProject(db, projectId, userId);
   if (!project) return c.json({ error: "Not found" }, 404);
@@ -110,8 +137,9 @@ projects.get("/:projectId/toggles", async (c) => {
   return c.json(rows);
 });
 
-// POST /:projectId/toggles — create a toggle
+// POST /:projectId/toggles - create a toggle
 projects.post("/:projectId/toggles", async (c) => {
+  if (c.get("apiKeyData")) return c.json({ error: "Forbidden" }, 403);
   const userId = c.get("user")?.id;
   if (!userId) return c.json({ error: "Unauthorized" }, 401);
 
@@ -141,8 +169,9 @@ projects.post("/:projectId/toggles", async (c) => {
   return c.json(row, 201);
 });
 
-// PATCH /:projectId/toggles/:id — update enabled state and/or meta
+// PATCH /:projectId/toggles/:id - update enabled state and/or meta
 projects.patch("/:projectId/toggles/:id", async (c) => {
+  if (c.get("apiKeyData")) return c.json({ error: "Forbidden" }, 403);
   const userId = c.get("user")?.id;
   if (!userId) return c.json({ error: "Unauthorized" }, 401);
 
@@ -174,7 +203,7 @@ projects.patch("/:projectId/toggles/:id", async (c) => {
   return c.json(row);
 });
 
-// GET /:projectId/toggles/one — get a single toggle
+// GET /:projectId/toggles/one - get a single toggle
 projects.get("/:projectId/toggles/one", async (c) => {
   const userId = c.get("user")?.id;
   if (!userId) return c.json({ error: "Unauthorized" }, 401);
@@ -186,6 +215,8 @@ projects.get("/:projectId/toggles/one", async (c) => {
   }
 
   const projectId = c.req.param("projectId");
+  if (isScopeViolation(c, projectId)) return c.json({ error: "Forbidden" }, 403);
+
   const db = drizzle(c.env.DB, { schema });
 
   const project = await getOwnedProject(db, projectId, userId);
@@ -204,8 +235,9 @@ projects.get("/:projectId/toggles/one", async (c) => {
   return c.json(rows.at(-1) ?? {});
 });
 
-// DELETE /:projectId/toggles/:id — delete a toggle
+// DELETE /:projectId/toggles/:id - delete a toggle
 projects.delete("/:projectId/toggles/:id", async (c) => {
+  if (c.get("apiKeyData")) return c.json({ error: "Forbidden" }, 403);
   const userId = c.get("user")?.id;
   if (!userId) return c.json({ error: "Unauthorized" }, 401);
 

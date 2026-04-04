@@ -1,5 +1,20 @@
 import { API_BASE_URL } from "./constants";
 
+export type ApiKeyMeta = { projectId: string | null };
+
+export interface ApiKeyItem {
+  id: string;
+  name: string | null;
+  start: string | null;
+  createdAt: number;
+  updatedAt: number;
+  lastUsedAt: number | null;
+  expiresAt: number | null;
+  enabled: boolean;
+  permissions: Record<string, string[]> | null;
+  metadata: ApiKeyMeta | null;
+}
+
 export interface Toggle {
   id: string;
   key: string;
@@ -99,4 +114,22 @@ export async function updateToggleMeta(
 
 export async function deleteToggle(projectId: string, id: string): Promise<void> {
   await fetchApi<void>(`/api/v1/projects/${projectId}/toggles/${id}`, { method: "DELETE" });
+}
+
+export async function createApiKey(
+  name: string,
+  projectId: string | null,
+): Promise<{ key: string } & ApiKeyItem> {
+  return fetchApi<{ key: string } & ApiKeyItem>("/api/v1/api-keys", {
+    method: "POST",
+    body: JSON.stringify({ name, projectId }),
+  });
+}
+
+export async function listApiKeys(): Promise<ApiKeyItem[]> {
+  return fetchApi<ApiKeyItem[]>("/api/v1/api-keys");
+}
+
+export async function deleteApiKey(id: string): Promise<void> {
+  await fetchApi<void>(`/api/v1/api-keys/${id}`, { method: "DELETE" });
 }

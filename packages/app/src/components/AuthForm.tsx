@@ -31,7 +31,7 @@ export function AuthForm({ onSuccess, compact = false }: AuthFormProps) {
       }
     >
       <div class="w-full max-w-md mx-auto">
-        {/* Tab toggle — underline style */}
+        {/* Tab toggle - underline style */}
         <div class="flex border-b border-edge mb-8">
           <button
             type="button"

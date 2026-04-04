@@ -26,7 +26,7 @@ function Hero({ onGetStarted }: { onGetStarted: () => void }) {
         </h1>
         <p class="text-base text-content-tertiary leading-relaxed mb-10 max-w-[52ch]">
           Toggles lets you manage feature flags across your projects. Enable or disable features at
-          runtime — no redeployment needed.
+          runtime - no redeployment needed.
         </p>
         <button
           onClick={onGetStarted}
@@ -147,7 +147,7 @@ function FAQ() {
   const items = [
     {
       q: "Do I need an account?",
-      a: "Yes. You sign up with an email and password — that's it. No OAuth required.",
+      a: "Yes. You sign up with an email and password - that's it",
     },
     {
       q: "How do I use flags in my app?",

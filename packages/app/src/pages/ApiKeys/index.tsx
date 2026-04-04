@@ -7,13 +7,17 @@ import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { ApiKeysModel } from "../../models/apiKeys";
 import { AuthModel } from "../../models/auth";
+import { ProjectsModel } from "../../models/projects";
 import { timeAgo } from "../../lib/date";
+import type { Project } from "../../lib/api";
 
 export function ApiKeys() {
   const { route } = useLocation();
   const auth = useModel(AuthModel);
   const apiKeyModel = useModel(ApiKeysModel);
+  const projectsModel = useModel(ProjectsModel);
   const [newName, setNewName] = useState("");
+  const [newProjectId, setNewProjectId] = useState<string>("__all__");
   const [newKey, setNewKey] = useState<string | null>(null);
 
   useEffect(() => {
@@ -23,16 +27,24 @@ export function ApiKeys() {
         return;
       }
       apiKeyModel.fetch();
+      projectsModel.fetch();
     });
   }, []);
 
   const handleCreate = async (e: Event) => {
     e.preventDefault();
-    const key = await apiKeyModel.create(newName.trim() || "Unnamed");
+    const projectId = newProjectId === "__all__" ? null : newProjectId;
+    const key = await apiKeyModel.create(newName.trim() || "Unnamed", projectId);
     if (key) {
       setNewKey(key);
       setNewName("");
+      setNewProjectId("__all__");
     }
+  };
+
+  const projectName = (id: string | null) => {
+    if (!id) return "All projects";
+    return projectsModel.projects.value.find((p: Project) => p.id === id)?.name ?? id;
   };
 
   if (apiKeyModel.loading.value) {
@@ -55,7 +67,7 @@ export function ApiKeys() {
 
         {newKey && (
           <Alert variant="success" class="mb-6">
-            <p class="font-medium mb-2">API key created. Copy it now — it won't be shown again.</p>
+            <p class="font-medium mb-2">API key created. Copy it now - it won't be shown again.</p>
             <code class="block bg-black/10 rounded px-2 py-1.5 text-xs break-all font-mono mb-2">
               {newKey}
             </code>
@@ -67,18 +79,35 @@ export function ApiKeys() {
 
         {apiKeyModel.error.value && <Alert class="mb-6">{apiKeyModel.error.value}</Alert>}
 
-        <form onSubmit={handleCreate} class="flex gap-2 mb-8">
-          <Input
-            type="text"
-            value={newName}
-            onInput={(e) => setNewName((e.target as HTMLInputElement).value)}
-            placeholder="Key name (optional)"
-            disabled={apiKeyModel.creating.value}
-            class="flex-1"
-          />
-          <Button type="submit" disabled={apiKeyModel.creating.value}>
-            {apiKeyModel.creating.value ? "Creating…" : "Create Key"}
-          </Button>
+        <form onSubmit={handleCreate} class="space-y-3 mb-8">
+          <div class="flex gap-2">
+            <Input
+              type="text"
+              value={newName}
+              onInput={(e) => setNewName((e.target as HTMLInputElement).value)}
+              placeholder="Key name (optional)"
+              disabled={apiKeyModel.creating.value}
+              class="flex-1"
+            />
+          </div>
+          <div class="flex gap-2">
+            <select
+              value={newProjectId}
+              onChange={(e) => setNewProjectId((e.target as HTMLSelectElement).value)}
+              disabled={apiKeyModel.creating.value}
+              class="flex-1 rounded-md border border-edge bg-page text-content text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent/20"
+            >
+              <option value="__all__">All projects (read)</option>
+              {projectsModel.projects.value.map((p: Project) => (
+                <option key={p.id} value={p.id}>
+                  {p.name} (read)
+                </option>
+              ))}
+            </select>
+            <Button type="submit" disabled={apiKeyModel.creating.value}>
+              {apiKeyModel.creating.value ? "Creating…" : "Create Key"}
+            </Button>
+          </div>
         </form>
 
         {apiKeyModel.apiKeys.value.length === 0 ? (
@@ -91,7 +120,15 @@ export function ApiKeys() {
                 class="flex items-center justify-between px-4 py-3 rounded-lg border border-edge bg-surface"
               >
                 <div>
-                  <p class="text-sm font-medium text-content">{key.name ?? "Unnamed"}</p>
+                  <div class="flex items-center gap-2">
+                    <p class="text-sm font-medium text-content">{key.name ?? "Unnamed"}</p>
+                    <span class="text-xs px-1.5 py-0.5 rounded bg-raised border border-edge text-content-tertiary font-mono">
+                      {projectName(key.metadata?.projectId ?? null)}
+                    </span>
+                    <span class="text-xs px-1.5 py-0.5 rounded bg-raised border border-edge text-content-tertiary">
+                      read
+                    </span>
+                  </div>
                   <p class="text-xs text-content-tertiary font-mono mt-0.5">{key.start}••••••••</p>
                   <p class="text-xs text-content-tertiary mt-1">
                     Created {timeAgo(key.createdAt)}

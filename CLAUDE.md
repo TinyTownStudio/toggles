@@ -38,10 +38,10 @@ The Vite build (`vite.config.ts`) combines frontend and API into a single deploy
 
 State is managed via **Preact Signals** in `src/models/`:
 
-- `auth` — session and user state
-- `billing` — subscription plan and limits
-- `notes` — local-only example model
-- `theme` — light/dark toggle
+- `auth` - session and user state
+- `billing` - subscription plan and limits
+- `notes` - local-only example model
+- `theme` - light/dark toggle
 
 Pages live in `src/pages/`, components in `src/components/`. API calls go through `src/lib/api.ts` which wraps `fetch` with the base URL from `VITE_API_BASE_URL`.
 
@@ -49,10 +49,10 @@ Pages live in `src/pages/`, components in `src/components/`. API calls go throug
 
 `api/index.ts` is the Hono entry point. It sets up CORS (locked to localhost:5173 in dev, configurable for prod), security headers, and mounts routes:
 
-- `GET /api/auth/*` — BetterAuth handler
-- `GET /api/v1/me` — current user (session-protected)
-- `GET /api/v1/subscription` — plan + limits (session-protected)
-- `GET /api/billing-success` — Polar checkout completion redirect
+- `GET /api/auth/*` - BetterAuth handler
+- `GET /api/v1/me` - current user (session-protected)
+- `GET /api/v1/subscription` - plan + limits (session-protected)
+- `GET /api/billing-success` - Polar checkout completion redirect
 - BetterAuth also exposes checkout and customer portal endpoints via Polar plugins
 
 Session middleware for `/api/v1/*` is in `api/index.ts` and validates via BetterAuth.

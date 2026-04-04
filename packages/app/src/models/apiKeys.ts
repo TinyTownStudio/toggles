@@ -1,20 +1,11 @@
 import { signal, createModel } from "@preact/signals";
-import { authClient } from "../lib/auth";
+import { createApiKey, listApiKeys, deleteApiKey, type ApiKeyItem } from "../lib/api";
 
-export interface ApiKey {
-  id: string;
-  name: string | null;
-  start: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-  lastUsedAt: Date | null;
-  expiresAt: Date | null;
-  enabled: boolean;
-}
+export type { ApiKeyItem as ApiKey };
 
 export const ApiKeysModel = createModel(() => {
   const loading = signal(true);
-  const apiKeys = signal<ApiKey[]>([]);
+  const apiKeys = signal<ApiKeyItem[]>([]);
   const error = signal<string | null>(null);
   const creating = signal(false);
 
@@ -22,8 +13,7 @@ export const ApiKeysModel = createModel(() => {
     loading.value = true;
     error.value = null;
     try {
-      const res = await authClient.apiKey.list();
-      apiKeys.value = (res.data ?? []) as unknown as ApiKey[];
+      apiKeys.value = await listApiKeys();
     } catch (err) {
       error.value = err instanceof Error ? err.message : "Failed to load API keys";
     } finally {
@@ -31,17 +21,14 @@ export const ApiKeysModel = createModel(() => {
     }
   };
 
-  // Returns the full plaintext key — only available at creation time
-  const create = async (name: string): Promise<string | null> => {
+  // Returns the full plaintext key - only available at creation time
+  const create = async (name: string, projectId: string | null): Promise<string | null> => {
     creating.value = true;
     error.value = null;
     try {
-      const res = await authClient.apiKey.create({ name });
-      if (res.data) {
-        await fetch();
-        return (res.data as { key: string }).key;
-      }
-      return null;
+      const res = await createApiKey(name, projectId);
+      await fetch();
+      return res.key;
     } catch (err) {
       error.value = err instanceof Error ? err.message : "Failed to create API key";
       return null;
@@ -54,7 +41,7 @@ export const ApiKeysModel = createModel(() => {
     const prev = apiKeys.value;
     apiKeys.value = prev.filter((k) => k.id !== id);
     try {
-      await authClient.apiKey.delete({ keyId: id });
+      await deleteApiKey(id);
     } catch (err) {
       apiKeys.value = prev;
       error.value = err instanceof Error ? err.message : "Failed to revoke API key";

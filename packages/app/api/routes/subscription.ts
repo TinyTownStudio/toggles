@@ -9,7 +9,7 @@ export const subscription = new Hono<{
   Variables: Variables;
 }>();
 
-// GET / — returns user's current plan and limits
+// GET / - returns user's current plan and limits
 subscription.get("/", async (c) => {
   const db = drizzle(c.env.DB, { schema });
   const userId = c.get("user")?.id;

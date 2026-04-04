@@ -5,6 +5,7 @@ import { Polar } from "@polar-sh/sdk";
 import { createAuth } from "./lib/auth";
 import { subscription } from "./routes/subscription";
 import { projects } from "./routes/projects";
+import { apiKeys } from "./routes/apiKeys";
 import type { Bindings, Variables } from "./types";
 import { isProduction } from "./utils/isProduction";
 import * as schema from "./db/schema";
@@ -20,7 +21,7 @@ app.use("/api/*", async (c, next) => {
   c.res.headers.set("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'");
 });
 
-// CORS — allow the frontend origin and credentials (cookies)
+// CORS - allow the frontend origin and credentials (cookies)
 app.use(
   "/api/*",
   cors({
@@ -109,9 +110,32 @@ app.on(["GET", "POST"], "/api/auth/*", (c) => {
   }
 });
 
-// Session middleware for protected routes
+// Session middleware for protected routes - supports both cookie sessions and Bearer API keys
 app.use("/api/v1/*", async (c, next) => {
   const auth = createAuth(c.env);
+  const authHeader = c.req.header("Authorization");
+
+  if (authHeader?.startsWith("Bearer ")) {
+    const key = authHeader.slice(7);
+    const result = await auth.api.verifyApiKey({
+      body: { key, permissions: { toggles: ["read"] } },
+    });
+    if (!result.valid || !result.key) {
+      return c.json({ error: "Unauthorized" }, 401);
+    }
+    c.set("user", {
+      id: result.key.userId,
+      name: "",
+      email: "",
+    });
+    c.set("session", null);
+    c.set("apiKeyData", {
+      userId: result.key.userId,
+      meta: result.key.metadata as { projectId: string | null } | null,
+    });
+    return next();
+  }
+
   const session = await auth.api.getSession({
     headers: c.req.raw.headers,
   });
@@ -122,6 +146,7 @@ app.use("/api/v1/*", async (c, next) => {
 
   c.set("user", session.user);
   c.set("session", session.session);
+  c.set("apiKeyData", null);
   await next();
 });
 
@@ -137,6 +162,9 @@ app.get("/api/v1/me", (c) => {
 
 // Subscription
 app.route("/api/v1/subscription", subscription);
+
+// API Keys
+app.route("/api/v1/api-keys", apiKeys);
 
 // Projects
 app.route("/api/v1/projects", projects);

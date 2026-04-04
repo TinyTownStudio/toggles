@@ -38,7 +38,9 @@ export function createAuth(env: Env) {
       ? ["https://toggles.tinytown.studio"]
       : ["http://localhost:5173"],
     plugins: [
-      apiKey(),
+      apiKey({
+        enableMetadata: true,
+      }),
       polar({
         client: polarClient,
         // We disable automatic customer creation because we want to control when customers are created in Polar
