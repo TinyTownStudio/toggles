@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.worker.json",
+  "compilerOptions": {
+    "types": [
+      "./worker-configuration.d.ts",
+      "@cloudflare/workers-types/2023-07-01",
+      "@cloudflare/vitest-pool-workers"
+    ]
+  },
+  "include": ["api", "vitest.config.ts"]
+}

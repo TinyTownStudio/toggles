@@ -1,0 +1,19 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "toggles-test",
+  "compatibility_date": "2026-02-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "vars": {
+    "BETTER_AUTH_URL": "http://localhost",
+    "LOCAL": "true",
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "app-db-test",
+      "database_id": "test-db-id",
+      "migrations_dir": "drizzle/migrations",
+    },
+  ],
+  "main": "./api/index.ts",
+}
