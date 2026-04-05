@@ -62,10 +62,6 @@ function Features() {
       title: "Authentication",
       desc: "Email and password sign-in with secure session management built in.",
     },
-    {
-      title: "Runs on Cloudflare",
-      desc: "Workers, D1, and edge delivery. Fast everywhere, no servers to manage.",
-    },
   ];
 
   return (
