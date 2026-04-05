@@ -7,5 +7,5 @@
       "@cloudflare/vitest-pool-workers"
     ]
   },
-  "include": ["api", "vitest.config.ts"]
+  "include": ["api", "**/tests/*.ts", "**/*.test.ts", "vitest.config.ts"]
 }

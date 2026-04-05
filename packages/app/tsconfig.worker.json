@@ -10,5 +10,6 @@
     "skipLibCheck": true,
     "lib": ["ESNext"]
   },
-  "include": ["api"]
+  "include": ["api"],
+  "exclude": ["**/tests/*.ts", "**/*.test.ts"]
 }
