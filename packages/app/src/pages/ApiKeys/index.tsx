@@ -9,7 +9,7 @@ import { ApiKeysModel } from "../../models/apiKeys";
 import { AuthModel } from "../../models/auth";
 import { ProjectsModel } from "../../models/projects";
 import { timeAgo } from "../../lib/date";
-import type { Project } from "../../lib/api";
+import type { Project, TokenType } from "../../lib/api";
 
 export function ApiKeys() {
   const { route } = useLocation();
@@ -18,6 +18,7 @@ export function ApiKeys() {
   const projectsModel = useModel(ProjectsModel);
   const [newName, setNewName] = useState("");
   const [newProjectId, setNewProjectId] = useState<string>("__all__");
+  const [newType, setNewType] = useState<TokenType>("read");
   const [newKey, setNewKey] = useState<string | null>(null);
 
   useEffect(() => {
@@ -34,11 +35,12 @@ export function ApiKeys() {
   const handleCreate = async (e: Event) => {
     e.preventDefault();
     const projectId = newProjectId === "__all__" ? null : newProjectId;
-    const key = await apiKeyModel.create(newName.trim() || "Unnamed", projectId);
+    const key = await apiKeyModel.create(newName.trim() || "Unnamed", projectId, newType);
     if (key) {
       setNewKey(key);
       setNewName("");
       setNewProjectId("__all__");
+      setNewType("read");
     }
   };
 
@@ -92,15 +94,24 @@ export function ApiKeys() {
           </div>
           <div class="flex gap-2">
             <select
+              value={newType}
+              onChange={(e) => setNewType((e.target as HTMLSelectElement).value as TokenType)}
+              disabled={apiKeyModel.creating.value}
+              class="rounded-md border border-edge bg-page text-content text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent/20"
+            >
+              <option value="read">Read</option>
+              <option value="admin">Admin</option>
+            </select>
+            <select
               value={newProjectId}
               onChange={(e) => setNewProjectId((e.target as HTMLSelectElement).value)}
               disabled={apiKeyModel.creating.value}
               class="flex-1 rounded-md border border-edge bg-page text-content text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent/20"
             >
-              <option value="__all__">All projects (read)</option>
+              <option value="__all__">All projects</option>
               {projectsModel.projects.value.map((p: Project) => (
                 <option key={p.id} value={p.id}>
-                  {p.name} (read)
+                  {p.name}
                 </option>
               ))}
             </select>
@@ -122,18 +133,16 @@ export function ApiKeys() {
                 <div>
                   <div class="flex items-center gap-2">
                     <p class="text-sm font-medium text-content">{key.name ?? "Unnamed"}</p>
-                    <span class="text-xs px-1.5 py-0.5 rounded bg-raised border border-edge text-content-tertiary font-mono">
-                      {projectName(key.metadata?.projectId ?? null)}
-                    </span>
-                    <span class="text-xs px-1.5 py-0.5 rounded bg-raised border border-edge text-content-tertiary">
-                      read
-                    </span>
+                    <TypeBadge type={key.type} />
+                    <ScopeBadge permissions={key.permissions} projectName={projectName} />
                   </div>
                   <p class="text-xs text-content-tertiary font-mono mt-0.5">{key.start}••••••••</p>
                   <p class="text-xs text-content-tertiary mt-1">
-                    Created {timeAgo(key.createdAt)}
+                    Created {timeAgo(new Date(key.createdAt * 1000))}
                     {" · "}
-                    {key.lastUsedAt ? `Last used ${timeAgo(key.lastUsedAt)}` : "Never used"}
+                    {key.lastUsedAt
+                      ? `Last used ${timeAgo(new Date(key.lastUsedAt * 1000))}`
+                      : "Never used"}
                   </p>
                 </div>
                 <Button variant="secondary" size="sm" onClick={() => apiKeyModel.revoke(key.id)}>
@@ -145,5 +154,49 @@ export function ApiKeys() {
         )}
       </div>
     </div>
+  );
+}
+
+interface TypeBadgeProps {
+  type: TokenType;
+}
+
+function TypeBadge({ type }: TypeBadgeProps) {
+  if (type === "admin") {
+    return (
+      <span class="text-xs px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 font-medium">
+        admin
+      </span>
+    );
+  }
+  return (
+    <span class="text-xs px-1.5 py-0.5 rounded bg-raised border border-edge text-content-tertiary">
+      read
+    </span>
+  );
+}
+
+interface ScopeBadgeProps {
+  permissions: Record<string, string[]> | null;
+  projectName: (id: string | null) => string;
+}
+
+function ScopeBadge({ permissions, projectName }: ScopeBadgeProps) {
+  const actions = permissions?.projects ?? [];
+  // Find a scoped entry (contains a dot, e.g. "read.abc" or "write.abc")
+  const scopedEntry = actions.find((a) => a.includes("."));
+  if (!scopedEntry) {
+    return (
+      <span class="text-xs px-1.5 py-0.5 rounded bg-raised border border-edge text-content-tertiary font-mono">
+        All projects
+      </span>
+    );
+  }
+  // Extract projectId from the first scoped entry (after the first dot)
+  const projectId = scopedEntry.slice(scopedEntry.indexOf(".") + 1);
+  return (
+    <span class="text-xs px-1.5 py-0.5 rounded bg-raised border border-edge text-content-tertiary font-mono">
+      {projectName(projectId)}
+    </span>
   );
 }

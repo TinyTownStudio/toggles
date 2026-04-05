@@ -1,6 +1,6 @@
 import { API_BASE_URL } from "./constants";
 
-export type ApiKeyMeta = { projectId: string | null };
+export type TokenType = "read" | "admin";
 
 export interface ApiKeyItem {
   id: string;
@@ -12,7 +12,7 @@ export interface ApiKeyItem {
   expiresAt: number | null;
   enabled: boolean;
   permissions: Record<string, string[]> | null;
-  metadata: ApiKeyMeta | null;
+  type: TokenType;
 }
 
 export interface Toggle {
@@ -119,10 +119,11 @@ export async function deleteToggle(projectId: string, id: string): Promise<void>
 export async function createApiKey(
   name: string,
   projectId: string | null,
+  type: TokenType = "read",
 ): Promise<{ key: string } & ApiKeyItem> {
   return fetchApi<{ key: string } & ApiKeyItem>("/api/v1/api-keys", {
     method: "POST",
-    body: JSON.stringify({ name, projectId }),
+    body: JSON.stringify({ name, projectId, type }),
   });
 }
 

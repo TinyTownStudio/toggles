@@ -1,5 +1,11 @@
 import { signal, createModel } from "@preact/signals";
-import { createApiKey, listApiKeys, deleteApiKey, type ApiKeyItem } from "../lib/api";
+import {
+  createApiKey,
+  listApiKeys,
+  deleteApiKey,
+  type ApiKeyItem,
+  type TokenType,
+} from "../lib/api";
 
 export type { ApiKeyItem as ApiKey };
 
@@ -22,11 +28,15 @@ export const ApiKeysModel = createModel(() => {
   };
 
   // Returns the full plaintext key - only available at creation time
-  const create = async (name: string, projectId: string | null): Promise<string | null> => {
+  const create = async (
+    name: string,
+    projectId: string | null,
+    type: TokenType = "read",
+  ): Promise<string | null> => {
     creating.value = true;
     error.value = null;
     try {
-      const res = await createApiKey(name, projectId);
+      const res = await createApiKey(name, projectId, type);
       await fetch();
       return res.key;
     } catch (err) {

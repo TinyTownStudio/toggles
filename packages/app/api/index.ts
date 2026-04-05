@@ -117,9 +117,7 @@ app.use("/api/v1/*", async (c, next) => {
 
   if (authHeader?.startsWith("Bearer ")) {
     const key = authHeader.slice(7);
-    const result = await auth.api.verifyApiKey({
-      body: { key, permissions: { toggles: ["read"] } },
-    });
+    const result = await auth.api.verifyApiKey({ body: { key } });
     if (!result.valid || !result.key) {
       return c.json({ error: "Unauthorized" }, 401);
     }
@@ -131,7 +129,11 @@ app.use("/api/v1/*", async (c, next) => {
     c.set("session", null);
     c.set("apiKeyData", {
       userId: result.key.userId,
-      meta: result.key.metadata as { projectId: string | null } | null,
+      permissions: result.key.permissions
+        ? typeof result.key.permissions === "string"
+          ? (JSON.parse(result.key.permissions as unknown as string) as Record<string, string[]>)
+          : result.key.permissions
+        : null,
     });
     return next();
   }

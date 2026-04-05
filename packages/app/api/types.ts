@@ -1,9 +1,5 @@
 export type Bindings = Cloudflare.Env;
 
-export type ApiKeyMeta = {
-  projectId: string | null;
-};
-
 export type Variables = {
   user: {
     id: string;
@@ -17,6 +13,6 @@ export type Variables = {
   } | null;
   apiKeyData: {
     userId: string;
-    meta: ApiKeyMeta | null;
+    permissions: Record<string, string[]> | null;
   } | null;
 };

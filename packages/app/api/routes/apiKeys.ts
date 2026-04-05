@@ -3,7 +3,9 @@ import { drizzle } from "drizzle-orm/d1";
 import { eq, and } from "drizzle-orm";
 import * as schema from "../db/schema";
 import { createAuth } from "../lib/auth";
-import type { Bindings, Variables, ApiKeyMeta } from "../types";
+import { buildPermissions, deriveTokenType } from "../lib/permissions";
+import type { TokenType } from "../lib/permissions";
+import type { Bindings, Variables } from "../types";
 
 export const apiKeys = new Hono<{ Bindings: Bindings; Variables: Variables }>();
 
@@ -15,14 +17,16 @@ apiKeys.get("/", async (c) => {
   const db = drizzle(c.env.DB, { schema });
   const rows = await db.select().from(schema.apikey).where(eq(schema.apikey.userId, userId)).all();
 
-  // Parse metadata JSON and omit the hashed key from each row
-  const result = rows.map(({ key: _key, ...rest }) => ({
-    ...rest,
-    metadata: rest.metadata ? (JSON.parse(rest.metadata as unknown as string) as ApiKeyMeta) : null,
-    permissions: rest.permissions
+  const result = rows.map(({ key: _key, metadata: _metadata, ...rest }) => {
+    const permissions = rest.permissions
       ? (JSON.parse(rest.permissions as unknown as string) as Record<string, string[]>)
-      : null,
-  }));
+      : null;
+    return {
+      ...rest,
+      permissions,
+      type: deriveTokenType(permissions),
+    };
+  });
 
   return c.json(result);
 });
@@ -32,37 +36,38 @@ apiKeys.post("/", async (c) => {
   const userId = c.get("user")?.id;
   if (!userId) return c.json({ error: "Unauthorized" }, 401);
 
-  const body = await c.req.json<{ name?: string; projectId?: string | null }>();
+  const body = await c.req.json<{ name?: string; type?: TokenType; projectId?: string | null }>();
+  const tokenType: TokenType = body.type === "admin" ? "admin" : "read";
+  const projectId = body.projectId ?? null;
 
   const auth = createAuth(c.env);
   const db = drizzle(c.env.DB, { schema });
 
   // If scoped to a project, verify the user owns it
-  if (body.projectId) {
+  if (projectId) {
     const project = await db
       .select()
       .from(schema.project)
-      .where(and(eq(schema.project.id, body.projectId), eq(schema.project.userId, userId)))
+      .where(and(eq(schema.project.id, projectId), eq(schema.project.userId, userId)))
       .get();
     if (!project) return c.json({ error: "Project not found" }, 404);
   }
 
-  const meta: ApiKeyMeta = { projectId: body.projectId ?? null };
+  const permissions = buildPermissions(tokenType, projectId);
 
   const res = await auth.api.createApiKey({
     body: {
       name: body.name?.trim() || "Unnamed",
       userId,
-      metadata: meta,
-      permissions: { toggles: ["read"] },
+      permissions,
     },
   });
 
   return c.json(
     {
       ...res,
-      metadata: meta,
-      permissions: { toggles: ["read"] },
+      permissions,
+      type: tokenType,
     },
     201,
   );
