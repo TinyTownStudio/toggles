@@ -25,6 +25,7 @@ export function Header() {
     { label: "Features", href: "/#features" },
     { label: "How it Works", href: "/#how-it-works" },
     { label: "Pricing", href: "/#pricing" },
+    { label: "Docs", href: "/docs" },
   ];
 
   return (
@@ -97,7 +98,7 @@ export function Header() {
             <ThemeToggle />
           </div>
           <a
-            href={auth.authenticated.value ? "/dashboard" : "/auth"}
+            href={auth.authenticated.value ? "/app/dashboard" : "/auth"}
             class="text-sm font-medium px-4 py-1.5 rounded-lg bg-cta text-cta-text shadow-btn-dark border border-black/10 hover:bg-cta-hover transition-all duration-100 text-center"
             onClick={() => (mobileOpen.value = false)}
           >

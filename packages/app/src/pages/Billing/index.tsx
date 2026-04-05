@@ -36,9 +36,6 @@ export function Billing() {
       <div class="max-w-2xl mx-auto px-4 py-12">
         <div class="flex items-center justify-between mb-8">
           <h1 class="text-2xl font-bold text-content">Billing</h1>
-          <Button variant="ghost" size="sm" onClick={() => route("/dashboard")}>
-            Back to Dashboard
-          </Button>
         </div>
 
         {success && (

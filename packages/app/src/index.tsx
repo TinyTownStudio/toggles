@@ -25,6 +25,7 @@ const ProjectDetail = lazy(() =>
   import("./pages/ProjectDetail/index").then((module) => module.ProjectDetail),
 );
 const ApiKeys = lazy(() => import("./pages/ApiKeys/index").then((module) => module.ApiKeys));
+const Docs = lazy(() => import("./pages/Docs/index").then((module) => module.Docs));
 const NotFound = lazy(() => import("./pages/_404").then((module) => module.NotFound));
 
 function AppContent() {
@@ -50,6 +51,7 @@ function AppContent() {
           <Route path="/app/projects/:id" component={ProjectDetail} />
           <Route path="/app/billing" component={Billing} />
           <Route path="/app/api-keys" component={ApiKeys} />
+          <Route path="/docs" component={Docs} />
           <Route default component={NotFound} />
         </Router>
       </main>
