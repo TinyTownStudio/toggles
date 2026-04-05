@@ -104,9 +104,9 @@ function Pricing({ onGetStarted }: { onGetStarted: () => void }) {
             </p>
             <p class="text-xs text-content-faint mb-6">No credit card required.</p>
             <ul class="space-y-2 text-sm text-content-tertiary mb-8 flex-1">
-              <li>Create and manage projects</li>
-              <li>Feature flag management</li>
-              <li>API key access</li>
+              <li>Limited to 10 projects</li>
+              <li>Unlimited Feature flags</li>
+              <li>API keys access</li>
               <li>Community support</li>
             </ul>
             <Button variant="secondary" class="w-full justify-center" onClick={onGetStarted}>
@@ -124,9 +124,8 @@ function Pricing({ onGetStarted }: { onGetStarted: () => void }) {
             <p class="text-xs text-content-faint mb-6">Billed monthly. Cancel any time.</p>
             <ul class="space-y-2 text-sm text-content-tertiary mb-8 flex-1">
               <li>Everything in Free</li>
-              <li>Higher usage limits</li>
-              <li>Priority support</li>
-              <li>Early access to new features</li>
+              <li>+ Unlimited Projects</li>
+              <li>+ Teams</li>
             </ul>
             <Button class="w-full justify-center" onClick={onGetStarted}>
               Get started

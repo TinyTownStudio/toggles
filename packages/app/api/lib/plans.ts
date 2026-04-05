@@ -6,10 +6,13 @@ type Plan = "free" | "pro";
 
 export const PLAN_LIMITS = {
   free: {
-    maxProjects: 5,
+    projects: 10,
+    toggles: Infinity,
+    teams: false,
   },
   pro: {
     maxProjects: Infinity,
+    teams: Infinity,
   },
 } as const;
 
