@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "deploy:app": "pnpm run --filter=toggles build && pnpm run --filter=toggles deploy",
     "prepare": "husky"
   },
   "devDependencies": {
