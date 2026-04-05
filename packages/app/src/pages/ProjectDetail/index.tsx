@@ -84,7 +84,7 @@ export function ProjectDetail({ id }: { id: string }) {
           >
             ← Projects
           </a>
-          <h1 class="text-2xl font-semibold tracking-tight text-content">
+          <h1 class="text-2xl font-bold tracking-tight text-content">
             {project?.name ?? "Project"}
           </h1>
         </div>
@@ -114,7 +114,7 @@ export function ProjectDetail({ id }: { id: string }) {
             {togglesModel.toggles.value.map((t) => (
               <li
                 key={t.id}
-                class="rounded-md border border-edge bg-page hover:border-edge-hover transition-colors"
+                class="rounded-lg border border-edge bg-page hover:border-edge-hover transition-colors"
               >
                 {/* Main row */}
                 <div class="flex items-center justify-between px-4 py-3">

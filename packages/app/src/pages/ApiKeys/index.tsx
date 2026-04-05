@@ -58,7 +58,7 @@ export function ApiKeys() {
   }
 
   return (
-    <div class="min-h-screen mt-12 bg-page">
+    <div class="min-h-screen pt-16 bg-page">
       <div class="max-w-2xl mx-auto px-4 py-12">
         <div class="flex items-center justify-between mb-8">
           <h1 class="text-2xl font-bold text-content">API Keys</h1>
@@ -97,7 +97,7 @@ export function ApiKeys() {
               value={newType}
               onChange={(e) => setNewType((e.target as HTMLSelectElement).value as TokenType)}
               disabled={apiKeyModel.creating.value}
-              class="rounded-md border border-edge bg-page text-content text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent/20"
+              class="rounded-lg border border-edge bg-page text-content text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent/20"
             >
               <option value="read">Read</option>
               <option value="admin">Admin</option>
@@ -106,7 +106,7 @@ export function ApiKeys() {
               value={newProjectId}
               onChange={(e) => setNewProjectId((e.target as HTMLSelectElement).value)}
               disabled={apiKeyModel.creating.value}
-              class="flex-1 rounded-md border border-edge bg-page text-content text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent/20"
+              class="flex-1 rounded-lg border border-edge bg-page text-content text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent/20"
             >
               <option value="__all__">All projects</option>
               {projectsModel.projects.value.map((p: Project) => (
@@ -128,7 +128,7 @@ export function ApiKeys() {
             {apiKeyModel.apiKeys.value.map((key) => (
               <li
                 key={key.id}
-                class="flex items-center justify-between px-4 py-3 rounded-lg border border-edge bg-surface"
+                class="flex items-center justify-between px-4 py-3 rounded-xl border border-edge bg-surface"
               >
                 <div>
                   <div class="flex items-center gap-2">

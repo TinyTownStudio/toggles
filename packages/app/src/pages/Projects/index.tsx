@@ -42,7 +42,7 @@ export function Projects() {
     <div class="min-h-screen bg-page pt-16">
       <div class="max-w-4xl mx-auto px-6 py-12">
         <div class="flex items-center justify-between mb-6">
-          <h1 class="text-2xl font-semibold tracking-tight text-content">Projects</h1>
+          <h1 class="text-2xl font-bold tracking-tight text-content">Projects</h1>
         </div>
 
         {projectsModel.error.value && (
@@ -70,7 +70,7 @@ export function Projects() {
             {projectsModel.projects.value.map((project: any) => (
               <li
                 key={project.id}
-                class="flex hover:cursor-pointer items-center justify-between px-4 py-3 rounded-md border border-edge bg-page hover:border-edge-hover transition-colors"
+                class="flex hover:cursor-pointer items-center justify-between px-4 py-3 rounded-lg border border-edge bg-page hover:border-edge-hover transition-colors"
                 onClick={() => {
                   route(`/app/projects/${project.id}`);
                 }}

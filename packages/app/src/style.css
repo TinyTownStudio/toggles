@@ -28,11 +28,11 @@
   --t-edge: #e7e5e3;
   --t-edge-hover: #d6d3d1;
 
-  /* Accent */
-  --t-accent: #2563eb;
-  --t-accent-hover: #1d4ed8;
-  --t-accent-text: #2563eb;
-  --t-accent-surface: #eff6ff;
+  /* Accent — teal #5bb7ca */
+  --t-accent: #5bb7ca;
+  --t-accent-hover: #3fa3b8;
+  --t-accent-text: #2d8fa3;
+  --t-accent-surface: rgb(91 183 202 / 12%);
 
   /* Status: Error */
   --t-error-surface: #fef2f2;
@@ -77,11 +77,11 @@
   --t-edge: #292524;
   --t-edge-hover: #44403c;
 
-  /* Accent */
-  --t-accent: #3b82f6;
-  --t-accent-hover: #60a5fa;
-  --t-accent-text: #93c5fd;
-  --t-accent-surface: rgb(37 99 235 / 15%);
+  /* Accent — teal, brightened for dark backgrounds */
+  --t-accent: #7dcfdf;
+  --t-accent-hover: #9adce8;
+  --t-accent-text: #9adce8;
+  --t-accent-surface: rgb(91 183 202 / 15%);
 
   /* Status: Error */
   --t-error-surface: rgb(127 29 29 / 20%);
@@ -105,11 +105,12 @@
 }
 
 @theme {
-  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --font-sans: "DM Sans", system-ui, -apple-system, sans-serif;
+  --font-mono: "DM Mono", ui-monospace, monospace;
 
-  /* Button shadows - subtle depth without skeuomorphism */
-  --shadow-btn: 0 1px 2px 0 rgb(0 0 0 / 0.1), inset 0 1px 0 rgb(255 255 255 / 0.08);
-  --shadow-btn-dark: 0 1px 2px 0 rgb(0 0 0 / 0.25), inset 0 1px 0 rgb(255 255 255 / 0.06);
+  /* Button shadows — slightly punchier than before */
+  --shadow-btn: 0 1px 3px 0 rgb(0 0 0 / 0.12), inset 0 1px 0 rgb(255 255 255 / 0.12);
+  --shadow-btn-dark: 0 1px 3px 0 rgb(0 0 0 / 0.3), inset 0 1px 0 rgb(255 255 255 / 0.08);
 
   --color-page: var(--t-page);
   --color-surface: var(--t-surface);
@@ -157,10 +158,22 @@ body {
   margin: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Subtle grain texture — very low opacity for warmth */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23noise)' opacity='0.035'/%3E%3C/svg%3E");
+  background-repeat: repeat;
 }
 
 #app {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+}
+
+/* ----------------------------------------------------------------
+   Wavy underline utility — used on hero headline key word
+   ---------------------------------------------------------------- */
+.underline-wavy {
+  text-decoration: underline wavy var(--t-accent);
+  text-underline-offset: 5px;
+  text-decoration-thickness: 2px;
 }

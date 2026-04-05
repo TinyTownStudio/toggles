@@ -1,52 +1,54 @@
 import { useModel } from "@preact/signals";
+import { useLocation } from "preact-iso";
 import { AuthModel } from "../models/auth";
 import { ThemeToggle } from "./ThemeToggle";
+import { Button } from "./ui/Button";
 
 export function DashboardHeader() {
   const auth = useModel(AuthModel);
+  const { url } = useLocation();
 
   async function handleSignOut() {
     await auth.signOut();
     window.location.href = "/";
   }
 
+  const navLinks = [
+    { label: "Dashboard", href: "/app/dashboard" },
+    { label: "Projects", href: "/app/projects" },
+    { label: "Billing", href: "/app/billing" },
+    { label: "API Keys", href: "/app/api-keys" },
+  ];
+
   return (
     <header class="fixed top-0 left-0 right-0 z-50 bg-page border-b border-edge">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-        <div class="text-lg sm:text-xl font-semibold text-content tracking-tight">Toggles</div>
-        <div class="flex items-center gap-6">
-          <a
-            href="/app/dashboard"
-            class="text-sm text-content-tertiary hover:text-content transition-colors"
-          >
-            Dashboard
-          </a>
-          <a
-            href="/app/projects"
-            class="text-sm text-content-tertiary hover:text-content transition-colors"
-          >
-            Projects
-          </a>
-          <a
-            href="/app/billing"
-            class="text-sm text-content-tertiary hover:text-content transition-colors"
-          >
-            Billing
-          </a>
-          <a
-            href="/app/api-keys"
-            class="text-sm text-content-tertiary hover:text-content transition-colors"
-          >
-            API Keys
-          </a>
-          <ThemeToggle />
-          <button
-            type="button"
-            onClick={handleSignOut}
-            class="text-xs sm:text-sm px-3 sm:px-4 py-1.5 rounded-md bg-raised border border-edge text-content-secondary shadow-btn hover:bg-raised-hover hover:text-content hover:border-edge-hover active:translate-y-px active:shadow-none transition-all duration-100 whitespace-nowrap"
-          >
-            Sign out
-          </button>
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+        <a href="/app/dashboard" class="text-lg sm:text-xl font-bold text-content tracking-tighter">
+          Toggles
+        </a>
+        <div class="flex items-center gap-1">
+          {navLinks.map((link) => {
+            const isActive = url === link.href || url.startsWith(link.href + "/");
+            return (
+              <a
+                key={link.href}
+                href={link.href}
+                class={`text-sm px-3 py-1.5 rounded-lg transition-colors duration-100 ${
+                  isActive
+                    ? "text-accent-text font-medium border-b-2 border-accent rounded-b-none"
+                    : "text-content-tertiary hover:text-content hover:bg-raised"
+                }`}
+              >
+                {link.label}
+              </a>
+            );
+          })}
+          <div class="ml-2 flex items-center gap-2">
+            <ThemeToggle />
+            <Button variant="secondary" size="sm" onClick={handleSignOut}>
+              Sign out
+            </Button>
+          </div>
         </div>
       </div>
     </header>

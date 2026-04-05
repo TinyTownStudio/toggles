@@ -2,7 +2,7 @@ export function Footer() {
   return (
     <footer class="bg-page border-t border-edge py-8 px-6">
       <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-        <div class="text-xl font-semibold text-content tracking-tight">Toggles</div>
+        <div class="text-xl font-bold text-content tracking-tighter">Toggles</div>
         <nav class="flex gap-6 text-sm text-content-tertiary">
           <a href="#features" class="hover:text-content transition-colors">
             Features

@@ -1,14 +1,15 @@
 import { useSignal } from "@preact/signals";
 import { useLocation } from "preact-iso";
+import { Button } from "../../components/ui/Button";
 
 export function Home() {
   const { route } = useLocation();
 
   return (
     <>
-      <Hero onGetStarted={() => route("/dashboard")} />
+      <Hero onGetStarted={() => route("/app/dashboard")} />
       <Features />
-      <Pricing onGetStarted={() => route("/dashboard")} />
+      <Pricing onGetStarted={() => route("/app/dashboard")} />
       <FAQ />
     </>
   );
@@ -22,7 +23,7 @@ function Hero({ onGetStarted }: { onGetStarted: () => void }) {
           Feature flags
         </p>
         <h1 class="text-4xl md:text-5xl font-semibold tracking-tight text-content leading-[1.15] mb-6">
-          Ship features on your terms.
+          Ship features <span class="underline-wavy">on your terms</span>.
         </h1>
         <p class="text-base text-content-tertiary leading-relaxed mb-10 max-w-[52ch]">
           Toggles lets you manage feature flags across your projects. Enable or disable features at
@@ -30,7 +31,7 @@ function Hero({ onGetStarted }: { onGetStarted: () => void }) {
         </p>
         <button
           onClick={onGetStarted}
-          class="px-6 py-2.5 rounded-md bg-cta text-cta-text font-medium text-sm shadow-btn-dark border border-black/10 hover:bg-cta-hover active:translate-y-px active:shadow-none transition-all duration-100"
+          class="px-6 py-2.5 rounded-lg bg-cta text-cta-text font-medium text-sm shadow-btn-dark border border-black/10 hover:bg-cta-hover active:translate-y-px active:shadow-none transition-all duration-100"
         >
           Get started for free
         </button>
@@ -75,7 +76,7 @@ function Features() {
         </h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
           {features.map((f) => (
-            <div key={f.title}>
+            <div key={f.title} class="border-l-2 border-accent/30 pl-4">
               <h3 class="text-sm font-medium text-content mb-1">{f.title}</h3>
               <p class="text-sm text-content-tertiary leading-relaxed">{f.desc}</p>
             </div>
@@ -95,7 +96,7 @@ function Pricing({ onGetStarted }: { onGetStarted: () => void }) {
         </h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Free */}
-          <div class="flex flex-col border border-edge rounded-md p-6">
+          <div class="flex flex-col border border-edge rounded-xl p-6">
             <h3 class="text-sm font-medium text-content mb-1">Free</h3>
             <p class="text-2xl font-semibold text-content mb-1">
               $0
@@ -108,16 +109,13 @@ function Pricing({ onGetStarted }: { onGetStarted: () => void }) {
               <li>API key access</li>
               <li>Community support</li>
             </ul>
-            <button
-              onClick={onGetStarted}
-              class="w-full py-2 rounded-md bg-raised border border-edge text-content-secondary text-sm font-medium shadow-btn hover:bg-raised-hover hover:border-edge-hover hover:text-content active:translate-y-px active:shadow-none transition-all duration-100"
-            >
+            <Button variant="secondary" class="w-full justify-center" onClick={onGetStarted}>
               Get started
-            </button>
+            </Button>
           </div>
 
           {/* Pro */}
-          <div class="flex flex-col border border-edge rounded-md p-6">
+          <div class="flex flex-col border border-edge rounded-xl p-6">
             <h3 class="text-sm font-medium text-content mb-1">Pro</h3>
             <p class="text-2xl font-semibold text-content mb-1">
               $5
@@ -130,12 +128,9 @@ function Pricing({ onGetStarted }: { onGetStarted: () => void }) {
               <li>Priority support</li>
               <li>Early access to new features</li>
             </ul>
-            <button
-              onClick={onGetStarted}
-              class="w-full py-2 rounded-md bg-cta text-cta-text text-sm font-medium shadow-btn-dark border border-black/10 hover:bg-cta-hover active:translate-y-px active:shadow-none transition-all duration-100"
-            >
+            <Button class="w-full justify-center" onClick={onGetStarted}>
               Get started
-            </button>
+            </Button>
           </div>
         </div>
       </div>

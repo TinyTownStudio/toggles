@@ -14,7 +14,7 @@ export function ThemeToggle() {
   return (
     <button
       onClick={() => theme.toggle()}
-      class="p-1.5 rounded-md text-content-tertiary hover:text-content hover:bg-raised transition-all cursor-pointer"
+      class="p-1.5 rounded-lg text-content-tertiary hover:text-content hover:bg-raised transition-all cursor-pointer"
       aria-label={`Theme: ${label}. Click to change.`}
       title={`Theme: ${label}`}
     >

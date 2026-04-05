@@ -58,7 +58,7 @@ export function AuthForm({ onSuccess, compact = false }: AuthFormProps) {
         </div>
 
         {/* Form card */}
-        <div class="bg-page border border-edge rounded-md p-6 shadow-sm">
+        <div class="bg-page border border-edge rounded-xl p-6 shadow-sm">
           <h1 class="text-lg font-medium text-content mb-1">
             {form.tab.value === "signin" ? "Welcome back" : "Create your account"}
           </h1>

@@ -5,8 +5,8 @@ interface AlertProps {
 }
 
 const variantClasses: Record<string, string> = {
-  error: "p-3 bg-error-surface border border-error-edge rounded-lg text-error-text text-sm",
-  success: "p-3 bg-success-surface border border-success-edge rounded-lg text-success-text text-sm",
+  error: "p-3 bg-error-surface border border-error-edge rounded-xl text-error-text text-sm",
+  success: "p-3 bg-success-surface border border-success-edge rounded-xl text-success-text text-sm",
 };
 
 export function Alert({ children, variant = "error", class: className }: AlertProps) {
