@@ -17,6 +17,9 @@ importers:
 
   packages/app:
     dependencies:
+      '@hono/node-server':
+        specifier: ^1.19.12
+        version: 1.19.12(hono@4.11.9)
       '@polar-sh/better-auth':
         specifier: ^1.6.4
         version: 1.8.0(@polar-sh/sdk@0.42.5)(@stripe/react-stripe-js@4.0.2(@stripe/stripe-js@7.9.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(@stripe/stripe-js@7.9.0)(@types/react-dom@19.2.3(@types/react@19.2.13))(@types/react@19.2.13)(better-auth@1.4.18(drizzle-kit@0.31.8)(drizzle-orm@0.45.1(@cloudflare/workers-types@4.20260207.0)(kysely@0.28.11))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(vitest@3.2.4(@types/node@24.10.12)(jiti@2.6.1)(lightningcss@1.31.1)))(react-dom@19.2.4(react@19.2.4))(react-is@19.2.4)(react@19.2.4)(redux@5.0.1)(zod@4.3.6)
@@ -1027,6 +1030,12 @@ packages:
 
   '@floating-ui/utils@0.2.10':
     resolution: {integrity: sha512-aGTxbpbg8/b5JfU1HXSrbH3wXZuLPJcNEcZQFMxLs3oSzgtVu6nFPkbbGGUvBcUjKV2YyB9Wxxabo+HEH9tcRQ==, tarball: https://registry.npmjs.org/@floating-ui/utils/-/utils-0.2.10.tgz}
+
+  '@hono/node-server@1.19.12':
+    resolution: {integrity: sha512-txsUW4SQ1iilgE0l9/e9VQWmELXifEFvmdA1j6WFh/aFPj99hIntrSsq/if0UWyGVkmrRPKA1wCeP+UCr1B9Uw==, tarball: https://registry.npmjs.org/@hono/node-server/-/node-server-1.19.12.tgz}
+    engines: {node: '>=18.14.1'}
+    peerDependencies:
+      hono: ^4
 
   '@humanfs/core@0.19.1':
     resolution: {integrity: sha512-5DyQ4+1JEUzejeK1JGICcideyfUbGixgS9jNgex5nqkW+cY7WZhxBigmieN5Qnw9ZosSNVC9KQKyb+GUaGyKUA==, tarball: https://registry.npmjs.org/@humanfs/core/-/core-0.19.1.tgz}
@@ -4747,6 +4756,10 @@ snapshots:
       react-dom: 19.2.4(react@19.2.4)
 
   '@floating-ui/utils@0.2.10': {}
+
+  '@hono/node-server@1.19.12(hono@4.11.9)':
+    dependencies:
+      hono: 4.11.9
 
   '@humanfs/core@0.19.1': {}
 
