@@ -36,6 +36,7 @@ export interface Project {
 export interface SubscriptionResponse {
   plan: "free" | "pro";
   limits: Record<string, unknown>;
+  beta: Record<string, boolean>;
 }
 
 async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {

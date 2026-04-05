@@ -91,9 +91,11 @@ function Pricing({ onGetStarted }: { onGetStarted: () => void }) {
   return (
     <section id="pricing" class="py-20 px-6 border-t border-edge">
       <div class="max-w-2xl mx-auto">
-        <h2 class="text-xs font-mono text-content-faint tracking-widest uppercase mb-12">
-          Pricing
-        </h2>
+        <h2 class="text-xs font-mono text-content-faint tracking-widest uppercase mb-6">Pricing</h2>
+        <p class="bg-accent-surface text-accent-text text-sm px-4 py-3 rounded-lg mb-8">
+          <span class="font-semibold">Free during Beta</span> &mdash; all features are unlocked
+          while we&rsquo;re in early access. Upgrading to Pro helps us keep the lights on.
+        </p>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Free */}
           <div class="flex flex-col border border-edge rounded-xl p-6">
@@ -125,7 +127,9 @@ function Pricing({ onGetStarted }: { onGetStarted: () => void }) {
             <ul class="space-y-2 text-sm text-content-tertiary mb-8 flex-1">
               <li>Everything in Free</li>
               <li>+ Unlimited Projects</li>
-              <li>+ Teams</li>
+              <li>
+                + Teams <span class="text-accent">(Coming soon...)</span>
+              </li>
             </ul>
             <Button class="w-full justify-center" onClick={onGetStarted}>
               Get started

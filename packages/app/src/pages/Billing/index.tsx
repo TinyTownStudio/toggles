@@ -53,13 +53,22 @@ export function Billing() {
         <div class="bg-surface border border-edge rounded-2xl p-6">
           <div class="flex items-center justify-between">
             <div>
-              <h2 class="text-lg font-semibold text-content">Current Plan</h2>
+              <div class="flex items-center gap-2 mb-1">
+                <h2 class="text-lg font-semibold text-content">Current Plan</h2>
+                <span class="text-xs font-medium bg-accent-surface text-accent-text px-2 py-0.5 rounded-full">
+                  Free during Beta
+                </span>
+              </div>
               <p class="text-sm text-content-tertiary mt-1">
                 You are on the{" "}
                 <span
                   class={`font-medium ${billing.isPro.value ? "text-accent-text" : "text-content-secondary"}`}
                 >
-                  {billing.isPro.value ? "Pro" : "Free"}
+                  {billing.isPro.value
+                    ? "Pro"
+                    : billing.isProductBeta.value
+                      ? "Pro (Preview)"
+                      : "Free"}
                 </span>{" "}
                 plan.
               </p>

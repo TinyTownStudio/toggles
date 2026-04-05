@@ -10,6 +10,7 @@
   "vars": {
     "BETTER_AUTH_URL": "https://toggles.tinytown.studio",
     "LOCAL": "false",
+    "PRODUCT_BETA": "true"
   },
   "d1_databases": [
     {

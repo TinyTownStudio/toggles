@@ -4,3 +4,4 @@ POLAR_ACCESS_TOKEN=your-polar-access-token
 POLAR_WEBHOOK_SECRET=your-polar-webhook-secret
 POLAR_PRO_PRODUCT_ID=your-polar-pro-product-id
 LOCAL=true
+PRODUCT_BETA=false

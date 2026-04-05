@@ -19,9 +19,14 @@ subscription.get("/", async (c) => {
 
   const plan = await getUserPlan(db, userId);
   const limits = PLAN_LIMITS[plan];
+  let betaFeatures: Record<string, boolean> = {};
+  if (c.env.PRODUCT_BETA === "true") {
+    betaFeatures.product = true;
+  }
 
   return c.json({
     plan,
     limits,
+    beta: betaFeatures,
   });
 });

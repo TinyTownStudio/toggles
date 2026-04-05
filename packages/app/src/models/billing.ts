@@ -9,6 +9,7 @@ export const BillingModel = createModel(() => {
   const upgradeLoading = signal(false);
   const plan = computed(() => subscription.value?.plan ?? "free");
   const isPro = computed(() => plan.value === "pro");
+  const isProductBeta = computed(() => subscription.value?.beta["product"] === true);
 
   // Alternatively you can add this to an effect and run it on app load
   // this can be convenient if you have variables in your fetch function
@@ -66,6 +67,7 @@ export const BillingModel = createModel(() => {
     upgradeLoading,
     plan,
     isPro,
+    isProductBeta,
     fetch,
     upgrade,
     manage,
