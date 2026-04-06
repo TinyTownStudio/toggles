@@ -6,6 +6,7 @@ import { createAuth } from "./lib/auth";
 import { subscription } from "./routes/subscription";
 import { projects } from "./routes/projects";
 import { apiKeys } from "./routes/apiKeys";
+import { dashboard } from "./routes/dashboard";
 import type { Bindings, Variables } from "./types";
 import { isProduction } from "./utils/isProduction";
 import * as schema from "./db/schema";
@@ -170,5 +171,8 @@ app.route("/api/v1/api-keys", apiKeys);
 
 // Projects
 app.route("/api/v1/projects", projects);
+
+// Dashboard
+app.route("/api/v1/dashboard", dashboard);
 
 export default app;

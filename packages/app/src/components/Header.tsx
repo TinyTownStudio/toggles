@@ -3,11 +3,13 @@ import { useEffect } from "preact/hooks";
 import { useModel } from "@preact/signals";
 import { AuthModel } from "../models/auth";
 import { ThemeToggle } from "./ThemeToggle";
+import { useLocation } from "preact-iso";
 
 export function Header() {
   const scrolled = useSignal(false);
   const mobileOpen = useSignal(false);
   const auth = useModel(AuthModel);
+  const location = useLocation();
 
   useEffect(() => {
     function onScroll() {
@@ -21,10 +23,13 @@ export function Header() {
     };
   }, []);
 
+  const currentRoute = location.path;
   const links = [
-    { label: "Features", href: "/#features" },
-    { label: "How it Works", href: "/#how-it-works" },
-    { label: "Pricing", href: "/#pricing" },
+    { label: "Features", href: !currentRoute.startsWith("/auth") ? "#features" : "/#features" },
+    {
+      label: "Pricing",
+      href: !currentRoute.startsWith("/auth") ? "#pricing" : "/#pricing",
+    },
     { label: "Docs", href: "/docs" },
   ];
 
