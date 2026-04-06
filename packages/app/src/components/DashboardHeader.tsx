@@ -22,7 +22,7 @@ export function DashboardHeader() {
 
   return (
     <header class="fixed top-0 left-0 right-0 z-50 bg-page border-b border-edge">
-      <div class="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+      <div class="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         <a
           href="/app/dashboard"
           class="hover:cursor-pointer text-lg sm:text-xl font-bold text-content tracking-tighter"
