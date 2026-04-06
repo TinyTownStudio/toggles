@@ -1,6 +1,6 @@
 import { signal, computed, createModel } from "@preact/signals";
 import { authClient } from "../lib/auth";
-import { getSubscription, type SubscriptionResponse } from "../lib/api";
+import { getSubscription, getPortalUrl, type SubscriptionResponse } from "../lib/api";
 
 export const BillingModel = createModel(() => {
   const loading = signal(true);
@@ -47,14 +47,8 @@ export const BillingModel = createModel(() => {
 
   const manage = async () => {
     try {
-      const res = await authClient.$fetch<{ url: string }>("/customer/portal", {
-        method: "GET",
-      });
-      if ("data" in res && res.data?.url) {
-        window.location.href = res.data.url;
-      } else if ("url" in res) {
-        window.location.href = res.url as string;
-      }
+      const { url } = await getPortalUrl();
+      window.location.href = url;
     } catch {
       error.value = "Failed to open customer portal";
     }

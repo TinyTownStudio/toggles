@@ -99,6 +99,10 @@ export async function getSubscription(): Promise<SubscriptionResponse> {
   return fetchApi<SubscriptionResponse>("/api/v1/subscription");
 }
 
+export async function getPortalUrl(): Promise<{ url: string }> {
+  return fetchApi<{ url: string }>("/api/v1/portal");
+}
+
 export async function getProjects(): Promise<Project[]> {
   return fetchApi<Project[]>("/api/v1/projects");
 }

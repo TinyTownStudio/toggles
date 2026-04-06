@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, index } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, index, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 export const user = sqliteTable("user", {
   id: text("id").primaryKey(),
@@ -110,7 +110,7 @@ export const subscription = sqliteTable(
     createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
     updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
   },
-  (t) => [index("subscription_user_idx").on(t.userId)],
+  (t) => [uniqueIndex("subscription_user_unique").on(t.userId)],
 );
 
 // ── API Keys ─────────────────────────────────────────────
