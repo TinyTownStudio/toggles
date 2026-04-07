@@ -186,7 +186,7 @@ app.use("/api/v1/*", async (c, next) => {
 });
 
 // Health check
-app.get("/", (c) => {
+app.get("/ping", (c) => {
   return c.json({ status: "ok" });
 });
 
