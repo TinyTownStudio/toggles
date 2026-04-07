@@ -71,8 +71,12 @@ export function Billing() {
               </p>
             </div>
             {billing.isPro.value ? (
-              <Button variant="secondary" onClick={() => billing.manage()}>
-                Manage Subscription
+              <Button
+                variant="secondary"
+                onClick={() => billing.manage()}
+                disabled={billing.manageLoading.value}
+              >
+                {billing.manageLoading.value ? "Redirecting..." : "Manage Subscription"}
               </Button>
             ) : (
               <Button onClick={() => billing.upgrade()} disabled={billing.upgradeLoading.value}>

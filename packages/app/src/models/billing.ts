@@ -7,6 +7,7 @@ export const BillingModel = createModel(() => {
   const subscription = signal<SubscriptionResponse | null>(null);
   const error = signal<string | null>(null);
   const upgradeLoading = signal(false);
+  const manageLoading = signal(false);
   const plan = computed(() => subscription.value?.plan ?? "free");
   const isPro = computed(() => plan.value === "pro");
   const isProductBeta = computed(() => subscription.value?.beta["product"] === true);
@@ -46,10 +47,12 @@ export const BillingModel = createModel(() => {
   };
 
   const manage = async () => {
+    manageLoading.value = true;
     try {
       const { url } = await getPortalUrl();
       window.location.href = url;
     } catch {
+      manageLoading.value = false;
       error.value = "Failed to open customer portal";
     }
   };
@@ -59,6 +62,7 @@ export const BillingModel = createModel(() => {
     subscription,
     error,
     upgradeLoading,
+    manageLoading,
     plan,
     isPro,
     isProductBeta,
