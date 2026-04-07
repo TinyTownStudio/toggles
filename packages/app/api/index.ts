@@ -6,6 +6,8 @@ import { createAuth } from "./lib/auth";
 import { subscription } from "./routes/subscription";
 import { projects } from "./routes/projects";
 import { apiKeys } from "./routes/apiKeys";
+import { dashboard } from "./routes/dashboard";
+import { portal } from "./routes/portal";
 import type { Bindings, Variables } from "./types";
 import { isProduction } from "./utils/isProduction";
 import * as schema from "./db/schema";
@@ -34,7 +36,13 @@ app.use(
 );
 
 app.get("/api/billing-success", async (c) => {
-  // Upgrade customer
+  // Require an authenticated session — only the paying user should trigger their own upgrade.
+  const auth = createAuth(c.env);
+  const session = await auth.api.getSession({ headers: c.req.raw.headers });
+  if (!session) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
   const db = drizzle(c.env.DB, { schema });
 
   const checkoutId = c.req.query("checkout_id");
@@ -53,6 +61,15 @@ app.get("/api/billing-success", async (c) => {
 
   if (!checkout || !checkout.customerId) {
     return c.json({ error: "Invalid checkout session" }, 400);
+  }
+
+  // Verify that this checkout belongs to the authenticated user.
+  // externalCustomerId is set by BetterAuth's Polar plugin to the user's ID.
+  if (!checkout.externalCustomerId) {
+    return c.json({ error: "Checkout has no associated user" }, 400);
+  }
+  if (checkout.externalCustomerId !== session.user.id) {
+    return c.json({ error: "Forbidden" }, 403);
   }
 
   // List subscriptions for this customer
@@ -76,21 +93,37 @@ app.get("/api/billing-success", async (c) => {
     return c.json({ error: "No active subscription found" }, 404);
   }
 
-  // Update the database synchronously
+  // Upsert the subscription row — idempotent if this URL is replayed.
+  // The UNIQUE constraint on userId ensures only one row exists per user.
   const now = new Date();
-  await db.insert(schema.subscription).values({
-    id: crypto.randomUUID(),
-    plan: "pro",
-    status: "active",
-    createdAt: now,
-    polarCustomerId: checkout.customerId,
-    userId: checkout.externalCustomerId as string,
-    polarSubscriptionId: activeSubscription.id,
-    currentPeriodEnd: activeSubscription.currentPeriodEnd
-      ? new Date(activeSubscription.currentPeriodEnd)
-      : null,
-    updatedAt: now,
-  });
+  await db
+    .insert(schema.subscription)
+    .values({
+      id: crypto.randomUUID(),
+      plan: "pro",
+      status: "active",
+      createdAt: now,
+      polarCustomerId: checkout.customerId,
+      userId: checkout.externalCustomerId,
+      polarSubscriptionId: activeSubscription.id,
+      currentPeriodEnd: activeSubscription.currentPeriodEnd
+        ? new Date(activeSubscription.currentPeriodEnd)
+        : null,
+      updatedAt: now,
+    })
+    .onConflictDoUpdate({
+      target: schema.subscription.userId,
+      set: {
+        plan: "pro",
+        status: "active",
+        polarCustomerId: checkout.customerId,
+        polarSubscriptionId: activeSubscription.id,
+        currentPeriodEnd: activeSubscription.currentPeriodEnd
+          ? new Date(activeSubscription.currentPeriodEnd)
+          : null,
+        updatedAt: now,
+      },
+    });
 
   return c.redirect(
     isProduction(c.env)
@@ -157,18 +190,19 @@ app.get("/", (c) => {
   return c.json({ status: "ok" });
 });
 
-// Example protected route
-app.get("/api/v1/me", (c) => {
-  return c.json({ user: c.get("user") });
-});
-
 // Subscription
 app.route("/api/v1/subscription", subscription);
+
+// Portal
+app.route("/api/v1/portal", portal);
 
 // API Keys
 app.route("/api/v1/api-keys", apiKeys);
 
 // Projects
 app.route("/api/v1/projects", projects);
+
+// Dashboard
+app.route("/api/v1/dashboard", dashboard);
 
 export default app;

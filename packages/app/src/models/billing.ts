@@ -1,12 +1,13 @@
 import { signal, computed, createModel } from "@preact/signals";
 import { authClient } from "../lib/auth";
-import { getSubscription, type SubscriptionResponse } from "../lib/api";
+import { getSubscription, getPortalUrl, type SubscriptionResponse } from "../lib/api";
 
 export const BillingModel = createModel(() => {
   const loading = signal(true);
   const subscription = signal<SubscriptionResponse | null>(null);
   const error = signal<string | null>(null);
   const upgradeLoading = signal(false);
+  const manageLoading = signal(false);
   const plan = computed(() => subscription.value?.plan ?? "free");
   const isPro = computed(() => plan.value === "pro");
   const isProductBeta = computed(() => subscription.value?.beta["product"] === true);
@@ -46,16 +47,12 @@ export const BillingModel = createModel(() => {
   };
 
   const manage = async () => {
+    manageLoading.value = true;
     try {
-      const res = await authClient.$fetch<{ url: string }>("/customer/portal", {
-        method: "GET",
-      });
-      if ("data" in res && res.data?.url) {
-        window.location.href = res.data.url;
-      } else if ("url" in res) {
-        window.location.href = res.url as string;
-      }
+      const { url } = await getPortalUrl();
+      window.location.href = url;
     } catch {
+      manageLoading.value = false;
       error.value = "Failed to open customer portal";
     }
   };
@@ -65,6 +62,7 @@ export const BillingModel = createModel(() => {
     subscription,
     error,
     upgradeLoading,
+    manageLoading,
     plan,
     isPro,
     isProductBeta,

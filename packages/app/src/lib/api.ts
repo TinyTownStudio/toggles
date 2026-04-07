@@ -39,6 +39,40 @@ export interface SubscriptionResponse {
   beta: Record<string, boolean>;
 }
 
+export interface DashboardFlagEntry {
+  id: string;
+  key: string;
+  projectId: string;
+  projectName: string;
+  enabled: boolean;
+  updatedAt: number;
+  createdAt: number;
+}
+
+export interface DashboardProjectEntry {
+  projectId: string;
+  projectName: string;
+  totalFlags: number;
+  enabledFlags: number;
+}
+
+export interface DashboardResponse {
+  totalProjects: number;
+  totalFlags: number;
+  enabledFlags: number;
+  disabledFlags: number;
+  totalApiKeys: number;
+  activeApiKeys: number;
+  unusedApiKeys: number;
+  expiringApiKeys: number;
+  recentlyModified: DashboardFlagEntry[];
+  staleFlags: DashboardFlagEntry[];
+  flagsPerProject: DashboardProjectEntry[];
+  plan: "free" | "pro";
+  limits: Record<string, unknown>;
+  beta: Record<string, boolean>;
+}
+
 async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,
@@ -63,6 +97,10 @@ async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> 
 
 export async function getSubscription(): Promise<SubscriptionResponse> {
   return fetchApi<SubscriptionResponse>("/api/v1/subscription");
+}
+
+export async function getPortalUrl(): Promise<{ url: string }> {
+  return fetchApi<{ url: string }>("/api/v1/portal");
 }
 
 export async function getProjects(): Promise<Project[]> {
@@ -134,4 +172,8 @@ export async function listApiKeys(): Promise<ApiKeyItem[]> {
 
 export async function deleteApiKey(id: string): Promise<void> {
   await fetchApi<void>(`/api/v1/api-keys/${id}`, { method: "DELETE" });
+}
+
+export async function getDashboard(): Promise<DashboardResponse> {
+  return fetchApi<DashboardResponse>("/api/v1/dashboard");
 }

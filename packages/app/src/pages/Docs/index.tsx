@@ -6,6 +6,7 @@ import { Introduction } from "./sections/Introduction";
 import { Authentication } from "./sections/Authentication";
 import { Projects } from "./sections/Projects";
 import { Toggles } from "./sections/Toggles";
+import { Dashboard } from "./sections/Dashboard";
 import { ApiKeys } from "./sections/ApiKeys";
 
 export function Docs() {
@@ -96,6 +97,7 @@ export function Docs() {
           <Authentication />
           <Projects />
           <Toggles />
+          <Dashboard />
           <ApiKeys />
         </article>
       </div>

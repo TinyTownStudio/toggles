@@ -76,7 +76,7 @@ export function ProjectDetail({ id }: { id: string }) {
 
   return (
     <div class="min-h-screen bg-page pt-16">
-      <div class="max-w-4xl mx-auto px-6 py-12">
+      <div class="max-w-5xl mx-auto px-6 py-12">
         <div class="mb-6">
           <a
             href="/app/projects"

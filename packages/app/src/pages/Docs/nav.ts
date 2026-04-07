@@ -32,6 +32,11 @@ export const NAV: NavSection[] = [
     ],
   },
   {
+    id: "dashboard",
+    label: "Dashboard",
+    children: [{ id: "dashboard-get", label: "Get dashboard" }],
+  },
+  {
     id: "api-keys",
     label: "API Keys",
     children: [

@@ -40,7 +40,7 @@ export function Projects() {
 
   return (
     <div class="min-h-screen bg-page pt-16">
-      <div class="max-w-4xl mx-auto px-6 py-12">
+      <div class="max-w-5xl mx-auto px-6 py-12">
         <div class="flex items-center justify-between mb-6">
           <h1 class="text-2xl font-bold tracking-tight text-content">Projects</h1>
         </div>

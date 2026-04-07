@@ -33,7 +33,7 @@ export function Billing() {
 
   return (
     <div class="min-h-screen pt-16 bg-page">
-      <div class="max-w-2xl mx-auto px-4 py-12">
+      <div class="max-w-5xl mx-auto px-4 py-12">
         <div class="flex items-center justify-between mb-8">
           <h1 class="text-2xl font-bold text-content">Billing</h1>
         </div>
@@ -71,8 +71,12 @@ export function Billing() {
               </p>
             </div>
             {billing.isPro.value ? (
-              <Button variant="secondary" onClick={() => billing.manage()}>
-                Manage Subscription
+              <Button
+                variant="secondary"
+                onClick={() => billing.manage()}
+                disabled={billing.manageLoading.value}
+              >
+                {billing.manageLoading.value ? "Redirecting..." : "Manage Subscription"}
               </Button>
             ) : (
               <Button onClick={() => billing.upgrade()} disabled={billing.upgradeLoading.value}>
