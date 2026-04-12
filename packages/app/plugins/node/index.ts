@@ -16,9 +16,11 @@ export const node = (): Plugin => {
           node: {
             consumer: "server",
             build: {
-              outDir: "dist/server",
+              outDir: "dist/node-server",
               rollupOptions: {
-                input: resolve(__dirname, "../../api/index.ts"),
+                input: {
+                  index: resolve(__dirname, "../../server.entry.node.ts"),
+                },
                 external: [/^node:/],
               },
               emitAssets: false,
