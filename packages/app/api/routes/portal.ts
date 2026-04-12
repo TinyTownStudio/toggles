@@ -1,5 +1,4 @@
 import { Hono } from "hono";
-import { drizzle } from "drizzle-orm/d1";
 import { eq } from "drizzle-orm";
 import { Polar } from "@polar-sh/sdk";
 import * as schema from "../db/schema";
@@ -8,7 +7,7 @@ import type { Bindings, Variables } from "../types";
 
 export const portal = new Hono<{
   Bindings: Bindings;
-  Variables: Variables;
+  Variables: Variables<typeof schema>;
 }>();
 
 // GET / - returns a customer portal session URL using the stored polarCustomerId
@@ -18,7 +17,7 @@ portal.get("/", async (c) => {
     return c.json({ error: "Unauthorized" }, 401);
   }
 
-  const db = drizzle(c.env.DB, { schema });
+  const db = c.get("db");
 
   const sub = await db
     .select()

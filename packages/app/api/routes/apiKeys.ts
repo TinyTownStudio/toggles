@@ -1,5 +1,4 @@
 import { Hono } from "hono";
-import { drizzle } from "drizzle-orm/d1";
 import { eq, and } from "drizzle-orm";
 import * as schema from "../db/schema";
 import { createAuth } from "../lib/auth";
@@ -7,14 +6,14 @@ import { buildPermissions, deriveTokenType } from "../lib/permissions";
 import type { TokenType } from "../lib/permissions";
 import type { Bindings, Variables } from "../types";
 
-export const apiKeys = new Hono<{ Bindings: Bindings; Variables: Variables }>();
+export const apiKeys = new Hono<{ Bindings: Bindings; Variables: Variables<typeof schema> }>();
 
 // GET /api/v1/api-keys - list keys for the authenticated user
 apiKeys.get("/", async (c) => {
   const userId = c.get("user")?.id;
   if (!userId) return c.json({ error: "Unauthorized" }, 401);
 
-  const db = drizzle(c.env.DB, { schema });
+  const db = c.get("db");
   const rows = await db.select().from(schema.apikey).where(eq(schema.apikey.userId, userId)).all();
 
   const result = rows.map(({ key: _key, metadata: _metadata, ...rest }) => {
@@ -40,8 +39,8 @@ apiKeys.post("/", async (c) => {
   const tokenType: TokenType = body.type === "admin" ? "admin" : "read";
   const projectId = body.projectId ?? null;
 
-  const auth = createAuth(c.env);
-  const db = drizzle(c.env.DB, { schema });
+  const auth = createAuth(c.env, c.get("db"));
+  const db = c.get("db");
 
   // If scoped to a project, verify the user owns it
   if (projectId) {
@@ -79,7 +78,7 @@ apiKeys.delete("/:id", async (c) => {
   if (!userId) return c.json({ error: "Unauthorized" }, 401);
 
   const id = c.req.param("id");
-  const db = drizzle(c.env.DB, { schema });
+  const db = c.get("db");
 
   const row = await db
     .select()
@@ -89,7 +88,7 @@ apiKeys.delete("/:id", async (c) => {
 
   if (!row) return c.json({ error: "Not found" }, 404);
 
-  const auth = createAuth(c.env);
+  const auth = createAuth(c.env, c.get("db"));
   await auth.api.deleteApiKey({ body: { keyId: id } });
 
   return c.body(null, 204);

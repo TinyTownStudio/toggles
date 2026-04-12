@@ -12,6 +12,7 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate:local": "wrangler d1 migrations apply app-db --local",
     "db:migrate:remote": "wrangler d1 migrations apply app-db --remote",
+    "db:migrate:node": "drizzle-kit migrate --config ./drizzle.config.node.ts",
     "db:studio": "drizzle-kit studio",
     "lint": "oxlint --fix",
     "format:atomic": "oxfmt --write",
@@ -43,6 +44,7 @@
     "@eslint/js": "^9.39.1",
     "@preact/preset-vite": "^2.10.3",
     "@tailwindcss/vite": "^4.1.18",
+    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",
@@ -61,6 +63,10 @@
     "vite": "npm:rolldown-vite@7.2.5",
     "vitest": "^3.0.0",
     "wrangler": "^4.63.0"
+  },
+  "optionalDependencies": {
+    "better-sqlite3": "^12.8.0",
+    "dotenv": "^17.4.1"
   },
   "overrides": {
     "vite": "npm:rolldown-vite@7.2.5"
