@@ -19,8 +19,7 @@
     "format": "oxfmt --write .",
     "format:check": "oxfmt --check .",
     "check": "oxlint && oxfmt --check .",
-    "test": "vitest run",
-    "prepare": "husky"
+    "test": "vitest run"
   },
   "dependencies": {
     "@hono/node-server": "^1.19.12",
@@ -29,7 +28,7 @@
     "@preact/signals": "^2.7.0",
     "@tabler/icons-react": "^3.36.1",
     "@tailwindcss/vite": "^4.1.18",
-    "better-auth": "^1.4.18",
+    "better-auth": "1.4.18",
     "drizzle-orm": "^0.45.1",
     "hono": "^4.11.7",
     "preact": "^10.28.3",
@@ -54,8 +53,6 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.5.0",
-    "husky": "^9.1.7",
-    "nano-staged": "^0.9.0",
     "oxfmt": "^0.28.0",
     "oxlint": "^1.43.0",
     "typescript": "~5.9.3",
