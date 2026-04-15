@@ -1,7 +1,8 @@
 import { Hono } from "hono";
-import { eq, and, like } from "drizzle-orm";
+import { eq, and, like, sql } from "drizzle-orm";
 import * as schema from "../db/schema";
 import { hasWriteAccess, isScopeViolation } from "../lib/permissions";
+import { getUserPlan, PLAN_LIMITS } from "../lib/plans";
 import type { AgnosticDatabaseInstance, Bindings, Variables } from "../types";
 
 export const projects = new Hono<{
@@ -39,6 +40,21 @@ projects.post("/", async (c) => {
   }
 
   const db = c.get("db");
+
+  const plan = await getUserPlan(db, userId);
+  const limit = PLAN_LIMITS[plan].projects;
+  if (limit !== Infinity) {
+    // @ts-expect-error — AgnosticDatabaseInstance union causes select(fields) to be typed incorrectly; same pattern as dashboard.ts
+    const rows = (await db
+      .select({ count: sql<number>`count(*)` })
+      .from(schema.project)
+      .where(eq(schema.project.userId, userId))
+      .all()) as unknown as { count: number }[];
+    if ((rows[0]?.count ?? 0) >= limit) {
+      return c.json({ error: "Project limit reached for your plan" }, 403);
+    }
+  }
+
   const now = new Date();
   const id = crypto.randomUUID();
 
