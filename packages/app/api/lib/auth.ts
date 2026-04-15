@@ -1,18 +1,16 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { drizzle } from "drizzle-orm/d1";
 import { eq } from "drizzle-orm";
 import { Polar } from "@polar-sh/sdk";
 import { polar, checkout, portal, webhooks } from "@polar-sh/better-auth";
 import * as schema from "../db/schema";
 import { isProduction } from "../utils/isProduction";
 import { apiKey } from "better-auth/plugins";
+import type { AgnosticDatabaseInstance } from "../types";
 
 type Env = Cloudflare.Env;
 
-export function createAuth(env: Env) {
-  const db = drizzle(env.DB, { schema });
-
+export function createAuth(env: Env, db: AgnosticDatabaseInstance<typeof schema>) {
   const polarClient = new Polar({
     accessToken: env.POLAR_ACCESS_TOKEN,
     server: isProduction(env) ? "production" : "sandbox",

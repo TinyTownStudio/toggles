@@ -1,6 +1,5 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { drizzle } from "drizzle-orm/d1";
 import { Polar } from "@polar-sh/sdk";
 import { createAuth } from "./lib/auth";
 import { subscription } from "./routes/subscription";
@@ -11,12 +10,35 @@ import { portal } from "./routes/portal";
 import type { Bindings, Variables } from "./types";
 import { isProduction } from "./utils/isProduction";
 import * as schema from "./db/schema";
+import { env } from "hono/adapter";
 
-const app = new Hono<{ Bindings: Bindings; Variables: Variables }>();
+const app = new Hono<{
+  Bindings: Bindings;
+  Variables: Variables<typeof schema>;
+}>();
 
 // Security response headers
 app.use("/api/*", async (c, next) => {
+  const { DATABASE_URL } = env(c);
+  const dbConnection: D1Database | string = c.env.DB ?? DATABASE_URL;
+
+  let connection: any;
+  if (c.env.DB) {
+    const d1Drizzle = await import("drizzle-orm/d1");
+    connection = d1Drizzle.drizzle(dbConnection, { schema });
+  } else if (typeof dbConnection === "string") {
+    const bsql = await import("drizzle-orm/better-sqlite3");
+    connection = bsql.drizzle(dbConnection, { schema });
+  }
+
+  c.set("db", connection);
+
   await next();
+
+  if ("close" in connection.$client && typeof connection.$client.close === "function") {
+    connection.$client.close();
+  }
+
   c.res.headers.set("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
   c.res.headers.set("X-Content-Type-Options", "nosniff");
   c.res.headers.set("X-Frame-Options", "DENY");
@@ -37,13 +59,13 @@ app.use(
 
 app.get("/api/billing-success", async (c) => {
   // Require an authenticated session — only the paying user should trigger their own upgrade.
-  const auth = createAuth(c.env);
+  const auth = createAuth(c.env, c.get("db"));
   const session = await auth.api.getSession({ headers: c.req.raw.headers });
   if (!session) {
     return c.json({ error: "Unauthorized" }, 401);
   }
 
-  const db = drizzle(c.env.DB, { schema });
+  const db = c.get("db");
 
   const checkoutId = c.req.query("checkout_id");
   if (!checkoutId) {
@@ -52,7 +74,7 @@ app.get("/api/billing-success", async (c) => {
 
   // Initialize Polar client
   const polarClient = new Polar({
-    accessToken: c.env.POLAR_ACCESS_TOKEN,
+    accessToken: env(c).POLAR_ACCESS_TOKEN,
     server: isProduction(c.env) ? "production" : "sandbox",
   });
 
@@ -135,7 +157,7 @@ app.get("/api/billing-success", async (c) => {
 // Mount BetterAuth handler
 app.on(["GET", "POST"], "/api/auth/*", (c) => {
   try {
-    const auth = createAuth(c.env);
+    const auth = createAuth(c.env, c.get("db"));
     return auth.handler(c.req.raw);
   } catch (error) {
     console.error("Error in auth handler:", error);
@@ -145,7 +167,7 @@ app.on(["GET", "POST"], "/api/auth/*", (c) => {
 
 // Session middleware for protected routes - supports both cookie sessions and Bearer API keys
 app.use("/api/v1/*", async (c, next) => {
-  const auth = createAuth(c.env);
+  const auth = createAuth(c.env, c.get("db"));
   const authHeader = c.req.header("Authorization");
 
   if (authHeader?.startsWith("Bearer ")) {
@@ -186,7 +208,7 @@ app.use("/api/v1/*", async (c, next) => {
 });
 
 // Health check
-app.get("/", (c) => {
+app.get("/ping", (c) => {
   return c.json({ status: "ok" });
 });
 

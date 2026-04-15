@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
-import type { DrizzleD1Database } from "drizzle-orm/d1";
 import * as schema from "../db/schema";
+import type { AgnosticDatabaseInstance } from "../types";
 
 type Plan = "free" | "pro";
 
@@ -17,7 +17,7 @@ export const PLAN_LIMITS = {
 } as const;
 
 export async function getUserPlan(
-  db: DrizzleD1Database<typeof schema>,
+  db: AgnosticDatabaseInstance<typeof schema>,
   userId: string,
 ): Promise<Plan> {
   const row = await db

@@ -24,6 +24,7 @@ declare namespace NodeJS {
   interface ProcessEnv extends StringifyValues<
     Pick<
       Cloudflare.Env,
+      | "DATABASE_URL"
       | "BETTER_AUTH_SECRET"
       | "BETTER_AUTH_URL"
       | "POLAR_ACCESS_TOKEN"

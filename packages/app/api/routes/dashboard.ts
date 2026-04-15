@@ -1,9 +1,9 @@
 import { Hono } from "hono";
-import { drizzle } from "drizzle-orm/d1";
 import { eq, lt, and, sql } from "drizzle-orm";
 import * as schema from "../db/schema";
 import { getUserPlan, PLAN_LIMITS } from "../lib/plans";
 import type { Bindings, Variables } from "../types";
+import { env } from "hono/adapter";
 
 // Flags not modified within this many days are considered stale.
 // TODO: make this configurable via user settings when that feature is added.
@@ -45,14 +45,14 @@ export interface DashboardResponse {
 
 export const dashboard = new Hono<{
   Bindings: Bindings;
-  Variables: Variables;
+  Variables: Variables<typeof schema>;
 }>();
 
 dashboard.get("/", async (c) => {
   const userId = c.get("user")?.id;
   if (!userId) return c.json({ error: "Unauthorized" }, 401);
 
-  const db = drizzle(c.env.DB, { schema });
+  const db = c.get("db");
 
   const staleThreshold = new Date(Date.now() - STALE_FLAG_DAYS * 24 * 60 * 60 * 1000);
   const sevenDaysFromNow = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
@@ -190,7 +190,7 @@ dashboard.get("/", async (c) => {
   // Plan info
   const plan = await getUserPlan(db, userId);
   const limits = PLAN_LIMITS[plan];
-  const productBeta = c.env.PRODUCT_BETA === "true";
+  const productBeta = env(c).PRODUCT_BETA === "true";
 
   const response: DashboardResponse = {
     totalProjects,

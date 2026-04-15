@@ -16,9 +16,11 @@ export const node = (): Plugin => {
           node: {
             consumer: "server",
             build: {
-              outDir: "dist/server",
+              outDir: "dist/node-server",
               rollupOptions: {
-                input: resolve(__dirname, "../../api/index.ts"),
+                input: {
+                  index: resolve(__dirname, "../../server.entry.node.ts"),
+                },
                 external: [/^node:/],
               },
               emitAssets: false,
@@ -37,24 +39,6 @@ export const node = (): Plugin => {
           },
         },
       };
-    },
-
-    configureServer(server: ViteDevServer) {
-      const apiEntryPath = resolve(server.config.root, "api/index.ts");
-
-      server.middlewares.use(async (req, res, next) => {
-        const url = req.url ?? "/";
-        if (!url.startsWith("/api/") && url !== "/ping") {
-          return next();
-        }
-        try {
-          const mod = await server.ssrLoadModule(apiEntryPath);
-          const fastifyInstance = await mod.devServer();
-          fastifyInstance.routing(req, res);
-        } catch (err) {
-          next(err);
-        }
-      });
     },
   };
 };
