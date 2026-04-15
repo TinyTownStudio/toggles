@@ -7,173 +7,173 @@
    ---------------------------------------------------------------- */
 
 :root {
-  color-scheme: light;
+    color-scheme: light;
 
-  /* Backgrounds */
-  --t-page: #fafaf9;
-  --t-surface: #f5f5f4;
-  --t-surface-alt: #efefed;
-  --t-raised: #f0efed;
-  --t-raised-hover: #e7e5e3;
-  --t-overlay: rgb(250 250 249 / 85%);
-  --t-overlay-heavy: rgb(250 250 249 / 97%);
+    /* Backgrounds */
+    --t-page: #fafaf9;
+    --t-surface: #f5f5f4;
+    --t-surface-alt: #efefed;
+    --t-raised: #f0efed;
+    --t-raised-hover: #e7e5e3;
+    --t-overlay: rgb(250 250 249 / 85%);
+    --t-overlay-heavy: rgb(250 250 249 / 97%);
 
-  /* Text */
-  --t-content: #0c0a09;
-  --t-content-secondary: #44403c;
-  --t-content-tertiary: #78716c;
-  --t-content-faint: #a8a29e;
+    /* Text */
+    --t-content: #0c0a09;
+    --t-content-secondary: #44403c;
+    --t-content-tertiary: #78716c;
+    --t-content-faint: #a8a29e;
 
-  /* Borders */
-  --t-edge: #e7e5e3;
-  --t-edge-hover: #d6d3d1;
+    /* Borders */
+    --t-edge: #e7e5e3;
+    --t-edge-hover: #d6d3d1;
 
-  /* Accent — teal #5bb7ca */
-  --t-accent: #5bb7ca;
-  --t-accent-hover: #3fa3b8;
-  --t-accent-text: #2d8fa3;
-  --t-accent-surface: rgb(91 183 202 / 12%);
+    /* Accent — teal #5bb7ca */
+    --t-accent: #5bb7ca;
+    --t-accent-hover: #3fa3b8;
+    --t-accent-text: #2d8fa3;
+    --t-accent-surface: rgb(91 183 202 / 12%);
 
-  /* Status: Error */
-  --t-error-surface: #fef2f2;
-  --t-error-edge: #fecaca;
-  --t-error-text: #dc2626;
+    /* Status: Error */
+    --t-error-surface: #fef2f2;
+    --t-error-edge: #fecaca;
+    --t-error-text: #dc2626;
 
-  /* Status: Success */
-  --t-success-surface: #f0fdf4;
-  --t-success-edge: #bbf7d0;
-  --t-success-text: #16a34a;
+    /* Status: Success */
+    --t-success-surface: #f0fdf4;
+    --t-success-edge: #bbf7d0;
+    --t-success-text: #16a34a;
 
-  /* Hero CTA (inverted) */
-  --t-cta: #0c0a09;
-  --t-cta-text: #fafaf9;
-  --t-cta-hover: #1c1917;
+    /* Hero CTA (inverted) */
+    --t-cta: #0c0a09;
+    --t-cta-text: #fafaf9;
+    --t-cta-hover: #1c1917;
 
-  /* Misc */
-  --t-delete: #a8a29e;
-  --t-delete-hover: #ef4444;
-  --t-note-bg: rgb(245 245 244 / 60%);
+    /* Misc */
+    --t-delete: #a8a29e;
+    --t-delete-hover: #ef4444;
+    --t-note-bg: rgb(245 245 244 / 60%);
 }
 
 .dark {
-  color-scheme: dark;
+    color-scheme: dark;
 
-  /* Backgrounds */
-  --t-page: #0c0a09;
-  --t-surface: #1c1917;
-  --t-surface-alt: rgb(28 25 23 / 60%);
-  --t-raised: #292524;
-  --t-raised-hover: #44403c;
-  --t-overlay: rgb(12 10 9 / 85%);
-  --t-overlay-heavy: rgb(12 10 9 / 97%);
+    /* Backgrounds */
+    --t-page: #0e0d0c;
+    --t-surface: #1c1917;
+    --t-surface-alt: rgb(28 25 23 / 60%);
+    --t-raised: #292524;
+    --t-raised-hover: #44403c;
+    --t-overlay: rgb(12 10 9 / 85%);
+    --t-overlay-heavy: rgb(12 10 9 / 97%);
 
-  /* Text */
-  --t-content: #fafaf9;
-  --t-content-secondary: #d6d3d1;
-  --t-content-tertiary: #a8a29e;
-  --t-content-faint: #78716c;
+    /* Text */
+    --t-content: #fafaf9;
+    --t-content-secondary: #d6d3d1;
+    --t-content-tertiary: #a8a29e;
+    --t-content-faint: #78716c;
 
-  /* Borders */
-  --t-edge: #292524;
-  --t-edge-hover: #44403c;
+    /* Borders */
+    --t-edge: #292524;
+    --t-edge-hover: #44403c;
 
-  /* Accent — teal, brightened for dark backgrounds */
-  --t-accent: #7dcfdf;
-  --t-accent-hover: #9adce8;
-  --t-accent-text: #9adce8;
-  --t-accent-surface: rgb(91 183 202 / 15%);
+    /* Accent — teal, brightened for dark backgrounds */
+    --t-accent: #7dcfdf;
+    --t-accent-hover: #9adce8;
+    --t-accent-text: #9adce8;
+    --t-accent-surface: rgb(91 183 202 / 15%);
 
-  /* Status: Error */
-  --t-error-surface: rgb(127 29 29 / 20%);
-  --t-error-edge: #991b1b;
-  --t-error-text: #f87171;
+    /* Status: Error */
+    --t-error-surface: rgb(127 29 29 / 20%);
+    --t-error-edge: #991b1b;
+    --t-error-text: #f87171;
 
-  /* Status: Success */
-  --t-success-surface: rgb(20 83 45 / 20%);
-  --t-success-edge: #166534;
-  --t-success-text: #4ade80;
+    /* Status: Success */
+    --t-success-surface: rgb(20 83 45 / 20%);
+    --t-success-edge: #166534;
+    --t-success-text: #4ade80;
 
-  /* Hero CTA (inverted) */
-  --t-cta: #fafaf9;
-  --t-cta-text: #0c0a09;
-  --t-cta-hover: #e7e5e3;
+    /* Hero CTA (inverted) */
+    --t-cta: #fafaf9;
+    --t-cta-text: #0c0a09;
+    --t-cta-hover: #e7e5e3;
 
-  /* Misc */
-  --t-delete: #57534e;
-  --t-delete-hover: #f87171;
-  --t-note-bg: rgb(41 37 36 / 60%);
+    /* Misc */
+    --t-delete: #57534e;
+    --t-delete-hover: #f87171;
+    --t-note-bg: rgb(41 37 36 / 60%);
 }
 
 @theme {
-  --font-sans: "DM Sans", system-ui, -apple-system, sans-serif;
-  --font-mono: "DM Mono", ui-monospace, monospace;
+    --font-sans: "DM Sans", system-ui, -apple-system, sans-serif;
+    --font-mono: "DM Mono", ui-monospace, monospace;
 
-  /* Button shadows — slightly punchier than before */
-  --shadow-btn: 0 1px 3px 0 rgb(0 0 0 / 0.12), inset 0 1px 0 rgb(255 255 255 / 0.12);
-  --shadow-btn-dark: 0 1px 3px 0 rgb(0 0 0 / 0.3), inset 0 1px 0 rgb(255 255 255 / 0.08);
+    /* Button shadows — slightly punchier than before */
+    --shadow-btn: 0 1px 3px 0 rgb(0 0 0 / 0.12), inset 0 1px 0 rgb(255 255 255 / 0.12);
+    --shadow-btn-dark: 0 1px 3px 0 rgb(0 0 0 / 0.3), inset 0 1px 0 rgb(255 255 255 / 0.08);
 
-  --color-page: var(--t-page);
-  --color-surface: var(--t-surface);
-  --color-surface-alt: var(--t-surface-alt);
-  --color-raised: var(--t-raised);
-  --color-raised-hover: var(--t-raised-hover);
-  --color-overlay: var(--t-overlay);
-  --color-overlay-heavy: var(--t-overlay-heavy);
+    --color-page: var(--t-page);
+    --color-surface: var(--t-surface);
+    --color-surface-alt: var(--t-surface-alt);
+    --color-raised: var(--t-raised);
+    --color-raised-hover: var(--t-raised-hover);
+    --color-overlay: var(--t-overlay);
+    --color-overlay-heavy: var(--t-overlay-heavy);
 
-  --color-content: var(--t-content);
-  --color-content-secondary: var(--t-content-secondary);
-  --color-content-tertiary: var(--t-content-tertiary);
-  --color-content-faint: var(--t-content-faint);
+    --color-content: var(--t-content);
+    --color-content-secondary: var(--t-content-secondary);
+    --color-content-tertiary: var(--t-content-tertiary);
+    --color-content-faint: var(--t-content-faint);
 
-  --color-edge: var(--t-edge);
-  --color-edge-hover: var(--t-edge-hover);
+    --color-edge: var(--t-edge);
+    --color-edge-hover: var(--t-edge-hover);
 
-  --color-accent: var(--t-accent);
-  --color-accent-hover: var(--t-accent-hover);
-  --color-accent-text: var(--t-accent-text);
-  --color-accent-surface: var(--t-accent-surface);
+    --color-accent: var(--t-accent);
+    --color-accent-hover: var(--t-accent-hover);
+    --color-accent-text: var(--t-accent-text);
+    --color-accent-surface: var(--t-accent-surface);
 
-  --color-error-surface: var(--t-error-surface);
-  --color-error-edge: var(--t-error-edge);
-  --color-error-text: var(--t-error-text);
+    --color-error-surface: var(--t-error-surface);
+    --color-error-edge: var(--t-error-edge);
+    --color-error-text: var(--t-error-text);
 
-  --color-success-surface: var(--t-success-surface);
-  --color-success-edge: var(--t-success-edge);
-  --color-success-text: var(--t-success-text);
+    --color-success-surface: var(--t-success-surface);
+    --color-success-edge: var(--t-success-edge);
+    --color-success-text: var(--t-success-text);
 
-  --color-cta: var(--t-cta);
-  --color-cta-text: var(--t-cta-text);
-  --color-cta-hover: var(--t-cta-hover);
+    --color-cta: var(--t-cta);
+    --color-cta-text: var(--t-cta-text);
+    --color-cta-hover: var(--t-cta-hover);
 
-  --color-delete: var(--t-delete);
-  --color-delete-hover: var(--t-delete-hover);
-  --color-note-bg: var(--t-note-bg);
+    --color-delete: var(--t-delete);
+    --color-delete-hover: var(--t-delete-hover);
+    --color-note-bg: var(--t-note-bg);
 }
 
 html {
-  scroll-behavior: smooth;
+    scroll-behavior: smooth;
 }
 
 body {
-  margin: 0;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  /* Subtle grain texture — very low opacity for warmth */
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23noise)' opacity='0.035'/%3E%3C/svg%3E");
-  background-repeat: repeat;
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Subtle grain texture — very low opacity for warmth */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23noise)' opacity='0.035'/%3E%3C/svg%3E");
+    background-repeat: repeat;
 }
 
 #app {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
 }
 
 /* ----------------------------------------------------------------
    Wavy underline utility — used on hero headline key word
    ---------------------------------------------------------------- */
 .underline-wavy {
-  text-decoration: underline wavy var(--t-accent);
-  text-underline-offset: 5px;
-  text-decoration-thickness: 2px;
+    text-decoration: underline wavy var(--t-accent);
+    text-underline-offset: 5px;
+    text-decoration-thickness: 2px;
 }
