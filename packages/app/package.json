@@ -19,7 +19,8 @@
     "format": "oxfmt --write .",
     "format:check": "oxfmt --check .",
     "check": "oxlint && oxfmt --check .",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:ci": "vitest run --coverage"
   },
   "dependencies": {
     "@hono/node-server": "^1.19.12",
@@ -38,7 +39,7 @@
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.23.1",
-    "@cloudflare/vitest-pool-workers": "^0.8.0",
+    "@cloudflare/vitest-pool-workers": "^0.14.5",
     "@cloudflare/workers-types": "^4.20260207.0",
     "@eslint/js": "^9.39.1",
     "@preact/preset-vite": "^2.10.3",
@@ -48,6 +49,8 @@
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.1",
+    "@vitest/coverage-istanbul": "^4.1.4",
+    "@vitest/coverage-v8": "^4.1.4",
     "drizzle-kit": "^0.31.8",
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
@@ -58,7 +61,7 @@
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.46.4",
     "vite": "npm:rolldown-vite@7.2.5",
-    "vitest": "^3.0.0",
+    "vitest": "^4.1.4",
     "wrangler": "^4.63.0"
   },
   "optionalDependencies": {
