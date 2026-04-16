@@ -1,12 +1,15 @@
-import type { BaseSQLiteDatabase } from "drizzle-orm/sqlite-core";
+import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
+import type { AnyD1Database, DrizzleD1Database } from "drizzle-orm/d1";
 
 export type Bindings = Cloudflare.Env;
 
-export type AgnosticDatabaseInstance<Schema extends Record<string, unknown>> = BaseSQLiteDatabase<
-  "sync" | "async",
-  unknown,
-  Schema
->;
+export type AgnosticDatabaseInstance<Schema extends Record<string, unknown>> =
+  | (DrizzleD1Database<Schema> & {
+      $client: AnyD1Database;
+    })
+  | (BetterSQLite3Database<Schema> & {
+      $client: import("better-sqlite3").Database;
+    });
 
 export type Variables<Schema extends Record<string, unknown>> = {
   user: {
