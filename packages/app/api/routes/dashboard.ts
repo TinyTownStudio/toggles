@@ -181,7 +181,12 @@ dashboard.get("/", async (c) => {
     enabledFlags: Number(row.enabledFlags ?? 0),
   }));
 
-  const apiKeyCounts = apiKeyCountRows[0] ?? { total: 0, active: 0, unused: 0, expiring: 0 };
+  const apiKeyCounts = apiKeyCountRows[0] ?? {
+    total: 0,
+    active: 0,
+    unused: 0,
+    expiring: 0,
+  };
   const totalApiKeys = Number(apiKeyCounts.total);
   const activeApiKeys = Number(apiKeyCounts.active ?? 0);
   const unusedApiKeys = Number(apiKeyCounts.unused ?? 0);

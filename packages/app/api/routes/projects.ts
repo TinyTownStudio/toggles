@@ -1,7 +1,8 @@
 import { Hono } from "hono";
-import { eq, and, like } from "drizzle-orm";
+import { eq, and, like, sql } from "drizzle-orm";
 import * as schema from "../db/schema";
 import { hasWriteAccess, isScopeViolation } from "../lib/permissions";
+import { getUserPlan, PLAN_LIMITS } from "../lib/plans";
 import type { AgnosticDatabaseInstance, Bindings, Variables } from "../types";
 
 export const projects = new Hono<{
@@ -39,6 +40,20 @@ projects.post("/", async (c) => {
   }
 
   const db = c.get("db");
+
+  const plan = await getUserPlan(db, userId);
+  const limit = PLAN_LIMITS[plan].projects;
+  if (limit !== Infinity) {
+    const rows = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(schema.project)
+      .where(eq(schema.project.userId, userId))
+      .all();
+    if (Number(rows[0]?.count ?? 0) >= limit) {
+      return c.json({ error: "Project limit reached for your plan" }, 403);
+    }
+  }
+
   const now = new Date();
   const id = crypto.randomUUID();
 
@@ -190,7 +205,10 @@ projects.patch("/:projectId/toggles/:id", async (c) => {
     : await getOwnedProject(db, projectId, userId);
   if (!project) return c.json({ error: "Not found" }, 404);
 
-  const body = await c.req.json<{ enabled?: boolean; meta?: Record<string, string> | null }>();
+  const body = await c.req.json<{
+    enabled?: boolean;
+    meta?: Record<string, string> | null;
+  }>();
   if (typeof body.enabled !== "boolean" && !("meta" in body)) {
     return c.json({ error: "enabled or meta is required" }, 400);
   }
