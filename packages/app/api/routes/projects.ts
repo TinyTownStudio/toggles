@@ -44,11 +44,11 @@ projects.post("/", async (c) => {
   const plan = await getUserPlan(db, userId);
   const limit = PLAN_LIMITS[plan].projects;
   if (limit !== Infinity) {
-    const rows = (await db
+    const rows = await db
       .select({ count: sql<number>`count(*)` })
       .from(schema.project)
       .where(eq(schema.project.userId, userId))
-      .all()) as unknown as { count: number }[];
+      .all();
     if (Number(rows[0]?.count ?? 0) >= limit) {
       return c.json({ error: "Project limit reached for your plan" }, 403);
     }
