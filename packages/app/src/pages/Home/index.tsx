@@ -26,7 +26,7 @@ function Hero({ onGetStarted }: { onGetStarted: () => void }) {
         <h1 class="text-4xl md:text-5xl font-semibold tracking-tight text-content leading-[1.15] mb-6">
           Ship features <span class="underline-wavy">on your terms</span>.
         </h1>
-        <div class="border overflow-clip border-surface rounded-md my-1 mb-4">
+        <div class="my-1 mb-4">
           <HeroAnimation />
         </div>
         <p class="text-base text-content-tertiary leading-relaxed mb-10 max-w-[52ch]">
