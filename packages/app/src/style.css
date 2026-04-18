@@ -177,3 +177,137 @@ body {
     text-underline-offset: 5px;
     text-decoration-thickness: 2px;
 }
+
+/* ----------------------------------------------------------------
+   Hero toggle animation
+   6 s loop:
+     0–22 %   → flag OFF,  card hidden
+     22–27 %  → toggle flips ON
+     27–72 %  → flag ON,   card visible
+     72–77 %  → toggle flips OFF
+     77–100 % → flag OFF,  card hidden
+   ---------------------------------------------------------------- */
+@keyframes hero-toggle-track {
+    0%,
+    22% {
+        background-color: var(--t-raised-hover);
+    }
+    27%,
+    72% {
+        background-color: var(--t-accent);
+    }
+    77%,
+    100% {
+        background-color: var(--t-raised-hover);
+    }
+}
+
+@keyframes hero-toggle-thumb {
+    0%,
+    22% {
+        transform: translateX(-15px);
+    }
+    27%,
+    72% {
+        transform: translateX(3px);
+    }
+    77%,
+    100% {
+        transform: translateX(-15px);
+    }
+}
+
+@keyframes hero-badge-on {
+    0%,
+    24% {
+        opacity: 0;
+    }
+    32%,
+    70% {
+        opacity: 1;
+    }
+    77%,
+    100% {
+        opacity: 0;
+    }
+}
+
+@keyframes hero-badge-off {
+    0%,
+    20% {
+        opacity: 1;
+    }
+    27%,
+    75% {
+        opacity: 0;
+    }
+    82%,
+    100% {
+        opacity: 1;
+    }
+}
+
+@keyframes hero-feature-card {
+    0%,
+    27% {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    40% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    68% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    77% {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+}
+
+.hero-anim-track {
+    animation: hero-toggle-track 6s ease-in-out infinite;
+}
+.hero-anim-thumb {
+    animation: hero-toggle-thumb 6s ease-in-out infinite;
+}
+.hero-anim-badge-on {
+    animation: hero-badge-on 6s ease-in-out infinite;
+}
+.hero-anim-badge-off {
+    animation: hero-badge-off 6s ease-in-out infinite;
+}
+.hero-anim-card {
+    animation: hero-feature-card 6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+    .hero-anim-track,
+    .hero-anim-thumb,
+    .hero-anim-badge-on,
+    .hero-anim-badge-off,
+    .hero-anim-card {
+        animation: none;
+    }
+    .hero-anim-track {
+        background-color: var(--t-accent);
+    }
+    .hero-anim-thumb {
+        transform: translateX(19px);
+    }
+    .hero-anim-badge-on {
+        opacity: 1;
+    }
+    .hero-anim-badge-off {
+        opacity: 0;
+    }
+    .hero-anim-card {
+        opacity: 1;
+        transform: none;
+    }
+}
