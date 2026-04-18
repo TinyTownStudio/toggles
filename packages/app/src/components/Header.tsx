@@ -25,10 +25,19 @@ export function Header() {
 
   const currentRoute = location.path;
   const links = [
-    { label: "Features", href: !currentRoute.startsWith("/auth") ? "#features" : "/#features" },
+    {
+      label: "Features",
+      href:
+        !currentRoute.startsWith("/auth") && !currentRoute.startsWith("/docs")
+          ? "#features"
+          : "/#features",
+    },
     {
       label: "Pricing",
-      href: !currentRoute.startsWith("/auth") ? "#pricing" : "/#pricing",
+      href:
+        !currentRoute.startsWith("/auth") && !currentRoute.startsWith("/docs")
+          ? "#pricing"
+          : "/#pricing",
     },
     { label: "Docs", href: "/docs" },
   ];
