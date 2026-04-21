@@ -5,7 +5,7 @@ import { Polar } from "@polar-sh/sdk";
 import { polar, checkout, portal, webhooks } from "@polar-sh/better-auth";
 import * as schema from "../db/schema";
 import { isProduction } from "../utils/isProduction";
-import { apiKey } from "better-auth/plugins";
+import { apiKey, organization } from "better-auth/plugins";
 import type { AgnosticDatabaseInstance } from "../types";
 
 type Env = Cloudflare.Env;
@@ -25,6 +25,11 @@ export function createAuth(env: Env, db: AgnosticDatabaseInstance<typeof schema>
         session: schema.session,
         account: schema.account,
         apikey: schema.apikey,
+        organization: schema.organization,
+        member: schema.member,
+        invitation: schema.invitation,
+        team: schema.team,
+        teamMember: schema.teamMember,
       },
     }),
     secret: env.BETTER_AUTH_SECRET,
@@ -38,6 +43,11 @@ export function createAuth(env: Env, db: AgnosticDatabaseInstance<typeof schema>
     plugins: [
       apiKey({
         enableMetadata: true,
+      }),
+      organization({
+        teams: {
+          enabled: true,
+        },
       }),
       polar({
         client: polarClient,
