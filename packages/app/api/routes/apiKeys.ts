@@ -6,7 +6,10 @@ import { buildPermissions, deriveTokenType } from "../lib/permissions";
 import type { TokenType } from "../lib/permissions";
 import type { Bindings, Variables } from "../types";
 
-export const apiKeys = new Hono<{ Bindings: Bindings; Variables: Variables<typeof schema> }>();
+export const apiKeys = new Hono<{
+  Bindings: Bindings;
+  Variables: Variables<typeof schema>;
+}>();
 
 // GET /api/v1/api-keys - list keys for the authenticated user
 apiKeys.get("/", async (c) => {
@@ -35,7 +38,11 @@ apiKeys.post("/", async (c) => {
   const userId = c.get("user")?.id;
   if (!userId) return c.json({ error: "Unauthorized" }, 401);
 
-  const body = await c.req.json<{ name?: string; type?: TokenType; projectId?: string | null }>();
+  const body = await c.req.json<{
+    name?: string;
+    type?: TokenType;
+    projectId?: string | null;
+  }>();
   const tokenType: TokenType = body.type === "admin" ? "admin" : "read";
   const projectId = body.projectId ?? null;
 
@@ -89,7 +96,13 @@ apiKeys.delete("/:id", async (c) => {
   if (!row) return c.json({ error: "Not found" }, 404);
 
   const auth = createAuth(c.env, c.get("db"));
-  await auth.api.deleteApiKey({ body: { keyId: id } });
+
+  await auth.api.deleteApiKey({
+    headers: c.req.raw.headers,
+    body: {
+      keyId: id,
+    },
+  });
 
   return c.body(null, 204);
 });
