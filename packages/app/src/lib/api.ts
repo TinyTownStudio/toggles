@@ -103,8 +103,9 @@ export async function getPortalUrl(): Promise<{ url: string }> {
   return fetchApi<{ url: string }>("/api/v1/portal");
 }
 
-export async function getProjects(): Promise<Project[]> {
-  return fetchApi<Project[]>("/api/v1/projects");
+export async function getProjects(search?: string): Promise<Project[]> {
+  const params = search?.trim() ? `?search=${encodeURIComponent(search.trim())}` : "";
+  return fetchApi<Project[]>(`/api/v1/projects${params}`);
 }
 
 export async function createProject(name: string): Promise<Project> {
@@ -118,8 +119,9 @@ export async function deleteProject(id: string): Promise<void> {
   await fetchApi<void>(`/api/v1/projects/${id}`, { method: "DELETE" });
 }
 
-export async function getToggles(projectId: string): Promise<Toggle[]> {
-  return fetchApi<Toggle[]>(`/api/v1/projects/${projectId}/toggles`);
+export async function getToggles(projectId: string, search?: string): Promise<Toggle[]> {
+  const params = search?.trim() ? `?search=${encodeURIComponent(search.trim())}` : "";
+  return fetchApi<Toggle[]>(`/api/v1/projects/${projectId}/toggles${params}`);
 }
 
 export async function createToggle(projectId: string, key: string): Promise<Toggle> {

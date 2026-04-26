@@ -6,6 +6,7 @@ export const ProjectsModel = createModel(() => {
   const projects = signal<Project[]>([]);
   const error = signal<string | null>(null);
   const creating = signal(false);
+  const searching = signal(false);
 
   const fetch = async () => {
     loading.value = true;
@@ -16,6 +17,18 @@ export const ProjectsModel = createModel(() => {
       error.value = err instanceof Error ? err.message : "Failed to load projects";
     } finally {
       loading.value = false;
+    }
+  };
+
+  const search = async (query: string) => {
+    searching.value = true;
+    error.value = null;
+    try {
+      projects.value = await getProjects(query);
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : "Failed to search projects";
+    } finally {
+      searching.value = false;
     }
   };
 
@@ -43,5 +56,5 @@ export const ProjectsModel = createModel(() => {
     }
   };
 
-  return { loading, projects, error, creating, fetch, create, remove };
+  return { loading, projects, error, creating, searching, fetch, search, create, remove };
 });

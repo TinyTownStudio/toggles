@@ -1,11 +1,12 @@
 import { useLocation } from "preact-iso";
 import { useModel } from "@preact/signals";
-import { useEffect, useState } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
 import { AuthModel } from "../../models/auth";
 import { ProjectsModel } from "../../models/projects";
 import { TogglesModel } from "../../models/toggles";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
+import { Modal } from "../../components/ui/Modal";
 import type { Toggle } from "../../lib/api";
 
 type MetaRow = { key: string; value: string };
@@ -25,8 +26,11 @@ export function ProjectDetail({ id }: { id: string }) {
   const togglesModel = useModel(TogglesModel);
   const { route } = useLocation();
   const [newKey, setNewKey] = useState("");
+  const [showModal, setShowModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [editingMetaId, setEditingMetaId] = useState<string | null>(null);
   const [metaRows, setMetaRows] = useState<MetaRow[]>([]);
+  const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     auth.checkSession().then(async () => {
@@ -57,6 +61,15 @@ export function ProjectDetail({ id }: { id: string }) {
     if (!key) return;
     await togglesModel.create(id, key);
     setNewKey("");
+    setShowModal(false);
+  };
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    if (searchTimeout.current) clearTimeout(searchTimeout.current);
+    searchTimeout.current = setTimeout(() => {
+      togglesModel.search(id, query);
+    }, 300);
   };
 
   const openMeta = (t: Toggle) => {
@@ -93,22 +106,21 @@ export function ProjectDetail({ id }: { id: string }) {
           <p class="text-sm text-error-text mb-4">{togglesModel.error.value}</p>
         )}
 
-        <form onSubmit={handleCreate} class="flex gap-2 mb-8">
+        <div class="flex gap-2 mb-8">
           <Input
-            type="text"
-            value={newKey}
-            onInput={(e) => setNewKey((e.target as HTMLInputElement).value)}
-            placeholder="Flag key (e.g. dark-mode)"
-            disabled={togglesModel.creating.value}
+            type="search"
+            value={searchQuery}
+            onInput={(e) => handleSearch((e.target as HTMLInputElement).value)}
+            placeholder="Search flags…"
             class="flex-1"
           />
-          <Button type="submit" disabled={togglesModel.creating.value || !newKey.trim()}>
-            {togglesModel.creating.value ? "Adding…" : "Add flag"}
-          </Button>
-        </form>
+          <Button onClick={() => setShowModal(true)}>New Flag</Button>
+        </div>
 
         {togglesModel.toggles.value.length === 0 ? (
-          <p class="text-content-tertiary text-sm">No flags yet.</p>
+          <p class="text-content-tertiary text-sm">
+            {searchQuery ? "No flags match your search." : "No flags yet."}
+          </p>
         ) : (
           <ul class="space-y-2">
             {togglesModel.toggles.value.map((t) => (
@@ -219,6 +231,29 @@ export function ProjectDetail({ id }: { id: string }) {
           </ul>
         )}
       </div>
+
+      {showModal && (
+        <Modal title="New Flag" onClose={() => setShowModal(false)}>
+          <form onSubmit={handleCreate} class="flex flex-col gap-4">
+            <Input
+              type="text"
+              value={newKey}
+              onInput={(e) => setNewKey((e.target as HTMLInputElement).value)}
+              placeholder="Flag key (e.g. dark-mode)"
+              disabled={togglesModel.creating.value}
+              autoFocus
+            />
+            <div class="flex justify-end gap-2">
+              <Button type="button" variant="secondary" onClick={() => setShowModal(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={togglesModel.creating.value || !newKey.trim()}>
+                {togglesModel.creating.value ? "Adding…" : "Add Flag"}
+              </Button>
+            </div>
+          </form>
+        </Modal>
+      )}
     </div>
   );
 }

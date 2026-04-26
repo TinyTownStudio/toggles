@@ -18,10 +18,17 @@ projects.get("/", async (c) => {
   }
 
   const db = c.get("db");
+  const { search } = c.req.query();
+  const searchFilter = search?.trim() ? like(schema.project.name, `%${search.trim()}%`) : undefined;
+
   const rows = await db
     .select()
     .from(schema.project)
-    .where(eq(schema.project.userId, userId))
+    .where(
+      searchFilter
+        ? and(eq(schema.project.userId, userId), searchFilter)
+        : eq(schema.project.userId, userId),
+    )
     .all();
 
   return c.json(rows);
@@ -120,6 +127,8 @@ projects.get("/:projectId/toggles", async (c) => {
     return c.json({ error: "Forbidden" }, 403);
 
   const db = c.get("db");
+  const { search } = c.req.query();
+  const searchFilter = search?.trim() ? like(schema.toggle.key, `%${search.trim()}%`) : undefined;
 
   if (keyData) {
     const project = await db
@@ -132,7 +141,11 @@ projects.get("/:projectId/toggles", async (c) => {
     const rows = await db
       .select()
       .from(schema.toggle)
-      .where(eq(schema.toggle.projectId, projectId))
+      .where(
+        searchFilter
+          ? and(eq(schema.toggle.projectId, projectId), searchFilter)
+          : eq(schema.toggle.projectId, projectId),
+      )
       .all();
     return c.json(rows);
   }
@@ -143,7 +156,11 @@ projects.get("/:projectId/toggles", async (c) => {
   const rows = await db
     .select()
     .from(schema.toggle)
-    .where(eq(schema.toggle.projectId, projectId))
+    .where(
+      searchFilter
+        ? and(eq(schema.toggle.projectId, projectId), searchFilter)
+        : eq(schema.toggle.projectId, projectId),
+    )
     .all();
 
   return c.json(rows);

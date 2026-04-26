@@ -14,16 +14,29 @@ export const TogglesModel = createModel(() => {
   const error = signal<string | null>(null);
   const creating = signal(false);
   const saving = signal(false);
+  const searching = signal(false);
 
-  const fetch = async (projectId: string) => {
+  const fetch = async (projectId: string, search?: string) => {
     loading.value = true;
     error.value = null;
     try {
-      toggles.value = await getToggles(projectId);
+      toggles.value = await getToggles(projectId, search);
     } catch (err) {
       error.value = err instanceof Error ? err.message : "Failed to load toggles";
     } finally {
       loading.value = false;
+    }
+  };
+
+  const search = async (projectId: string, query: string) => {
+    searching.value = true;
+    error.value = null;
+    try {
+      toggles.value = await getToggles(projectId, query);
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : "Failed to search toggles";
+    } finally {
+      searching.value = false;
     }
   };
 
@@ -78,5 +91,18 @@ export const TogglesModel = createModel(() => {
     }
   };
 
-  return { loading, toggles, error, creating, saving, fetch, create, toggle, remove, saveMeta };
+  return {
+    loading,
+    toggles,
+    error,
+    creating,
+    saving,
+    searching,
+    fetch,
+    search,
+    create,
+    toggle,
+    remove,
+    saveMeta,
+  };
 });

@@ -5,6 +5,7 @@ import { useEffect, useState } from "preact/hooks";
 import { Alert } from "../../components/ui/Alert";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
+import { Modal } from "../../components/ui/Modal";
 import { ApiKeysModel } from "../../models/apiKeys";
 import { AuthModel } from "../../models/auth";
 import { ProjectsModel } from "../../models/projects";
@@ -16,6 +17,7 @@ export function ApiKeys() {
   const auth = useModel(AuthModel);
   const apiKeyModel = useModel(ApiKeysModel);
   const projectsModel = useModel(ProjectsModel);
+  const [showModal, setShowModal] = useState(false);
   const [newName, setNewName] = useState("");
   const [newProjectId, setNewProjectId] = useState<string>("__all__");
   const [newType, setNewType] = useState<TokenType>("read");
@@ -41,6 +43,7 @@ export function ApiKeys() {
       setNewName("");
       setNewProjectId("__all__");
       setNewType("read");
+      setShowModal(false);
     }
   };
 
@@ -62,9 +65,12 @@ export function ApiKeys() {
       <div class="max-w-5xl mx-auto px-4 py-12">
         <div class="flex items-center justify-between mb-8">
           <h1 class="text-2xl font-bold text-content">API Keys</h1>
-          <Button variant="ghost" size="sm" onClick={() => route("/docs")}>
-            API Documentation &rarr;
-          </Button>
+          <div class="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={() => route("/docs")}>
+              API Documentation &rarr;
+            </Button>
+            <Button onClick={() => setShowModal(true)}>New API Key</Button>
+          </div>
         </div>
 
         {newKey && (
@@ -80,46 +86,6 @@ export function ApiKeys() {
         )}
 
         {apiKeyModel.error.value && <Alert class="mb-6">{apiKeyModel.error.value}</Alert>}
-
-        <form onSubmit={handleCreate} class="space-y-3 mb-8">
-          <div class="flex gap-2">
-            <Input
-              type="text"
-              value={newName}
-              onInput={(e) => setNewName((e.target as HTMLInputElement).value)}
-              placeholder="Key name (optional)"
-              disabled={apiKeyModel.creating.value}
-              class="flex-1"
-            />
-          </div>
-          <div class="flex gap-2">
-            <select
-              value={newType}
-              onChange={(e) => setNewType((e.target as HTMLSelectElement).value as TokenType)}
-              disabled={apiKeyModel.creating.value}
-              class="rounded-lg border border-edge bg-page text-content text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent/20"
-            >
-              <option value="read">Read</option>
-              <option value="admin">Admin</option>
-            </select>
-            <select
-              value={newProjectId}
-              onChange={(e) => setNewProjectId((e.target as HTMLSelectElement).value)}
-              disabled={apiKeyModel.creating.value}
-              class="flex-1 rounded-lg border border-edge bg-page text-content text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent/20"
-            >
-              <option value="__all__">All projects</option>
-              {projectsModel.projects.value.map((p: Project) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
-            <Button type="submit" disabled={apiKeyModel.creating.value}>
-              {apiKeyModel.creating.value ? "Creating…" : "Create Key"}
-            </Button>
-          </div>
-        </form>
 
         {apiKeyModel.apiKeys.value.length === 0 ? (
           <p class="text-content-tertiary text-sm">No API keys yet.</p>
@@ -153,6 +119,53 @@ export function ApiKeys() {
           </ul>
         )}
       </div>
+
+      {showModal && (
+        <Modal title="New API Key" onClose={() => setShowModal(false)}>
+          <form onSubmit={handleCreate} class="flex flex-col gap-4">
+            <Input
+              type="text"
+              value={newName}
+              onInput={(e) => setNewName((e.target as HTMLInputElement).value)}
+              placeholder="Key name (optional)"
+              disabled={apiKeyModel.creating.value}
+              autoFocus
+            />
+            <div class="flex gap-2">
+              <select
+                value={newType}
+                onChange={(e) => setNewType((e.target as HTMLSelectElement).value as TokenType)}
+                disabled={apiKeyModel.creating.value}
+                class="rounded-lg border border-edge bg-page text-content text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent/20"
+              >
+                <option value="read">Read</option>
+                <option value="admin">Admin</option>
+              </select>
+              <select
+                value={newProjectId}
+                onChange={(e) => setNewProjectId((e.target as HTMLSelectElement).value)}
+                disabled={apiKeyModel.creating.value}
+                class="flex-1 rounded-lg border border-edge bg-page text-content text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent/20"
+              >
+                <option value="__all__">All projects</option>
+                {projectsModel.projects.value.map((p: Project) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div class="flex justify-end gap-2">
+              <Button type="button" variant="secondary" onClick={() => setShowModal(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={apiKeyModel.creating.value}>
+                {apiKeyModel.creating.value ? "Creating…" : "Create Key"}
+              </Button>
+            </div>
+          </form>
+        </Modal>
+      )}
     </div>
   );
 }
