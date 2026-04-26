@@ -20,7 +20,7 @@ export async function getUserPlan(
   userId: string,
 ): Promise<Plan> {
   const row = await db
-    .select({ plan: schema.subscription.plan })
+    .select()
     .from(schema.subscription)
     .where(eq(schema.subscription.userId, userId))
     .get();
