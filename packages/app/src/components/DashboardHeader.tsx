@@ -16,6 +16,7 @@ export function DashboardHeader() {
   const navLinks = [
     { label: "Dashboard", href: "/app/dashboard" },
     { label: "Projects", href: "/app/projects" },
+    { label: "Teams", href: "/app/teams" },
     { label: "Billing", href: "/app/billing" },
     { label: "API Keys", href: "/app/api-keys" },
   ];

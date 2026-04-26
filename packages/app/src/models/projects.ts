@@ -1,5 +1,5 @@
 import { signal, createModel } from "@preact/signals";
-import { getProjects, createProject, deleteProject, type Project } from "../lib/api";
+import { getProjects, createProject, deleteProject, updateProject, type Project } from "../lib/api";
 
 export const ProjectsModel = createModel(() => {
   const loading = signal(true);
@@ -43,5 +43,17 @@ export const ProjectsModel = createModel(() => {
     }
   };
 
-  return { loading, projects, error, creating, fetch, create, remove };
+  const update = async (id: string, organizationId: string | null, teamId: string | null) => {
+    error.value = null;
+    try {
+      const updated = await updateProject(id, organizationId, teamId);
+      projects.value = projects.value.map((p) => (p.id === id ? updated : p));
+      return updated;
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : "Failed to update project";
+      throw err;
+    }
+  };
+
+  return { loading, projects, error, creating, fetch, create, remove, update };
 });

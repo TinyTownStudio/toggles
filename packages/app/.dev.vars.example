@@ -3,5 +3,6 @@ BETTER_AUTH_URL=http://localhost:5173/api/auth
 POLAR_ACCESS_TOKEN=your-polar-access-token
 POLAR_WEBHOOK_SECRET=your-polar-webhook-secret
 POLAR_PRO_PRODUCT_ID=your-polar-pro-product-id
+POSTMARK_SERVER_TOKEN=your-postmark-server-token
 LOCAL=true
 PRODUCT_BETA=false

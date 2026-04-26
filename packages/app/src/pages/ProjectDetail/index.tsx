@@ -4,8 +4,10 @@ import { useEffect, useState } from "preact/hooks";
 import { AuthModel } from "../../models/auth";
 import { ProjectsModel } from "../../models/projects";
 import { TogglesModel } from "../../models/toggles";
+import { OrganizationsModel } from "../../models/organizations";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
+import { Alert } from "../../components/ui/Alert";
 import type { Toggle } from "../../lib/api";
 
 type MetaRow = { key: string; value: string };
@@ -23,10 +25,18 @@ export function ProjectDetail({ id }: { id: string }) {
   const auth = useModel(AuthModel);
   const projectsModel = useModel(ProjectsModel);
   const togglesModel = useModel(TogglesModel);
+  const orgsModel = useModel(OrganizationsModel);
   const { route } = useLocation();
   const [newKey, setNewKey] = useState("");
   const [editingMetaId, setEditingMetaId] = useState<string | null>(null);
   const [metaRows, setMetaRows] = useState<MetaRow[]>([]);
+
+  // Workspace association state
+  const [selectedOrgId, setSelectedOrgId] = useState<string>("");
+  const [selectedTeamId, setSelectedTeamId] = useState<string>("");
+  const [savingWorkspace, setSavingWorkspace] = useState(false);
+  const [workspaceSaved, setWorkspaceSaved] = useState(false);
+  const [workspaceError, setWorkspaceError] = useState<string | null>(null);
 
   useEffect(() => {
     auth.checkSession().then(async () => {
@@ -37,9 +47,26 @@ export function ProjectDetail({ id }: { id: string }) {
       await Promise.all([
         projectsModel.projects.value.length === 0 ? projectsModel.fetch() : Promise.resolve(),
         togglesModel.fetch(id),
+        orgsModel.orgs.value.length === 0 ? orgsModel.fetchOrgs() : Promise.resolve(),
       ]);
     });
   }, [id]);
+
+  // When project loads, initialise workspace dropdowns to current values
+  useEffect(() => {
+    const project = projectsModel.projects.value.find((p) => p.id === id);
+    if (project) {
+      setSelectedOrgId(project.organizationId ?? "");
+      setSelectedTeamId(project.teamId ?? "");
+    }
+  }, [projectsModel.projects.value, id]);
+
+  // When org selection changes, load teams for that org
+  useEffect(() => {
+    if (selectedOrgId) {
+      orgsModel.fetchTeams(selectedOrgId);
+    }
+  }, [selectedOrgId]);
 
   if (auth.loading.value || togglesModel.loading.value) {
     return (
@@ -74,6 +101,30 @@ export function ProjectDetail({ id }: { id: string }) {
     closeMeta();
   };
 
+  const handleSaveWorkspace = async (e: Event) => {
+    e.preventDefault();
+    setSavingWorkspace(true);
+    setWorkspaceSaved(false);
+    setWorkspaceError(null);
+    try {
+      await projectsModel.update(id, selectedOrgId || null, selectedTeamId || null);
+      setWorkspaceSaved(true);
+      setTimeout(() => setWorkspaceSaved(false), 3000);
+    } catch (err) {
+      setWorkspaceError(err instanceof Error ? err.message : "Failed to save");
+    } finally {
+      setSavingWorkspace(false);
+    }
+  };
+
+  // Teams filtered to the currently selected org
+  const availableTeams = selectedOrgId
+    ? orgsModel.teams.value.filter((t) => t.organizationId === selectedOrgId)
+    : [];
+
+  // Is the current user the project owner?
+  const isOwner = project?.userId === auth.user?.value?.id;
+
   return (
     <div class="min-h-screen bg-page pt-16">
       <div class="max-w-5xl mx-auto px-6 py-12">
@@ -88,6 +139,67 @@ export function ProjectDetail({ id }: { id: string }) {
             {project?.name ?? "Project"}
           </h1>
         </div>
+
+        {/* Workspace association */}
+        {isOwner && (
+          <div class="bg-surface border border-edge rounded-xl p-5 mb-8">
+            <h2 class="text-sm font-semibold text-content mb-4">Workspace</h2>
+            {workspaceError && <Alert class="mb-3">{workspaceError}</Alert>}
+            {workspaceSaved && (
+              <Alert variant="success" class="mb-3">
+                Workspace association saved.
+              </Alert>
+            )}
+            <form onSubmit={handleSaveWorkspace} class="flex flex-wrap gap-3 items-end">
+              <div class="flex flex-col gap-1">
+                <label for="ws-org" class="text-xs text-content-tertiary font-medium">
+                  Workspace
+                </label>
+                <select
+                  id="ws-org"
+                  class="h-9 rounded-lg border border-edge bg-page text-content text-sm px-2 focus:outline-none focus:ring-2 focus:ring-accent min-w-40"
+                  value={selectedOrgId}
+                  onChange={(e) => {
+                    setSelectedOrgId((e.target as HTMLSelectElement).value);
+                    setSelectedTeamId("");
+                  }}
+                  disabled={savingWorkspace}
+                >
+                  <option value="">None</option>
+                  {orgsModel.orgs.value.map((org) => (
+                    <option key={org.id} value={org.id}>
+                      {org.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {selectedOrgId && (
+                <div class="flex flex-col gap-1">
+                  <label for="ws-team" class="text-xs text-content-tertiary font-medium">
+                    Team (optional)
+                  </label>
+                  <select
+                    id="ws-team"
+                    class="h-9 rounded-lg border border-edge bg-page text-content text-sm px-2 focus:outline-none focus:ring-2 focus:ring-accent min-w-40"
+                    value={selectedTeamId}
+                    onChange={(e) => setSelectedTeamId((e.target as HTMLSelectElement).value)}
+                    disabled={savingWorkspace}
+                  >
+                    <option value="">Org-wide</option>
+                    {availableTeams.map((team) => (
+                      <option key={team.id} value={team.id}>
+                        {team.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              <Button type="submit" size="sm" disabled={savingWorkspace}>
+                {savingWorkspace ? "Saving…" : "Save"}
+              </Button>
+            </form>
+          </div>
+        )}
 
         {togglesModel.error.value && (
           <p class="text-sm text-error-text mb-4">{togglesModel.error.value}</p>

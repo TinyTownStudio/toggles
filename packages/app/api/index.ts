@@ -7,6 +7,7 @@ import { projects } from "./routes/projects";
 import { apiKeys } from "./routes/apiKeys";
 import { dashboard } from "./routes/dashboard";
 import { portal } from "./routes/portal";
+import { organizations } from "./routes/organizations";
 import type { Bindings, Variables } from "./types";
 import { isProduction } from "./utils/isProduction";
 import * as schema from "./db/schema";
@@ -226,5 +227,8 @@ app.route("/api/v1/projects", projects);
 
 // Dashboard
 app.route("/api/v1/dashboard", dashboard);
+
+// Organizations
+app.route("/api/v1/organizations", organizations);
 
 export default app;
