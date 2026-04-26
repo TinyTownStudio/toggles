@@ -29,6 +29,8 @@ export interface Project {
   id: string;
   name: string;
   userId: string;
+  organizationId: string | null;
+  teamId: string | null;
   createdAt: number;
   updatedAt: number;
 }
@@ -176,4 +178,130 @@ export async function deleteApiKey(id: string): Promise<void> {
 
 export async function getDashboard(): Promise<DashboardResponse> {
   return fetchApi<DashboardResponse>("/api/v1/dashboard");
+}
+
+// --- Organizations / Workspaces ---
+
+export interface Workspace {
+  id: string;
+  name: string;
+  slug: string;
+  createdAt: number;
+}
+
+export interface WorkspaceMember {
+  id: string;
+  userId: string;
+  name: string;
+  email: string;
+  role: "owner" | "member";
+  joinedAt: number;
+}
+
+export interface WorkspaceTeamMember {
+  userId: string;
+  name: string;
+  email: string;
+}
+
+export interface Invitation {
+  id: string;
+  email: string;
+  role: "owner" | "member";
+  status: "pending" | "accepted" | "rejected" | "canceled";
+  createdAt: number;
+}
+
+export interface WorkspaceTeam {
+  id: string;
+  name: string;
+  organizationId: string;
+  createdAt: number;
+  members: WorkspaceTeamMember[];
+}
+
+export async function getOrganizations(): Promise<Workspace[]> {
+  return fetchApi<Workspace[]>("/api/v1/organizations");
+}
+
+export async function createOrganization(name: string, slug: string): Promise<Workspace> {
+  return fetchApi<Workspace>("/api/v1/organizations", {
+    method: "POST",
+    body: JSON.stringify({ name, slug }),
+  });
+}
+
+export async function getMembers(
+  orgId: string,
+): Promise<{ members: WorkspaceMember[]; invitations: Invitation[] }> {
+  return fetchApi<{ members: WorkspaceMember[]; invitations: Invitation[] }>(
+    `/api/v1/organizations/${orgId}/members`,
+  );
+}
+
+export async function inviteMember(
+  orgId: string,
+  email: string,
+  role: "owner" | "member",
+): Promise<void> {
+  await fetchApi<void>(`/api/v1/organizations/${orgId}/invite`, {
+    method: "POST",
+    body: JSON.stringify({ email, role }),
+  });
+}
+
+export async function removeMember(orgId: string, memberId: string): Promise<void> {
+  await fetchApi<void>(`/api/v1/organizations/${orgId}/members/${memberId}`, {
+    method: "DELETE",
+  });
+}
+
+export async function getTeams(orgId: string): Promise<WorkspaceTeam[]> {
+  return fetchApi<WorkspaceTeam[]>(`/api/v1/organizations/${orgId}/teams`);
+}
+
+export async function createTeam(orgId: string, name: string): Promise<WorkspaceTeam> {
+  return fetchApi<WorkspaceTeam>(`/api/v1/organizations/${orgId}/teams`, {
+    method: "POST",
+    body: JSON.stringify({ name }),
+  });
+}
+
+export async function addTeamMember(orgId: string, teamId: string, userId: string): Promise<void> {
+  await fetchApi<void>(`/api/v1/organizations/${orgId}/teams/${teamId}/members`, {
+    method: "POST",
+    body: JSON.stringify({ userId }),
+  });
+}
+
+export async function removeTeamMember(
+  orgId: string,
+  teamId: string,
+  userId: string,
+): Promise<void> {
+  await fetchApi<void>(`/api/v1/organizations/${orgId}/teams/${teamId}/members/${userId}`, {
+    method: "DELETE",
+  });
+}
+
+export async function createProjectWithOrg(
+  name: string,
+  organizationId?: string,
+  teamId?: string,
+): Promise<Project> {
+  return fetchApi<Project>("/api/v1/projects", {
+    method: "POST",
+    body: JSON.stringify({ name, organizationId, teamId }),
+  });
+}
+
+export async function updateProject(
+  id: string,
+  organizationId: string | null,
+  teamId: string | null,
+): Promise<Project> {
+  return fetchApi<Project>(`/api/v1/projects/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify({ organizationId, teamId }),
+  });
 }

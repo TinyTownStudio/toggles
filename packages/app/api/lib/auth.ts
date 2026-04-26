@@ -6,6 +6,7 @@ import { polar, checkout, portal, webhooks } from "@polar-sh/better-auth";
 import * as schema from "../db/schema";
 import { isProduction } from "../utils/isProduction";
 import { apiKey, organization } from "better-auth/plugins";
+import { sendInvitationEmail } from "./email";
 import type { AgnosticDatabaseInstance } from "../types";
 
 type Env = Cloudflare.Env;
@@ -47,6 +48,17 @@ export function createAuth(env: Env, db: AgnosticDatabaseInstance<typeof schema>
       organization({
         teams: {
           enabled: true,
+        },
+        async sendInvitationEmail(data) {
+          const baseUrl = env.BETTER_AUTH_URL.replace("/api/auth", "");
+          const inviteUrl = `${baseUrl}/invite/accept?token=${data.id}`;
+          await sendInvitationEmail({
+            to: data.email,
+            inviterName: data.inviter.user.name,
+            workspaceName: data.organization.name,
+            inviteUrl,
+            serverToken: env.POSTMARK_SERVER_TOKEN,
+          });
         },
       }),
       polar({

@@ -57,95 +57,6 @@ export const verification = sqliteTable("verification", {
   updatedAt: integer("updated_at", { mode: "timestamp" }),
 });
 
-// ── Projects ──────────────────────────────────────────────────
-
-export const project = sqliteTable(
-  "project",
-  {
-    id: text("id").primaryKey(),
-    userId: text("user_id")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
-    name: text("name").notNull(),
-    createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
-    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
-  },
-  (t) => [index("project_user_idx").on(t.userId)],
-);
-
-// ── Toggles ────────────────────────────────────────────────────
-
-export const toggle = sqliteTable(
-  "toggle",
-  {
-    id: text("id").primaryKey(),
-    projectId: text("project_id")
-      .notNull()
-      .references(() => project.id, { onDelete: "cascade" }),
-    key: text("key").notNull(),
-    enabled: integer("enabled", { mode: "boolean" }).notNull().default(false),
-    meta: text("meta", { mode: "json" }), // optional JSON metadata
-    createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
-    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
-  },
-  (t) => [
-    index("toggle_project_idx").on(t.projectId),
-    index("toggle_project_key_idx").on(t.projectId, t.key),
-  ],
-);
-
-// ── Subscriptions ─────────────────────────────────────────────
-
-export const subscription = sqliteTable(
-  "subscription",
-  {
-    id: text("id").primaryKey(),
-    userId: text("user_id")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
-    polarCustomerId: text("polar_customer_id"),
-    polarSubscriptionId: text("polar_subscription_id"),
-    plan: text("plan").notNull().default("free"), // 'free' | 'pro'
-    status: text("status").notNull().default("active"), // 'active' | 'canceled' | 'expired'
-    currentPeriodEnd: integer("current_period_end", { mode: "timestamp" }),
-    createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
-    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
-  },
-  (t) => [uniqueIndex("subscription_user_unique").on(t.userId)],
-);
-
-// ── API Keys ─────────────────────────────────────────────
-
-export const apikey = sqliteTable(
-  "apikey",
-  {
-    id: text("id").primaryKey(),
-    name: text("name"),
-    start: text("start"),
-    prefix: text("prefix"),
-    key: text("key").notNull(),
-    userId: text("user_id")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
-    refillInterval: integer("refill_interval"),
-    refillAmount: integer("refill_amount"),
-    lastRefillAt: integer("last_refill_at", { mode: "timestamp" }),
-    enabled: integer("enabled", { mode: "boolean" }).default(true),
-    rateLimitEnabled: integer("rate_limit_enabled", { mode: "boolean" }).default(true),
-    rateLimitTimeWindow: integer("rate_limit_time_window"),
-    rateLimitMax: integer("rate_limit_max"),
-    requestCount: integer("request_count").default(0),
-    remaining: integer("remaining"),
-    lastRequest: integer("last_request", { mode: "timestamp" }),
-    expiresAt: integer("expires_at", { mode: "timestamp" }),
-    createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
-    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
-    permissions: text("permissions"),
-    metadata: text("metadata"),
-  },
-  (t) => [index("apikey_user_idx").on(t.userId)],
-);
-
 // ── Organizations ─────────────────────────────────────────────
 
 export const organization = sqliteTable("organization", {
@@ -222,4 +133,97 @@ export const teamMember = sqliteTable(
     createdAt: integer("created_at", { mode: "timestamp" }),
   },
   (t) => [index("team_member_team_idx").on(t.teamId)],
+);
+
+// ── Projects ──────────────────────────────────────────────────
+
+export const project = sqliteTable(
+  "project",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    organizationId: text("organization_id").references(() => organization.id, {
+      onDelete: "cascade",
+    }),
+    teamId: text("team_id").references(() => team.id, { onDelete: "set null" }),
+    name: text("name").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
+  },
+  (t) => [index("project_user_idx").on(t.userId), index("project_org_idx").on(t.organizationId)],
+);
+
+// ── Toggles ────────────────────────────────────────────────────
+
+export const toggle = sqliteTable(
+  "toggle",
+  {
+    id: text("id").primaryKey(),
+    projectId: text("project_id")
+      .notNull()
+      .references(() => project.id, { onDelete: "cascade" }),
+    key: text("key").notNull(),
+    enabled: integer("enabled", { mode: "boolean" }).notNull().default(false),
+    meta: text("meta", { mode: "json" }), // optional JSON metadata
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
+  },
+  (t) => [
+    index("toggle_project_idx").on(t.projectId),
+    index("toggle_project_key_idx").on(t.projectId, t.key),
+  ],
+);
+
+// ── Subscriptions ─────────────────────────────────────────────
+
+export const subscription = sqliteTable(
+  "subscription",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    polarCustomerId: text("polar_customer_id"),
+    polarSubscriptionId: text("polar_subscription_id"),
+    plan: text("plan").notNull().default("free"), // 'free' | 'pro'
+    status: text("status").notNull().default("active"), // 'active' | 'canceled' | 'expired'
+    currentPeriodEnd: integer("current_period_end", { mode: "timestamp" }),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
+  },
+  (t) => [uniqueIndex("subscription_user_unique").on(t.userId)],
+);
+
+// ── API Keys ─────────────────────────────────────────────
+
+export const apikey = sqliteTable(
+  "apikey",
+  {
+    id: text("id").primaryKey(),
+    name: text("name"),
+    start: text("start"),
+    prefix: text("prefix"),
+    key: text("key").notNull(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    refillInterval: integer("refill_interval"),
+    refillAmount: integer("refill_amount"),
+    lastRefillAt: integer("last_refill_at", { mode: "timestamp" }),
+    enabled: integer("enabled", { mode: "boolean" }).default(true),
+    rateLimitEnabled: integer("rate_limit_enabled", { mode: "boolean" }).default(true),
+    rateLimitTimeWindow: integer("rate_limit_time_window"),
+    rateLimitMax: integer("rate_limit_max"),
+    requestCount: integer("request_count").default(0),
+    remaining: integer("remaining"),
+    lastRequest: integer("last_request", { mode: "timestamp" }),
+    expiresAt: integer("expires_at", { mode: "timestamp" }),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
+    permissions: text("permissions"),
+    metadata: text("metadata"),
+  },
+  (t) => [index("apikey_user_idx").on(t.userId)],
 );
