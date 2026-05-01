@@ -280,6 +280,47 @@ projects.get("/:projectId/toggles/one", async (c) => {
   return c.json(rows.at(-1) ?? {});
 });
 
+// GET /:projectId/evaluate/:flagKey - evaluate a toggle in OpenFeature-compatible shape
+projects.get("/:projectId/evaluate/:flagKey", async (c) => {
+  const userId = c.get("user")?.id;
+  if (!userId) return c.json({ error: "Unauthorized" }, 401);
+
+  const projectId = c.req.param("projectId");
+  const flagKey = c.req.param("flagKey");
+  const keyData = c.get("apiKeyData");
+  if (keyData && isScopeViolation(keyData.permissions, projectId)) {
+    return c.json({ error: "Forbidden" }, 403);
+  }
+
+  const db = c.get("db");
+
+  const project = keyData
+    ? await db.select().from(schema.project).where(eq(schema.project.id, projectId)).get()
+    : await getOwnedProject(db, projectId, userId);
+  if (!project) return c.json({ error: "Not found" }, 404);
+
+  const row = await db
+    .select()
+    .from(schema.toggle)
+    .where(and(eq(schema.toggle.projectId, projectId), eq(schema.toggle.key, flagKey)))
+    .get();
+
+  if (!row) return c.json({ error: "Not found" }, 404);
+
+  return c.json({
+    key: row.key,
+    value: row.enabled,
+    variant: row.enabled ? "on" : "off",
+    reason: "STATIC",
+    metadata: {
+      projectId: row.projectId,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+      ...(row.meta ? { meta: row.meta } : {}),
+    },
+  });
+});
+
 // DELETE /:projectId/toggles/:id - delete a toggle
 projects.delete("/:projectId/toggles/:id", async (c) => {
   const userId = c.get("user")?.id;

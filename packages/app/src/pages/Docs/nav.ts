@@ -26,6 +26,8 @@ export const NAV: NavSection[] = [
     children: [
       { id: "toggles-list", label: "List toggles" },
       { id: "toggles-one", label: "Get one toggle" },
+      { id: "toggles-evaluate", label: "OpenFeature evaluate" },
+      { id: "toggles-openfeature-sdk", label: "OpenFeature SDK usage" },
       { id: "toggles-create", label: "Create toggle" },
       { id: "toggles-update", label: "Update toggle" },
       { id: "toggles-delete", label: "Delete toggle" },

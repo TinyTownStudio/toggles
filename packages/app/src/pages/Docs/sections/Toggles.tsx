@@ -1,3 +1,4 @@
+import { CodeBlock } from "../primitives";
 import { SectionHeading, SubHeading } from "../headings";
 import { Endpoint } from "../Endpoint";
 
@@ -88,6 +89,71 @@ const res = await fetch(
 const toggle = await res.json();
 
 if (toggle.enabled) {
+  // show new checkout
+}`}
+      />
+
+      <SubHeading id="toggles-evaluate">OpenFeature evaluate</SubHeading>
+      <Endpoint
+        method="GET"
+        path="/api/v1/projects/:projectId/evaluate/:flagKey"
+        description="Resolve a boolean flag in an OpenFeature-friendly shape for runtime providers."
+        authNote="Readable with any API key scoped to this project (read or admin)."
+        responseExample={`{
+  "key": "new-checkout",
+  "value": true,
+  "variant": "on",
+  "reason": "STATIC",
+  "metadata": {
+    "projectId": "proj_01hz...",
+    "createdAt": "2024-01-15T10:30:00.000Z",
+    "updatedAt": "2024-01-16T08:00:00.000Z",
+    "meta": { "description": "New checkout flow" }
+  }
+}`}
+        curlExample={`curl "https://toggles.tinytown.studio/api/v1/projects/proj_01hz.../evaluate/new-checkout" \\
+  -H "Authorization: Bearer tgs_xxxxxxxxxxxxxxxxxxxxxxxx"`}
+        jsExample={`const res = await fetch(
+  "https://toggles.tinytown.studio/api/v1/projects/proj_01hz.../evaluate/new-checkout",
+  {
+    headers: {
+      Authorization: "Bearer tgs_xxxxxxxxxxxxxxxxxxxxxxxx",
+    },
+  }
+);
+
+if (!res.ok) {
+  throw new Error("Evaluation request failed");
+}
+
+const evaluation = await res.json();
+if (evaluation.value) {
+  // show new checkout
+}`}
+      />
+
+      <SubHeading id="toggles-openfeature-sdk">OpenFeature SDK usage</SubHeading>
+      <p class="text-sm text-content-tertiary leading-relaxed mb-4">
+        Use the <code class="font-mono text-xs">@toggles/openfeature-provider</code> package with
+        OpenFeature's server SDK to evaluate Toggles flags through a standard provider interface.
+      </p>
+      <CodeBlock
+        language="ts"
+        code={`import { OpenFeature } from "@openfeature/server-sdk";
+import { TogglesOpenFeatureProvider } from "@toggles/openfeature-provider";
+
+await OpenFeature.setProviderAndWait(
+  new TogglesOpenFeatureProvider({
+    baseUrl: "https://toggles.tinytown.studio",
+    projectId: "proj_01hz...",
+    apiKey: "tgs_xxxxxxxxxxxxxxxxxxxxxxxx",
+  }),
+);
+
+const client = OpenFeature.getClient();
+const enabled = await client.getBooleanValue("new-checkout", false);
+
+if (enabled) {
   // show new checkout
 }`}
       />

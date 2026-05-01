@@ -107,6 +107,13 @@ describe("project-scoped API key", () => {
     expect(res.status).toBe(403);
   });
 
+  it("cannot evaluate a flag in a different project (403)", async () => {
+    const res = await apiGet(`/api/v1/projects/${projectBId}/evaluate/my-flag`, {
+      bearer: scopedKey,
+    });
+    expect(res.status).toBe(403);
+  });
+
   it("cannot PATCH a toggle (403)", async () => {
     const res = await apiPatch(`/api/v1/projects/${projectAId}/toggles/${toggleId}`, {
       bearer: scopedKey,
@@ -143,6 +150,34 @@ describe("all-projects API key", () => {
     });
     expect(res.status).toBe(403);
   });
+
+  it("evaluates a toggle in OpenFeature shape", async () => {
+    const res = await apiGet(`/api/v1/projects/${projectAId}/evaluate/my-flag`, {
+      bearer: allProjectsKey,
+    });
+
+    expect(res.status).toBe(200);
+    const data = (await res.json()) as {
+      key: string;
+      value: boolean;
+      variant: string;
+      reason: string;
+      metadata: { projectId: string };
+    };
+
+    expect(data.key).toBe("my-flag");
+    expect(typeof data.value).toBe("boolean");
+    expect(data.variant === "on" || data.variant === "off").toBe(true);
+    expect(data.reason).toBe("STATIC");
+    expect(data.metadata.projectId).toBe(projectAId);
+  });
+
+  it("returns 404 for a missing evaluate flag", async () => {
+    const res = await apiGet(`/api/v1/projects/${projectAId}/evaluate/does-not-exist`, {
+      bearer: allProjectsKey,
+    });
+    expect(res.status).toBe(404);
+  });
 });
 
 describe("invalid credentials", () => {
@@ -155,6 +190,11 @@ describe("invalid credentials", () => {
     const res = await apiGet(`/api/v1/projects/${projectAId}/toggles`, {
       bearer: "not-a-real-key",
     });
+    expect(res.status).toBe(401);
+  });
+
+  it("evaluate endpoint with no auth returns 401", async () => {
+    const res = await apiGet(`/api/v1/projects/${projectAId}/evaluate/my-flag`);
     expect(res.status).toBe(401);
   });
 });
