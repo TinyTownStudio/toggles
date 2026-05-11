@@ -8,6 +8,8 @@
   - [x] To get a single flag (`/:projectId/toggles/one?flag='dark-mode'`)
   - [x] toggle flag (`PATCH /:projectId/toggles/:id`)
 - [ ] App 
+    - [ ] Environments 
+    - [ ] Segmentation by Meta props 
 - [ ] Admin Interface 
 - [ ] Self Hosted 
   - [ ] Docs
