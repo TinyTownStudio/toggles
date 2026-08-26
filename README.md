@@ -13,5 +13,5 @@
 - [ ] Admin Interface 
 - [ ] Self Hosted 
   - [ ] Docs
-  - [ ] Server and Vite Plugin implementation 
+  - [x] Server and Vite Plugin implementation 
   - [ ] Docker wrapper
