@@ -1,6 +1,7 @@
 import { useLocation } from "preact-iso";
 import { useModel } from "@preact/signals";
 import { useEffect, useRef, useState } from "preact/hooks";
+import { IconChevronRight, IconTrash } from "@tabler/icons-react";
 import { AuthModel } from "../../models/auth";
 import { ProjectsModel } from "../../models/projects";
 import { TogglesModel } from "../../models/toggles";
@@ -73,7 +74,8 @@ export function ProjectDetail({ id }: { id: string }) {
   };
 
   const openMeta = (t: Toggle) => {
-    setMetaRows(metaToRows(t.meta));
+    const rows = metaToRows(t.meta);
+    setMetaRows(rows.length > 0 ? rows : [{ key: "", value: "" }]);
     setEditingMetaId(t.id);
   };
 
@@ -84,7 +86,6 @@ export function ProjectDetail({ id }: { id: string }) {
 
   const handleSaveMeta = async (toggleId: string) => {
     await togglesModel.saveMeta(id, toggleId, rowsToMeta(metaRows));
-    closeMeta();
   };
 
   return (
@@ -124,111 +125,166 @@ export function ProjectDetail({ id }: { id: string }) {
           </p>
         ) : (
           <ul class="space-y-2">
-            {togglesModel.toggles.value.map((t) => (
-              <li
-                key={t.id}
-                class="rounded-lg border border-edge bg-page hover:border-edge-hover transition-colors"
-              >
-                {/* Main row */}
-                <div class="flex items-center justify-between px-4 py-3">
-                  <span class="text-content text-sm font-mono">{t.key}</span>
-                  <div class="flex items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={() => (editingMetaId === t.id ? closeMeta() : openMeta(t))}
-                      class="text-xs text-content-tertiary hover:text-content transition-colors"
-                    >
-                      {editingMetaId === t.id ? "Cancel" : "Meta"}
-                    </button>
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={t.enabled}
-                      onClick={() => togglesModel.toggle(id, t.id, !t.enabled)}
-                      class={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-accent/20 ${
-                        t.enabled ? "bg-accent" : "bg-raised-hover"
-                      }`}
-                    >
-                      <span
-                        class={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
-                          t.enabled ? "translate-x-5" : "translate-x-1"
-                        }`}
-                      />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => togglesModel.remove(id, t.id)}
-                      class="text-xs text-content-faint hover:text-error-text transition-colors"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
+            {togglesModel.toggles.value.map((t) => {
+              const isOpen = editingMetaId === t.id;
+              const metaEntries = t.meta ? Object.entries(t.meta) : [];
+              const hasMeta = metaEntries.length > 0;
 
-                {/* Meta editor */}
-                {editingMetaId === t.id && (
-                  <div class="border-t border-edge px-4 py-3 space-y-2">
-                    {metaRows.map((row, i) => (
-                      <div key={i} class="flex items-center gap-2">
-                        <Input
-                          type="text"
-                          value={row.key}
-                          onInput={(e) => {
-                            const updated = [...metaRows];
-                            updated[i] = {
-                              ...updated[i],
-                              key: (e.target as HTMLInputElement).value,
-                            };
-                            setMetaRows(updated);
-                          }}
-                          placeholder="key"
-                          class="flex-1 font-mono text-xs"
+              return (
+                <li
+                  key={t.id}
+                  class="rounded-lg border border-edge bg-page hover:border-edge-hover transition-colors"
+                >
+                  <div class="flex items-start gap-3 px-4 py-3">
+                    <button
+                      type="button"
+                      onClick={() => (isOpen ? closeMeta() : openMeta(t))}
+                      aria-expanded={isOpen}
+                      class="min-w-0 flex-1 text-left group"
+                    >
+                      <div class="flex items-center gap-2">
+                        <IconChevronRight
+                          size={14}
+                          stroke={2}
+                          aria-hidden="true"
+                          className={`shrink-0 text-content-faint transition-transform duration-100 ${
+                            isOpen ? "rotate-90" : ""
+                          }`}
                         />
-                        <Input
-                          type="text"
-                          value={row.value}
-                          onInput={(e) => {
-                            const updated = [...metaRows];
-                            updated[i] = {
-                              ...updated[i],
-                              value: (e.target as HTMLInputElement).value,
-                            };
-                            setMetaRows(updated);
-                          }}
-                          placeholder="value"
-                          class="flex-1 text-xs"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setMetaRows(metaRows.filter((_, idx) => idx !== i))}
-                          class="text-content-faint hover:text-error-text transition-colors text-sm leading-none px-1"
-                          aria-label="Remove field"
-                        >
-                          ×
-                        </button>
+                        <span class="text-content text-sm font-mono truncate">{t.key}</span>
                       </div>
-                    ))}
-                    <div class="flex items-center gap-2 pt-1">
+                      {!isOpen && (
+                        <div class="mt-1 ml-[22px] flex flex-wrap items-center gap-1.5">
+                          {hasMeta ? (
+                            metaEntries.slice(0, 3).map(([key, value]) => (
+                              <span
+                                key={key}
+                                class="inline-flex max-w-[12rem] items-center gap-1 rounded-md bg-raised px-1.5 py-0.5 text-[11px] text-content-tertiary"
+                              >
+                                <span class="font-mono truncate">{key}</span>
+                                <span class="text-content-faint">=</span>
+                                <span class="truncate">{value}</span>
+                              </span>
+                            ))
+                          ) : (
+                            <span class="text-[11px] text-content-faint group-hover:text-content-tertiary transition-colors">
+                              Add metadata…
+                            </span>
+                          )}
+                          {metaEntries.length > 3 && (
+                            <span class="text-[11px] text-content-faint">
+                              +{metaEntries.length - 3} more
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </button>
+
+                    <div class="flex shrink-0 items-center gap-2">
                       <button
                         type="button"
-                        onClick={() => setMetaRows([...metaRows, { key: "", value: "" }])}
-                        class="text-xs text-content-tertiary hover:text-content transition-colors"
+                        role="switch"
+                        aria-checked={t.enabled}
+                        aria-label={t.enabled ? "Disable flag" : "Enable flag"}
+                        onClick={() => togglesModel.toggle(id, t.id, !t.enabled)}
+                        class={`relative mt-0.5 inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-accent/20 ${
+                          t.enabled ? "bg-accent" : "bg-raised-hover"
+                        }`}
                       >
-                        + Add field
+                        <span
+                          class={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
+                            t.enabled ? "translate-x-5" : "translate-x-1"
+                          }`}
+                        />
                       </button>
-                      <div class="flex-1" />
                       <Button
                         type="button"
-                        disabled={togglesModel.saving.value}
-                        onClick={() => handleSaveMeta(t.id)}
+                        variant="danger-icon"
+                        aria-label="Delete flag"
+                        onClick={() => togglesModel.remove(id, t.id)}
                       >
-                        {togglesModel.saving.value ? "Saving…" : "Save"}
+                        <IconTrash size={16} stroke={2} />
                       </Button>
                     </div>
                   </div>
-                )}
-              </li>
-            ))}
+
+                  {isOpen && (
+                    <div class="border-t border-edge px-4 py-3 space-y-2">
+                      <p class="text-xs font-medium text-content-tertiary uppercase tracking-wide mb-1">
+                        Metadata
+                      </p>
+                      {metaRows.map((row, i) => (
+                        <div key={i} class="flex items-center gap-2">
+                          <Input
+                            type="text"
+                            value={row.key}
+                            onInput={(e) => {
+                              const updated = [...metaRows];
+                              updated[i] = {
+                                ...updated[i],
+                                key: (e.target as HTMLInputElement).value,
+                              };
+                              setMetaRows(updated);
+                            }}
+                            placeholder="key"
+                            class="flex-1 font-mono text-xs"
+                          />
+                          <Input
+                            type="text"
+                            value={row.value}
+                            onInput={(e) => {
+                              const updated = [...metaRows];
+                              updated[i] = {
+                                ...updated[i],
+                                value: (e.target as HTMLInputElement).value,
+                              };
+                              setMetaRows(updated);
+                            }}
+                            placeholder="value"
+                            class="flex-1 text-xs"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setMetaRows(metaRows.filter((_, idx) => idx !== i))}
+                            class="text-content-faint hover:text-error-text transition-colors text-sm leading-none px-1"
+                            aria-label="Remove field"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                      <div class="flex items-center gap-2 pt-1">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setMetaRows([...metaRows, { key: "", value: "" }])}
+                        >
+                          + Add field
+                        </Button>
+                        <div class="flex-1" />
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          onClick={closeMeta}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          disabled={togglesModel.saving.value}
+                          onClick={() => handleSaveMeta(t.id)}
+                        >
+                          {togglesModel.saving.value ? "Saving…" : "Save"}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>
