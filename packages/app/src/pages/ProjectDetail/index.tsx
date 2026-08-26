@@ -90,32 +90,33 @@ export function ProjectDetail({ id }: { id: string }) {
   return (
     <div class="min-h-screen bg-page pt-16">
       <div class="max-w-5xl mx-auto px-6 py-12">
-        <div class="mb-6">
+        <div class="mb-8">
           <a
             href="/app/projects"
             class="text-xs text-content-tertiary hover:text-content transition-colors mb-2 inline-block"
           >
             ← Projects
           </a>
-          <h1 class="text-2xl font-bold tracking-tight text-content">
-            {project?.name ?? "Project"}
-          </h1>
+          <div class="flex items-center justify-between gap-4">
+            <h1 class="text-2xl font-bold tracking-tight text-content">
+              {project?.name ?? "Project"}
+            </h1>
+            <div class="flex items-center gap-2">
+              <Input
+                type="search"
+                value={searchQuery}
+                onInput={(e) => handleSearch((e.target as HTMLInputElement).value)}
+                placeholder="Search…"
+                class="w-48"
+              />
+              <Button onClick={() => setShowModal(true)}>New Flag</Button>
+            </div>
+          </div>
         </div>
 
         {togglesModel.error.value && (
           <p class="text-sm text-error-text mb-4">{togglesModel.error.value}</p>
         )}
-
-        <div class="flex gap-2 mb-8">
-          <Input
-            type="search"
-            value={searchQuery}
-            onInput={(e) => handleSearch((e.target as HTMLInputElement).value)}
-            placeholder="Search flags…"
-            class="flex-1"
-          />
-          <Button onClick={() => setShowModal(true)}>New Flag</Button>
-        </div>
 
         {togglesModel.toggles.value.length === 0 ? (
           <p class="text-content-tertiary text-sm">
