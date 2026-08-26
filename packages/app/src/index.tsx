@@ -25,12 +25,16 @@ const ProjectDetail = lazy(() =>
   import("./pages/ProjectDetail/index").then((module) => module.ProjectDetail),
 );
 const ApiKeys = lazy(() => import("./pages/ApiKeys/index").then((module) => module.ApiKeys));
+const Teams = lazy(() => import("./pages/Teams/index").then((module) => module.Teams));
+const InviteAccept = lazy(() =>
+  import("./pages/InviteAccept/index").then((module) => module.InviteAccept),
+);
 const Docs = lazy(() => import("./pages/Docs/index").then((module) => module.Docs));
 const NotFound = lazy(() => import("./pages/_404").then((module) => module.NotFound));
 
 function AppContent() {
   const { url } = useLocation();
-  const shouldRenderBaseHeader = !url.startsWith("/app");
+  const shouldRenderBaseHeader = !url.startsWith("/app") && !url.startsWith("/invite");
   const theme = useModel(ThemeModel);
 
   useEffect(() => {
@@ -51,6 +55,8 @@ function AppContent() {
           <Route path="/app/projects/:id" component={ProjectDetail} />
           <Route path="/app/billing" component={Billing} />
           <Route path="/app/api-keys" component={ApiKeys} />
+          <Route path="/app/teams" component={Teams} />
+          <Route path="/invite/accept" component={InviteAccept} />
           <Route path="/docs" component={Docs} />
           <Route default component={NotFound} />
         </Router>
