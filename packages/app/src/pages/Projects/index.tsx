@@ -54,19 +54,18 @@ export function Projects() {
   return (
     <div class="min-h-screen bg-page pt-16">
       <div class="max-w-5xl mx-auto px-6 py-12">
-        <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center justify-between gap-4 mb-8">
           <h1 class="text-2xl font-bold tracking-tight text-content">Projects</h1>
-          <Button onClick={() => setShowModal(true)}>New Project</Button>
-        </div>
-
-        <div class="mb-8">
-          <Input
-            type="search"
-            value={searchQuery}
-            onInput={(e) => handleSearch((e.target as HTMLInputElement).value)}
-            placeholder="Search projects…"
-            class="w-full"
-          />
+          <div class="flex items-center gap-2">
+            <Input
+              type="search"
+              value={searchQuery}
+              onInput={(e) => handleSearch((e.target as HTMLInputElement).value)}
+              placeholder="Search…"
+              class="w-48"
+            />
+            <Button onClick={() => setShowModal(true)}>New Project</Button>
+          </div>
         </div>
 
         {projectsModel.error.value && (
