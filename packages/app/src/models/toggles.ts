@@ -84,10 +84,15 @@ export const TogglesModel = createModel(() => {
     }
   };
 
-  const saveMeta = async (projectId: string, id: string, meta: Record<string, string>) => {
+  const saveMeta = async (
+    projectId: string,
+    id: string,
+    meta: Record<string, string>,
+  ): Promise<boolean> => {
     const prev = toggles.value;
     toggles.value = prev.map((t) => (t.id === id ? { ...t, meta } : t));
     saving.value = true;
+    error.value = null;
     try {
       const updated = await updateToggleMeta(
         projectId,
@@ -96,9 +101,11 @@ export const TogglesModel = createModel(() => {
         activeEnvironment.value ?? undefined,
       );
       toggles.value = toggles.value.map((t) => (t.id === id ? updated : t));
+      return true;
     } catch (err) {
       toggles.value = prev;
       error.value = err instanceof Error ? err.message : "Failed to save meta";
+      return false;
     } finally {
       saving.value = false;
     }

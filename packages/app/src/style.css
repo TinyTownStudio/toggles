@@ -4,6 +4,7 @@
 @import "basecoat-css/components/select";
 @import "basecoat-css/styles/nova";
 @import "./basecoat-theme.css";
+@import "./toast.css";
 
 /* ----------------------------------------------------------------
    Semantic design tokens

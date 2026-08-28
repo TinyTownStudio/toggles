@@ -26,6 +26,9 @@ importers:
       '@polar-sh/sdk':
         specifier: ^0.42.5
         version: 0.42.5
+      '@preachjs/toast':
+        specifier: ^0.0.5
+        version: 0.0.5(@preact/signals@2.7.0(preact@10.28.3))(preact@10.28.3)
       '@preact/signals':
         specifier: ^2.7.0
         version: 2.7.0(preact@10.28.3)
@@ -1383,6 +1386,15 @@ packages:
 
   '@poppinss/exception@1.2.3':
     resolution: {integrity: sha512-dCED+QRChTVatE9ibtoaxc+WkdzOSjYTKi/+uacHWIsfodVfpsueo3+DKpgU5Px8qXjgmXkSvhXvSCz3fnP9lw==, tarball: https://registry.npmjs.org/@poppinss/exception/-/exception-1.2.3.tgz}
+
+  '@preachjs/popper@0.0.6':
+    resolution: {integrity: sha512-CUWN0/UEFCtseOWJlS0emzZs8qfmrHlJ7EtyrBCaTeEpahcQeZkEqwlb7keBhs6Dlxs6qEOJrJpXGGm1qFO9eA==, tarball: https://registry.npmjs.org/@preachjs/popper/-/popper-0.0.6.tgz}
+
+  '@preachjs/toast@0.0.5':
+    resolution: {integrity: sha512-Sj6vM0dQT/GnTeBA6yXmgXezORf80QVJxQsvMVsE7s6EzPE9uHMGLgkWiRn0c6JJ2arVs8KxPF2AHnh7g4LjBw==, tarball: https://registry.npmjs.org/@preachjs/toast/-/toast-0.0.5.tgz}
+    peerDependencies:
+      '@preact/signals': ^2.0.1
+      preact: ^10
 
   '@preact/preset-vite@2.10.3':
     resolution: {integrity: sha512-1SiS+vFItpkNdBs7q585PSAIln0wBeBdcpJYbzPs1qipsb/FssnkUioNXuRsb8ZnU8YEQHr+3v8+/mzWSnTQmg==, tarball: https://registry.npmjs.org/@preact/preset-vite/-/preset-vite-2.10.3.tgz}
@@ -5071,6 +5083,14 @@ snapshots:
       supports-color: 10.2.2
 
   '@poppinss/exception@1.2.3': {}
+
+  '@preachjs/popper@0.0.6': {}
+
+  '@preachjs/toast@0.0.5(@preact/signals@2.7.0(preact@10.28.3))(preact@10.28.3)':
+    dependencies:
+      '@preachjs/popper': 0.0.6
+      '@preact/signals': 2.7.0(preact@10.28.3)
+      preact: 10.28.3
 
   '@preact/preset-vite@2.10.3(@babel/core@7.29.0)(preact@10.28.3)(rolldown-vite@7.2.5(@types/node@24.10.12)(esbuild@0.25.12)(jiti@2.6.1))(rollup@4.60.1)':
     dependencies:

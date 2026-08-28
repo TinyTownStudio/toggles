@@ -11,6 +11,7 @@ import {
 import { useModel } from "@preact/signals";
 import { useEffect } from "preact/hooks";
 
+import { Toaster } from "@preachjs/toast";
 import { Header } from "./components/Header";
 import { Footer } from "./components/Footer";
 import { DashboardHeader } from "./components/DashboardHeader";
@@ -67,6 +68,7 @@ function AppContent() {
 
       {/* Show appropriate footer based on route */}
       {shouldRenderBaseHeader && <Footer />}
+      <Toaster />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { useLocation } from "preact-iso";
 import { useModel } from "@preact/signals";
 import { useEffect, useRef, useState } from "preact/hooks";
+import { toast } from "@preachjs/toast";
 import { IconChevronRight, IconTrash } from "@tabler/icons-react";
 import { AuthModel } from "../../models/auth";
 import { ProjectsModel } from "../../models/projects";
@@ -90,9 +91,20 @@ export function ProjectDetail({ id }: { id: string }) {
     if (created) await environmentsModel.fetch(id);
   };
 
+  const syncMetaEditor = (toggleId: string) => {
+    const t = togglesModel.toggles.value.find((item) => item.id === toggleId);
+    if (!t) {
+      closeMeta();
+      return;
+    }
+    const rows = metaToRows(t.meta);
+    setMetaRows(rows.length > 0 ? rows : [{ key: "", value: "" }]);
+  };
+
   const handleEnvChange = async (env: Environment) => {
     togglesModel.setActiveEnvironment(env.slug);
     await togglesModel.fetch(id, searchQuery || undefined, env.slug);
+    if (editingMetaId) syncMetaEditor(editingMetaId);
   };
 
   const handleSearch = (query: string) => {
@@ -115,7 +127,8 @@ export function ProjectDetail({ id }: { id: string }) {
   };
 
   const handleSaveMeta = async (toggleId: string) => {
-    await togglesModel.saveMeta(id, toggleId, rowsToMeta(metaRows));
+    const ok = await togglesModel.saveMeta(id, toggleId, rowsToMeta(metaRows));
+    if (ok) toast.success("Metadata saved");
   };
 
   return (

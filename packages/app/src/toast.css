@@ -1,0 +1,123 @@
+/* @preachjs/toast — themed via app design tokens (--t-*) */
+
+.preachjs-toast--message {
+  pointer-events: auto;
+  min-width: min(20rem, calc(100vw - 2rem));
+  max-width: 24rem;
+  padding: 0.625rem 1rem;
+  border: 1px solid var(--t-edge);
+  border-radius: 0.5rem;
+  background: var(--t-overlay-heavy);
+  color: var(--t-content);
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  box-shadow:
+    0 4px 12px rgb(0 0 0 / 0.08),
+    0 1px 2px rgb(0 0 0 / 0.04);
+  word-break: break-word;
+  transition:
+    opacity 0.2s ease-in-out,
+    transform 0.2s ease-in-out;
+}
+
+.dark .preachjs-toast--message {
+  box-shadow:
+    0 4px 12px rgb(0 0 0 / 0.35),
+    0 1px 2px rgb(0 0 0 / 0.2);
+}
+
+.preachjs-toast--message[data-type="success"] {
+  background: var(--t-success-surface);
+  color: var(--t-success-text);
+  border-color: var(--t-success-edge);
+}
+
+.preachjs-toast--message[data-type="error"] {
+  background: var(--t-error-surface);
+  color: var(--t-error-text);
+  border-color: var(--t-error-edge);
+}
+
+.preachjs-toast--message[data-type="warning"] {
+  background: var(--t-raised);
+  color: var(--t-content-secondary);
+  border-color: var(--t-edge-hover);
+}
+
+.preachjs-toast--message[data-type="info"] {
+  background: var(--t-accent-surface);
+  color: var(--t-accent-text);
+  border-color: var(--t-accent);
+}
+
+.preachjs-toast--aligner[data-position="top"] .preachjs-toast--message.toast-added {
+  animation: toast-top-enter 0.35s cubic-bezier(0.21, 1.02, 0.73, 1) forwards;
+}
+
+.preachjs-toast--aligner[data-position="top"] .preachjs-toast--message.toast-removed {
+  animation: toast-top-exit 0.4s cubic-bezier(0.06, 0.71, 0.55, 1) forwards;
+}
+
+.preachjs-toast--aligner[data-position="bottom"] .preachjs-toast--message.toast-added {
+  animation: toast-bottom-enter 0.35s cubic-bezier(0.21, 1.02, 0.73, 1) forwards;
+}
+
+.preachjs-toast--aligner[data-position="bottom"] .preachjs-toast--message.toast-removed {
+  animation: toast-bottom-exit 0.4s cubic-bezier(0.06, 0.71, 0.55, 1) forwards;
+}
+
+@keyframes toast-top-enter {
+  0% {
+    transform: translate3d(0, -200%, 0) scale(0.96);
+    opacity: 0.5;
+  }
+
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes toast-top-exit {
+  0% {
+    transform: translate3d(0, 0, -1px) scale(1);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translate3d(0, -150%, -1px) scale(0.96);
+    opacity: 0;
+  }
+}
+
+@keyframes toast-bottom-enter {
+  0% {
+    transform: translate3d(0, 200%, 0) scale(0.96);
+    opacity: 0.5;
+  }
+
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes toast-bottom-exit {
+  0% {
+    transform: translate3d(0, 0, -1px) scale(1);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translate3d(0, 150%, -1px) scale(0.96);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .preachjs-toast--message.toast-added,
+  .preachjs-toast--message.toast-removed {
+    animation: none;
+  }
+}
