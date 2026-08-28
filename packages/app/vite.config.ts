@@ -6,5 +6,17 @@ import tailwindcss from "@tailwindcss/vite";
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [preact(), tailwindcss(), cloudflare(), node()],
+  plugins: [
+    preact({
+      prerender: {
+        enabled: true,
+        renderTarget: "#app",
+        additionalPrerenderRoutes: ["/docs"],
+        previewMiddlewareEnabled: true,
+      },
+    }),
+    tailwindcss(),
+    cloudflare(),
+    node(),
+  ],
 });

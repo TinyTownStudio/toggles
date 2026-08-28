@@ -6,6 +6,7 @@ import {
   prerender as ssr,
   useLocation,
   lazy,
+  ErrorBoundary,
 } from "preact-iso";
 import { useModel } from "@preact/signals";
 import { useEffect } from "preact/hooks";
@@ -14,6 +15,7 @@ import { Header } from "./components/Header";
 import { Footer } from "./components/Footer";
 import { DashboardHeader } from "./components/DashboardHeader";
 import { ThemeModel } from "./models/theme";
+import { getHeadMeta } from "./lib/seo";
 import "./style.css";
 
 const Home = lazy(() => import("./pages/Home/index").then((module) => module.Home));
@@ -43,17 +45,19 @@ function AppContent() {
       {shouldRenderBaseHeader ? <Header /> : <DashboardHeader />}
 
       <main>
-        <Router>
-          <Route path="/" component={Home} />
-          <Route path="/auth" component={Auth} />
-          <Route path="/app/dashboard" component={Dashboard} />
-          <Route path="/app/projects" component={Projects} />
-          <Route path="/app/projects/:id" component={ProjectDetail} />
-          <Route path="/app/billing" component={Billing} />
-          <Route path="/app/api-keys" component={ApiKeys} />
-          <Route path="/docs" component={Docs} />
-          <Route default component={NotFound} />
-        </Router>
+        <ErrorBoundary>
+          <Router>
+            <Route path="/" component={Home} />
+            <Route path="/auth" component={Auth} />
+            <Route path="/app/dashboard" component={Dashboard} />
+            <Route path="/app/projects" component={Projects} />
+            <Route path="/app/projects/:id" component={ProjectDetail} />
+            <Route path="/app/billing" component={Billing} />
+            <Route path="/app/api-keys" component={ApiKeys} />
+            <Route path="/docs" component={Docs} />
+            <Route default component={NotFound} />
+          </Router>
+        </ErrorBoundary>
       </main>
 
       {/* Show appropriate footer based on route */}
@@ -74,6 +78,15 @@ if (typeof window !== "undefined") {
   hydrate(<App />, document.getElementById("app")!);
 }
 
-export async function prerender(data: any) {
-  return await ssr(<App {...data} />);
+const PRERENDER_ROUTES = new Set(["/", "/docs"]);
+
+export async function prerender(data: { url: string }) {
+  const { html, links: discovered = new Set<string>() } = await ssr(<App />);
+  const links = new Set(
+    [...discovered].filter((href) => {
+      const path = new URL(href, "http://localhost").pathname.replace(/\/$/, "") || "/";
+      return PRERENDER_ROUTES.has(path);
+    }),
+  );
+  return { html, links, head: getHeadMeta(data.url) };
 }
