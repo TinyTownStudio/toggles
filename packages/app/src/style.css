@@ -1,4 +1,9 @@
 @import "tailwindcss";
+@import "basecoat-css/base";
+@import "basecoat-css/components/popover";
+@import "basecoat-css/components/select";
+@import "basecoat-css/styles/nova";
+@import "./basecoat-theme.css";
 
 /* ----------------------------------------------------------------
    Semantic design tokens

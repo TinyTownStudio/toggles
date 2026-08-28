@@ -6,6 +6,7 @@ import { Alert } from "../../components/ui/Alert";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { Modal } from "../../components/ui/Modal";
+import { Select } from "../../components/ui/Select";
 import { ApiKeysModel } from "../../models/apiKeys";
 import { AuthModel } from "../../models/auth";
 import { ProjectsModel } from "../../models/projects";
@@ -150,43 +151,40 @@ export function ApiKeys() {
               autoFocus
             />
             <div class="flex gap-2">
-              <select
+              <Select
                 value={newType}
-                onChange={(e) => setNewType((e.target as HTMLSelectElement).value as TokenType)}
+                onChange={(v) => setNewType(v as TokenType)}
                 disabled={apiKeyModel.creating.value}
-                class="rounded-lg border border-edge bg-page text-content text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent/20"
-              >
-                <option value="read">Read</option>
-                <option value="admin">Admin</option>
-              </select>
-              <select
+                options={[
+                  { value: "read", label: "Read" },
+                  { value: "admin", label: "Admin" },
+                ]}
+              />
+              <Select
                 value={newProjectId}
-                onChange={(e) => handleProjectChange((e.target as HTMLSelectElement).value)}
+                onChange={handleProjectChange}
                 disabled={apiKeyModel.creating.value}
-                class="flex-1 rounded-lg border border-edge bg-page text-content text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent/20"
-              >
-                <option value="__all__">All projects</option>
-                {projectsModel.projects.value.map((p: Project) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
+                class="flex-1"
+                options={[
+                  { value: "__all__", label: "All projects" },
+                  ...projectsModel.projects.value.map((p: Project) => ({
+                    value: p.id,
+                    label: p.name,
+                  })),
+                ]}
+              />
             </div>
             {newProjectId !== "__all__" && (
-              <select
+              <Select
                 value={newEnvSlug}
-                onChange={(e) => setNewEnvSlug((e.target as HTMLSelectElement).value)}
+                onChange={setNewEnvSlug}
                 disabled={apiKeyModel.creating.value}
-                class="rounded-lg border border-edge bg-page text-content text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent/20"
-              >
-                <option value="">Any environment</option>
-                {environmentsModel.environments.value.map((env) => (
-                  <option key={env.id} value={env.slug}>
-                    {env.name}
-                  </option>
-                ))}
-              </select>
+                placeholder="Any environment"
+                options={environmentsModel.environments.value.map((env) => ({
+                  value: env.slug,
+                  label: env.name,
+                }))}
+              />
             )}
             <div class="flex justify-end gap-2">
               <Button type="button" variant="secondary" onClick={() => setShowModal(false)}>

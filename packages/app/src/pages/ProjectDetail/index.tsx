@@ -9,6 +9,7 @@ import { EnvironmentsModel } from "../../models/environments";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { Modal } from "../../components/ui/Modal";
+import { Select } from "../../components/ui/Select";
 import type { Environment, Toggle } from "../../lib/api";
 
 type MetaRow = { key: string; value: string };
@@ -150,21 +151,18 @@ export function ProjectDetail({ id }: { id: string }) {
           <div class="mb-6 flex flex-wrap items-center gap-2">
             <label class="flex items-center gap-2 text-sm text-content-tertiary">
               <span>Environment</span>
-              <select
+              <Select
                 value={activeSlug ?? ""}
-                onChange={(e) => {
-                  const env = envs.find((item) => item.slug === e.currentTarget.value);
+                options={envs.map((env) => ({
+                  value: env.slug,
+                  label: `${env.name}${env.isDefault ? " (default)" : ""}`,
+                }))}
+                onChange={(slug) => {
+                  const env = envs.find((item) => item.slug === slug);
                   if (env) handleEnvChange(env);
                 }}
-                class="rounded-lg border border-edge bg-page text-content text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent/20"
-              >
-                {envs.map((env) => (
-                  <option key={env.id} value={env.slug}>
-                    {env.name}
-                    {env.isDefault ? " (default)" : ""}
-                  </option>
-                ))}
-              </select>
+                class="min-w-[10rem]"
+              />
             </label>
             <Button variant="secondary" size="sm" onClick={() => setShowEnvModal(true)}>
               Manage

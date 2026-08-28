@@ -16,7 +16,12 @@ import { Footer } from "./components/Footer";
 import { DashboardHeader } from "./components/DashboardHeader";
 import { ThemeModel } from "./models/theme";
 import { getHeadMeta } from "./lib/seo";
+import { loadBasecoat } from "./lib/basecoat";
 import "./style.css";
+
+if (typeof window !== "undefined") {
+  loadBasecoat();
+}
 
 const Home = lazy(() => import("./pages/Home/index").then((module) => module.Home));
 const Auth = lazy(() => import("./pages/Auth/index").then((module) => module.Auth));
