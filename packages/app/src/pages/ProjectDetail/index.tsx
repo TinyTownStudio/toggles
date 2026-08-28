@@ -71,8 +71,6 @@ export function ProjectDetail({ id }: { id: string }) {
   const project = projectsModel.projects.value.find((p: { id: string }) => p.id === id);
   const envs = environmentsModel.environments.value;
   const activeSlug = togglesModel.activeEnvironment.value;
-  const activeEnv = envs.find((e) => e.slug === activeSlug) ?? envs.find((e) => e.isDefault);
-  const defaultEnv = envs.find((e) => e.isDefault);
 
   const handleCreate = async (e: Event) => {
     e.preventDefault();
@@ -89,7 +87,7 @@ export function ProjectDetail({ id }: { id: string }) {
     if (!name) return;
     const created = await environmentsModel.create(id, name);
     setNewEnvName("");
-    if (created) await handleEnvChange(created);
+    if (created) await environmentsModel.fetch(id);
   };
 
   const handleEnvChange = async (env: Environment) => {
@@ -170,12 +168,6 @@ export function ProjectDetail({ id }: { id: string }) {
           </div>
         )}
 
-        {activeEnv && !activeEnv.isDefault && defaultEnv && (
-          <p class="text-xs text-content-faint mb-4">
-            Inherited flags use values from <span class="font-mono">{defaultEnv.name}</span>.
-          </p>
-        )}
-
         {togglesModel.error.value && (
           <p class="text-sm text-error-text mb-4">{togglesModel.error.value}</p>
         )}
@@ -213,11 +205,6 @@ export function ProjectDetail({ id }: { id: string }) {
                           }`}
                         />
                         <span class="text-content text-sm font-mono truncate">{t.key}</span>
-                        {t.inherited && (
-                          <span class="text-[10px] uppercase tracking-wide text-content-faint">
-                            inherited
-                          </span>
-                        )}
                       </div>
                       {!isOpen && (
                         <div class="mt-1 ml-[22px] flex flex-wrap items-center gap-1.5">
@@ -255,7 +242,7 @@ export function ProjectDetail({ id }: { id: string }) {
                         onClick={() => togglesModel.toggle(id, t.id, !t.enabled)}
                         class={`relative mt-0.5 inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-accent/20 ${
                           t.enabled ? "bg-accent" : "bg-raised-hover"
-                        } ${t.inherited ? "opacity-70" : ""}`}
+                        }`}
                       >
                         <span
                           class={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${

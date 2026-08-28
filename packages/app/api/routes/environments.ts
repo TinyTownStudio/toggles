@@ -3,8 +3,8 @@ import { eq, and } from "drizzle-orm";
 import * as schema from "../db/schema";
 import {
   ensureDefaultEnvironment,
-  getDefaultEnvironment,
   listProjectEnvironments,
+  seedToggleStatesForEnvironment,
   slugifyEnvironmentName,
 } from "../lib/environments";
 import { getUserPlan, PLAN_LIMITS } from "../lib/plans";
@@ -96,6 +96,8 @@ environments.post("/", async (c) => {
     updatedAt: now,
   });
 
+  await seedToggleStatesForEnvironment(db, projectId, id);
+
   const row = await db.select().from(schema.environment).where(eq(schema.environment.id, id)).get();
   return c.json(row, 201);
 });
@@ -128,79 +130,6 @@ environments.patch("/:id", async (c) => {
   const now = new Date();
 
   if (body.isDefault === true && !env.isDefault) {
-    const currentDefault = await getDefaultEnvironment(db, projectId);
-    if (!currentDefault) return c.json({ error: "Default environment not found" }, 500);
-
-    const toggles = await db
-      .select()
-      .from(schema.toggle)
-      .where(eq(schema.toggle.projectId, projectId))
-      .all();
-
-    for (const toggle of toggles) {
-      let resolvedEnabled = toggle.enabled;
-      const override = await db
-        .select()
-        .from(schema.toggleState)
-        .where(
-          and(
-            eq(schema.toggleState.toggleId, toggle.id),
-            eq(schema.toggleState.environmentId, env.id),
-          ),
-        )
-        .get();
-      if (override) resolvedEnabled = override.enabled;
-
-      const oldDefaultOverride = await db
-        .select()
-        .from(schema.toggleState)
-        .where(
-          and(
-            eq(schema.toggleState.toggleId, toggle.id),
-            eq(schema.toggleState.environmentId, currentDefault.id),
-          ),
-        )
-        .get();
-
-      await db
-        .update(schema.toggle)
-        .set({ enabled: resolvedEnabled, updatedAt: now })
-        .where(eq(schema.toggle.id, toggle.id));
-
-      if (currentDefault.id !== env.id && toggle.enabled !== resolvedEnabled) {
-        await db
-          .insert(schema.toggleState)
-          .values({
-            toggleId: toggle.id,
-            environmentId: currentDefault.id,
-            enabled: toggle.enabled,
-            updatedAt: now,
-          })
-          .onConflictDoUpdate({
-            target: [schema.toggleState.toggleId, schema.toggleState.environmentId],
-            set: { enabled: toggle.enabled, updatedAt: now },
-          });
-      } else if (oldDefaultOverride) {
-        await db
-          .delete(schema.toggleState)
-          .where(
-            and(
-              eq(schema.toggleState.toggleId, toggle.id),
-              eq(schema.toggleState.environmentId, currentDefault.id),
-            ),
-          );
-      }
-
-      await db
-        .delete(schema.toggleState)
-        .where(
-          and(
-            eq(schema.toggleState.toggleId, toggle.id),
-            eq(schema.toggleState.environmentId, env.id),
-          ),
-        );
-    }
-
     await db
       .update(schema.environment)
       .set({ isDefault: false, updatedAt: now })

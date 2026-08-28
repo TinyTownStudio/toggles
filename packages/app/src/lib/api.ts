@@ -19,7 +19,6 @@ export interface Toggle {
   id: string;
   key: string;
   enabled: boolean;
-  inherited?: boolean;
   environment?: string;
   projectId: string;
   meta: Record<string, string> | null;
@@ -167,10 +166,12 @@ export async function updateToggleMeta(
   projectId: string,
   id: string,
   meta: Record<string, string>,
+  env?: string,
 ): Promise<Toggle> {
-  return fetchApi<Toggle>(`/api/v1/projects/${projectId}/toggles/${id}`, {
+  const params = env?.trim() ? `?env=${encodeURIComponent(env.trim())}` : "";
+  return fetchApi<Toggle>(`/api/v1/projects/${projectId}/toggles/${id}${params}`, {
     method: "PATCH",
-    body: JSON.stringify({ meta }),
+    body: JSON.stringify({ meta, ...(env ? { env } : {}) }),
   });
 }
 

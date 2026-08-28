@@ -3,7 +3,6 @@ import * as schema from "../db/schema";
 import type { AgnosticDatabaseInstance } from "../types";
 
 export type EnvironmentRow = typeof schema.environment.$inferSelect;
-export type ToggleRow = typeof schema.toggle.$inferSelect;
 
 const DEFAULT_ENV_NAME = "Production";
 const DEFAULT_ENV_SLUG = "production";
@@ -92,22 +91,7 @@ export async function resolveEnvironment(
   return env;
 }
 
-export function resolveEnabled(
-  toggle: ToggleRow,
-  env: EnvironmentRow,
-  defaultEnv: EnvironmentRow,
-  override: { enabled: boolean } | null | undefined,
-): { enabled: boolean; inherited: boolean } {
-  if (env.id === defaultEnv.id) {
-    return { enabled: toggle.enabled, inherited: false };
-  }
-  if (override) {
-    return { enabled: override.enabled, inherited: false };
-  }
-  return { enabled: toggle.enabled, inherited: true };
-}
-
-export async function getToggleOverride(
+export async function getToggleState(
   db: AgnosticDatabaseInstance<typeof schema>,
   toggleId: string,
   environmentId: string,
@@ -122,4 +106,102 @@ export async function getToggleOverride(
       ),
     )
     .get();
+}
+
+export async function resolveToggleForEnv(
+  db: AgnosticDatabaseInstance<typeof schema>,
+  toggleId: string,
+  environmentId: string,
+): Promise<{ enabled: boolean; meta: Record<string, string> | null }> {
+  const state = await getToggleState(db, toggleId, environmentId);
+  return {
+    enabled: state?.enabled ?? false,
+    meta: (state?.meta as Record<string, string> | null) ?? null,
+  };
+}
+
+export async function upsertToggleState(
+  db: AgnosticDatabaseInstance<typeof schema>,
+  toggleId: string,
+  environmentId: string,
+  patch: { enabled?: boolean; meta?: Record<string, string> | null },
+) {
+  const now = new Date();
+  const existing = await getToggleState(db, toggleId, environmentId);
+
+  if (existing) {
+    await db
+      .update(schema.toggleState)
+      .set({
+        ...(patch.enabled !== undefined ? { enabled: patch.enabled } : {}),
+        ...("meta" in patch ? { meta: patch.meta } : {}),
+        updatedAt: now,
+      })
+      .where(
+        and(
+          eq(schema.toggleState.toggleId, toggleId),
+          eq(schema.toggleState.environmentId, environmentId),
+        ),
+      );
+    return;
+  }
+
+  await db.insert(schema.toggleState).values({
+    toggleId,
+    environmentId,
+    enabled: patch.enabled ?? false,
+    meta: "meta" in patch ? patch.meta : null,
+    updatedAt: now,
+  });
+}
+
+export async function seedToggleStatesForToggle(
+  db: AgnosticDatabaseInstance<typeof schema>,
+  projectId: string,
+  toggleId: string,
+  initial: { enabled: boolean; meta?: Record<string, string> | null },
+) {
+  await ensureDefaultEnvironment(db, projectId);
+  const envs = await listProjectEnvironments(db, projectId);
+  const now = new Date();
+
+  for (const env of envs) {
+    const existing = await getToggleState(db, toggleId, env.id);
+    if (existing) continue;
+
+    await db.insert(schema.toggleState).values({
+      toggleId,
+      environmentId: env.id,
+      enabled: initial.enabled,
+      meta: initial.meta ?? null,
+      updatedAt: now,
+    });
+  }
+}
+
+export async function seedToggleStatesForEnvironment(
+  db: AgnosticDatabaseInstance<typeof schema>,
+  projectId: string,
+  environmentId: string,
+) {
+  const toggles = await db
+    .select()
+    .from(schema.toggle)
+    .where(eq(schema.toggle.projectId, projectId))
+    .all();
+
+  const now = new Date();
+
+  for (const toggle of toggles) {
+    const existing = await getToggleState(db, toggle.id, environmentId);
+    if (existing) continue;
+
+    await db.insert(schema.toggleState).values({
+      toggleId: toggle.id,
+      environmentId,
+      enabled: false,
+      meta: null,
+      updatedAt: now,
+    });
+  }
 }

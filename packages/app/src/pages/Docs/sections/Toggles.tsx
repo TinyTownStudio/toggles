@@ -14,7 +14,7 @@ export function Toggles() {
       <Endpoint
         method="GET"
         path="/api/v1/projects/:projectId/toggles"
-        description="Returns all toggles for the given project. Pass ?env=<slug> to resolve enabled values for a specific environment."
+        description="Returns all toggles for the given project. Pass ?env=<slug> to read each flag's enabled state and metadata for that environment (defaults to the project's default environment)."
         authNote="Readable with any API key scoped to this project (read or admin)."
         queryParams={[
           {
@@ -22,7 +22,7 @@ export function Toggles() {
             type: "string",
             required: false,
             description:
-              "Environment slug (e.g. staging). Defaults to the project's default environment.",
+              "Environment slug (e.g. staging). Defaults to the project's default environment. Selects which environment's enabled and meta values are returned.",
           },
         ]}
         responseExample={`[
@@ -30,7 +30,6 @@ export function Toggles() {
     "id": "tgl_01hz...",
     "key": "new-checkout",
     "enabled": true,
-    "inherited": false,
     "environment": "production",
     "projectId": "proj_01hz...",
     "meta": { "description": "New checkout flow" },
@@ -74,14 +73,14 @@ const toggles = await res.json();`}
             field: "env",
             type: "string",
             required: false,
-            description: "Environment slug. Defaults to the project's default environment.",
+            description:
+              "Environment slug. Defaults to the project's default environment. Selects which environment's enabled and meta values are returned.",
           },
         ]}
         responseExample={`{
   "id": "tgl_01hz...",
   "key": "new-checkout",
   "enabled": true,
-  "inherited": false,
   "environment": "production",
   "projectId": "proj_01hz...",
   "meta": {},
@@ -162,7 +161,7 @@ const toggle = await res.json();`}
       <Endpoint
         method="PATCH"
         path="/api/v1/projects/:projectId/toggles/:id"
-        description="Update a toggle's enabled state and/or metadata. Send only the fields you want to change."
+        description="Update a toggle's enabled state and/or metadata for the environment selected via ?env= (or the default environment when omitted). Send only the fields you want to change."
         authNote="Requires an admin API key or session auth."
         requestBody={[
           {

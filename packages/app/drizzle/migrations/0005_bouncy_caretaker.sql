@@ -1,0 +1,1 @@
+ALTER TABLE `toggle_state` ADD `meta` text;

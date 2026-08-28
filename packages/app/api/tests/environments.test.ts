@@ -69,7 +69,7 @@ describe("POST /api/v1/projects/:projectId/environments", () => {
   });
 });
 
-describe("environment toggle resolution", () => {
+describe("toggle values across environments", () => {
   let toggleId = "";
 
   beforeAll(async () => {
@@ -80,16 +80,27 @@ describe("environment toggle resolution", () => {
     toggleId = ((await toggleRes.json()) as { id: string }).id;
   });
 
-  it("staging inherits default value when no override exists", async () => {
-    const res = await apiGet(`/api/v1/projects/${projectId}/toggles?env=staging`, { cookie });
-    expect(res.status).toBe(200);
-    const data = (await res.json()) as { key: string; enabled: boolean; inherited: boolean }[];
-    const flag = data.find((t) => t.key === "env-flag");
-    expect(flag?.enabled).toBe(false);
-    expect(flag?.inherited).toBe(true);
+  it("seeds the same initial enabled value for production and staging", async () => {
+    const prodRes = await apiGet(`/api/v1/projects/${projectId}/toggles?env=production`, {
+      cookie,
+    });
+    const stagingRes = await apiGet(`/api/v1/projects/${projectId}/toggles?env=staging`, {
+      cookie,
+    });
+    expect(prodRes.status).toBe(200);
+    expect(stagingRes.status).toBe(200);
+
+    const prod = ((await prodRes.json()) as { key: string; enabled: boolean }[]).find(
+      (t) => t.key === "env-flag",
+    );
+    const staging = ((await stagingRes.json()) as { key: string; enabled: boolean }[]).find(
+      (t) => t.key === "env-flag",
+    );
+    expect(prod?.enabled).toBe(false);
+    expect(staging?.enabled).toBe(false);
   });
 
-  it("override on staging env works", async () => {
+  it("PATCH on staging only enables staging", async () => {
     const patchRes = await apiPatch(
       `/api/v1/projects/${projectId}/toggles/${toggleId}?env=staging`,
       {
@@ -98,38 +109,55 @@ describe("environment toggle resolution", () => {
       },
     );
     expect(patchRes.status).toBe(200);
-    const patched = (await patchRes.json()) as { enabled: boolean; inherited: boolean };
-    expect(patched.enabled).toBe(true);
-    expect(patched.inherited).toBe(false);
 
-    const listRes = await apiGet(`/api/v1/projects/${projectId}/toggles?env=production`, {
+    const prodRes = await apiGet(`/api/v1/projects/${projectId}/toggles?env=production`, {
       cookie,
     });
-    const list = (await listRes.json()) as { key: string; enabled: boolean }[];
-    const prod = list.find((t) => t.key === "env-flag");
+    const stagingRes = await apiGet(`/api/v1/projects/${projectId}/toggles?env=staging`, {
+      cookie,
+    });
+    const prod = ((await prodRes.json()) as { key: string; enabled: boolean }[]).find(
+      (t) => t.key === "env-flag",
+    );
+    const staging = ((await stagingRes.json()) as { key: string; enabled: boolean }[]).find(
+      (t) => t.key === "env-flag",
+    );
     expect(prod?.enabled).toBe(false);
+    expect(staging?.enabled).toBe(true);
   });
 
-  it("reverting override deletes toggle_state row", async () => {
+  it("PATCH meta on staging only updates staging meta", async () => {
+    await apiPatch(`/api/v1/projects/${projectId}/toggles/${toggleId}?env=production`, {
+      cookie,
+      body: { meta: { region: "us-east" } },
+    });
+
     const patchRes = await apiPatch(
       `/api/v1/projects/${projectId}/toggles/${toggleId}?env=staging`,
       {
         cookie,
-        body: { enabled: false },
+        body: { meta: { region: "eu-west" } },
       },
     );
     expect(patchRes.status).toBe(200);
-    const patched = (await patchRes.json()) as { enabled: boolean; inherited: boolean };
-    expect(patched.enabled).toBe(false);
-    expect(patched.inherited).toBe(true);
+
+    const prodRes = await apiGet(`/api/v1/projects/${projectId}/toggles?env=production`, {
+      cookie,
+    });
+    const stagingRes = await apiGet(`/api/v1/projects/${projectId}/toggles?env=staging`, {
+      cookie,
+    });
+    const prod = ((await prodRes.json()) as { key: string; meta: Record<string, string> | null }[]).find(
+      (t) => t.key === "env-flag",
+    );
+    const staging = (
+      (await stagingRes.json()) as { key: string; meta: Record<string, string> | null }[]
+    ).find((t) => t.key === "env-flag");
+    expect(prod?.meta).toEqual({ region: "us-east" });
+    expect(staging?.meta).toEqual({ region: "eu-west" });
   });
 
   it("GET /toggles/one resolves env with flag query", async () => {
-    await apiPatch(`/api/v1/projects/${projectId}/toggles/${toggleId}?env=staging`, {
-      cookie,
-      body: { enabled: true },
-    });
-
     const res = await apiGet(
       `/api/v1/projects/${projectId}/toggles/one?flag=env-flag&env=staging`,
       { cookie },
@@ -138,6 +166,37 @@ describe("environment toggle resolution", () => {
     const data = (await res.json()) as { enabled: boolean; environment: string };
     expect(data.enabled).toBe(true);
     expect(data.environment).toBe("staging");
+  });
+
+  it("new environment seeds existing flags as disabled", async () => {
+    const createRes = await apiPost("/api/v1/projects", {
+      cookie,
+      body: { name: "Seed Env Proj" },
+    });
+    const pid = ((await createRes.json()) as { id: string }).id;
+
+    await apiGet(`/api/v1/projects/${pid}/environments`, { cookie });
+    await apiPost(`/api/v1/projects/${pid}/toggles`, {
+      cookie,
+      body: { key: "seed-flag", enabled: true },
+    });
+
+    await apiPost(`/api/v1/projects/${pid}/environments`, {
+      cookie,
+      body: { name: "QA" },
+    });
+
+    const qaRes = await apiGet(`/api/v1/projects/${pid}/toggles?env=qa`, { cookie });
+    const qaFlag = ((await qaRes.json()) as { key: string; enabled: boolean }[]).find(
+      (t) => t.key === "seed-flag",
+    );
+    expect(qaFlag?.enabled).toBe(false);
+
+    const prodRes = await apiGet(`/api/v1/projects/${pid}/toggles?env=production`, { cookie });
+    const prodFlag = ((await prodRes.json()) as { key: string; enabled: boolean }[]).find(
+      (t) => t.key === "seed-flag",
+    );
+    expect(prodFlag?.enabled).toBe(true);
   });
 });
 
@@ -207,5 +266,11 @@ describe("PATCH /api/v1/projects/:projectId/environments/:id", () => {
     const list = (await listRes.json()) as { key: string; enabled: boolean }[];
     const flag = list.find((t) => t.key === "promote-flag");
     expect(flag?.enabled).toBe(true);
+
+    const prodRes = await apiGet(`/api/v1/projects/${pid}/toggles?env=production`, { cookie });
+    const prod = ((await prodRes.json()) as { key: string; enabled: boolean }[]).find(
+      (t) => t.key === "promote-flag",
+    );
+    expect(prod?.enabled).toBe(false);
   });
 });

@@ -124,6 +124,7 @@ export const toggleState = sqliteTable(
       .notNull()
       .references(() => environment.id, { onDelete: "cascade" }),
     enabled: integer("enabled", { mode: "boolean" }).notNull(),
+    meta: text("meta", { mode: "json" }),
     updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
   },
   (t) => [

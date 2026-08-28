@@ -58,7 +58,7 @@ export const TogglesModel = createModel(() => {
 
   const toggle = async (projectId: string, id: string, enabled: boolean) => {
     const prev = toggles.value;
-    toggles.value = prev.map((t) => (t.id === id ? { ...t, enabled, inherited: false } : t));
+    toggles.value = prev.map((t) => (t.id === id ? { ...t, enabled } : t));
     try {
       const updated = await updateToggle(
         projectId,
@@ -89,7 +89,12 @@ export const TogglesModel = createModel(() => {
     toggles.value = prev.map((t) => (t.id === id ? { ...t, meta } : t));
     saving.value = true;
     try {
-      const updated = await updateToggleMeta(projectId, id, meta);
+      const updated = await updateToggleMeta(
+        projectId,
+        id,
+        meta,
+        activeEnvironment.value ?? undefined,
+      );
       toggles.value = toggles.value.map((t) => (t.id === id ? updated : t));
     } catch (err) {
       toggles.value = prev;

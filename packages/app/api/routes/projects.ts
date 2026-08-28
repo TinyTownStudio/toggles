@@ -3,9 +3,10 @@ import { eq, and, like } from "drizzle-orm";
 import * as schema from "../db/schema";
 import {
   getDefaultEnvironment,
-  getToggleOverride,
-  resolveEnabled,
   resolveEnvironment,
+  resolveToggleForEnv,
+  seedToggleStatesForToggle,
+  upsertToggleState,
 } from "../lib/environments";
 import { hasWriteAccess, isEnvScopeViolation, isScopeViolation } from "../lib/permissions";
 import { getUserPlan, PLAN_LIMITS } from "../lib/plans";
@@ -153,16 +154,17 @@ async function formatToggleForEnv(
   db: AgnosticDatabaseInstance<typeof schema>,
   toggle: typeof schema.toggle.$inferSelect,
   env: typeof schema.environment.$inferSelect,
-  defaultEnv: typeof schema.environment.$inferSelect,
 ) {
-  const override = env.id !== defaultEnv.id ? await getToggleOverride(db, toggle.id, env.id) : null;
-  const { enabled, inherited } = resolveEnabled(toggle, env, defaultEnv, override);
-
+  const { enabled, meta } = await resolveToggleForEnv(db, toggle.id, env.id);
   return {
-    ...toggle,
+    id: toggle.id,
+    key: toggle.key,
+    projectId: toggle.projectId,
     enabled,
-    inherited,
+    meta,
     environment: env.slug,
+    createdAt: toggle.createdAt,
+    updatedAt: toggle.updatedAt,
   };
 }
 
@@ -202,7 +204,7 @@ projects.get("/:projectId/toggles", async (c) => {
       .all();
 
     const formatted = await Promise.all(
-      rows.map((toggle) => formatToggleForEnv(db, toggle, ctx.env, ctx.defaultEnv)),
+      rows.map((toggle) => formatToggleForEnv(db, toggle, ctx.env)),
     );
     return c.json(formatted);
   }
@@ -223,9 +225,7 @@ projects.get("/:projectId/toggles", async (c) => {
     )
     .all();
 
-  const formatted = await Promise.all(
-    rows.map((toggle) => formatToggleForEnv(db, toggle, ctx.env, ctx.defaultEnv)),
-  );
+  const formatted = await Promise.all(rows.map((toggle) => formatToggleForEnv(db, toggle, ctx.env)));
 
   return c.json(formatted);
 });
@@ -262,6 +262,8 @@ projects.post("/:projectId/toggles", async (c) => {
     updatedAt: now,
   });
 
+  await seedToggleStatesForToggle(db, projectId, id, { enabled: body.enabled ?? false });
+
   const row = await db.select().from(schema.toggle).where(eq(schema.toggle.id, id)).get();
   if (!row) return c.json({ error: "Not found" }, 404);
 
@@ -269,7 +271,7 @@ projects.post("/:projectId/toggles", async (c) => {
   const ctx = await resolveToggleContext(db, projectId, envSlug, keyData?.permissions ?? null);
   if ("error" in ctx) return c.json(row, 201);
 
-  const formatted = await formatToggleForEnv(db, row, ctx.env, ctx.defaultEnv);
+  const formatted = await formatToggleForEnv(db, row, ctx.env);
   return c.json(formatted, 201);
 });
 
@@ -313,49 +315,26 @@ projects.patch("/:projectId/toggles/:id", async (c) => {
   if (!toggle) return c.json({ error: "Not found" }, 404);
 
   const now = new Date();
+  const toggleUpdates: Partial<typeof schema.toggle.$inferInsert> = { updatedAt: now };
 
   if (typeof body.enabled === "boolean") {
-    if (ctx.env.id === ctx.defaultEnv.id) {
-      await db
-        .update(schema.toggle)
-        .set({ enabled: body.enabled, updatedAt: now })
-        .where(eq(schema.toggle.id, id));
-    } else if (body.enabled === toggle.enabled) {
-      await db
-        .delete(schema.toggleState)
-        .where(
-          and(
-            eq(schema.toggleState.toggleId, id),
-            eq(schema.toggleState.environmentId, ctx.env.id),
-          ),
-        );
-    } else {
-      await db
-        .insert(schema.toggleState)
-        .values({
-          toggleId: id,
-          environmentId: ctx.env.id,
-          enabled: body.enabled,
-          updatedAt: now,
-        })
-        .onConflictDoUpdate({
-          target: [schema.toggleState.toggleId, schema.toggleState.environmentId],
-          set: { enabled: body.enabled, updatedAt: now },
-        });
-    }
+    await upsertToggleState(db, id, ctx.env.id, { enabled: body.enabled });
+    if (ctx.env.isDefault) toggleUpdates.enabled = body.enabled;
   }
 
   if ("meta" in body) {
-    await db
-      .update(schema.toggle)
-      .set({ meta: body.meta, updatedAt: now })
-      .where(eq(schema.toggle.id, id));
+    await upsertToggleState(db, id, ctx.env.id, { meta: body.meta });
+    if (ctx.env.isDefault) toggleUpdates.meta = body.meta;
+  }
+
+  if (Object.keys(toggleUpdates).length > 1) {
+    await db.update(schema.toggle).set(toggleUpdates).where(eq(schema.toggle.id, id));
   }
 
   const row = await db.select().from(schema.toggle).where(eq(schema.toggle.id, id)).get();
   if (!row) return c.json({ error: "Not found" }, 404);
 
-  const formatted = await formatToggleForEnv(db, row, ctx.env, ctx.defaultEnv);
+  const formatted = await formatToggleForEnv(db, row, ctx.env);
   return c.json(formatted);
 });
 
@@ -409,7 +388,7 @@ projects.get("/:projectId/toggles/one", async (c) => {
 
   if (!toggle) return c.json({});
 
-  const formatted = await formatToggleForEnv(db, toggle, ctx.env, ctx.defaultEnv);
+  const formatted = await formatToggleForEnv(db, toggle, ctx.env);
   return c.json(formatted);
 });
 

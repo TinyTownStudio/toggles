@@ -8,9 +8,10 @@ export function Environments() {
     <div class="mt-14">
       <SectionHeading id="environments">Environments</SectionHeading>
       <p class="text-sm text-content-tertiary leading-relaxed mb-8">
-        Environments let you manage different flag values per deployment stage (e.g. staging vs
-        production). The default environment uses toggle.enabled directly; other environments store
-        sparse overrides that fall back to the default when unset.
+        Environments organize deployment stages (e.g. staging vs production) within a project. Each
+        environment stores its own flag enabled state and metadata. Use environments to scope API
+        keys and pass <code class="text-xs">?env=&lt;slug&gt;</code> on toggle endpoints to read or
+        update values for a specific environment.
       </p>
 
       <SubHeading id="environments-list">List environments</SubHeading>
@@ -42,7 +43,7 @@ const environments = await res.json();`}
       <Endpoint
         method="POST"
         path="/api/v1/projects/:projectId/environments"
-        description="Creates a new environment. New environments inherit all flag values from the default environment."
+        description="Creates a new environment."
         authNote="Requires session auth. Free plan: 3 environments per project."
         requestBody={[
           { field: "name", type: "string", required: true, description: "Display name." },
@@ -79,7 +80,7 @@ const environment = await res.json();`}
       <Endpoint
         method="PATCH"
         path="/api/v1/projects/:projectId/environments/:id"
-        description="Rename an environment or promote it to default. Promoting copies resolved flag values into toggle.enabled."
+        description="Rename an environment or promote it to default."
         authNote="Requires session auth."
         requestBody={[
           { field: "name", type: "string", required: false, description: "New display name." },
@@ -113,7 +114,7 @@ const environment = await res.json();`}
       <Endpoint
         method="DELETE"
         path="/api/v1/projects/:projectId/environments/:id"
-        description="Deletes a non-default environment and its override rows. The default environment cannot be deleted."
+        description="Deletes a non-default environment. The default environment cannot be deleted."
         authNote="Requires session auth."
         responseExample="204 No Content"
         curlExample={`curl -X DELETE ${BASE}/api/v1/projects/proj_01hz.../environments/env_01hz... \\
