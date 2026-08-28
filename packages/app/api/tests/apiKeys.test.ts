@@ -158,3 +158,43 @@ describe("invalid credentials", () => {
     expect(res.status).toBe(401);
   });
 });
+
+describe("environment-scoped API key", () => {
+  let stagingKey = "";
+
+  beforeAll(async () => {
+    await apiGet(`/api/v1/projects/${projectAId}/environments`, { cookie });
+    await apiPost(`/api/v1/projects/${projectAId}/environments`, {
+      cookie,
+      body: { name: "Staging" },
+    });
+
+    const keyRes = await apiPost("/api/v1/api-keys", {
+      cookie,
+      body: { name: "Staging Key", projectId: projectAId, environmentSlug: "staging" },
+    });
+    expect(keyRes.status).toBe(201);
+    stagingKey = ((await keyRes.json()) as { key: string }).key;
+  });
+
+  it("reads toggles for its environment", async () => {
+    const res = await apiGet(`/api/v1/projects/${projectAId}/toggles?env=staging`, {
+      bearer: stagingKey,
+    });
+    expect(res.status).toBe(200);
+  });
+
+  it("cannot read toggles for a different environment (403)", async () => {
+    const res = await apiGet(`/api/v1/projects/${projectAId}/toggles?env=production`, {
+      bearer: stagingKey,
+    });
+    expect(res.status).toBe(403);
+  });
+
+  it("global project key can use ?env= override", async () => {
+    const res = await apiGet(`/api/v1/projects/${projectAId}/toggles?env=staging`, {
+      bearer: allProjectsKey,
+    });
+    expect(res.status).toBe(200);
+  });
+});

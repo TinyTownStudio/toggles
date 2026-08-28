@@ -15,12 +15,15 @@ export const TogglesModel = createModel(() => {
   const creating = signal(false);
   const saving = signal(false);
   const searching = signal(false);
+  const activeEnvironment = signal<string | null>(null);
 
-  const fetch = async (projectId: string, search?: string) => {
+  const fetch = async (projectId: string, search?: string, env?: string) => {
     loading.value = true;
     error.value = null;
+    const envSlug = env ?? activeEnvironment.value ?? undefined;
     try {
-      toggles.value = await getToggles(projectId, search);
+      toggles.value = await getToggles(projectId, search, envSlug);
+      if (envSlug) activeEnvironment.value = envSlug;
     } catch (err) {
       error.value = err instanceof Error ? err.message : "Failed to load toggles";
     } finally {
@@ -32,7 +35,7 @@ export const TogglesModel = createModel(() => {
     searching.value = true;
     error.value = null;
     try {
-      toggles.value = await getToggles(projectId, query);
+      toggles.value = await getToggles(projectId, query, activeEnvironment.value ?? undefined);
     } catch (err) {
       error.value = err instanceof Error ? err.message : "Failed to search toggles";
     } finally {
@@ -55,9 +58,14 @@ export const TogglesModel = createModel(() => {
 
   const toggle = async (projectId: string, id: string, enabled: boolean) => {
     const prev = toggles.value;
-    toggles.value = prev.map((t) => (t.id === id ? { ...t, enabled } : t));
+    toggles.value = prev.map((t) => (t.id === id ? { ...t, enabled, inherited: false } : t));
     try {
-      const updated = await updateToggle(projectId, id, enabled);
+      const updated = await updateToggle(
+        projectId,
+        id,
+        enabled,
+        activeEnvironment.value ?? undefined,
+      );
       toggles.value = toggles.value.map((t) => (t.id === id ? updated : t));
     } catch (err) {
       toggles.value = prev;
@@ -91,6 +99,10 @@ export const TogglesModel = createModel(() => {
     }
   };
 
+  const setActiveEnvironment = (slug: string | null) => {
+    activeEnvironment.value = slug;
+  };
+
   return {
     loading,
     toggles,
@@ -98,11 +110,13 @@ export const TogglesModel = createModel(() => {
     creating,
     saving,
     searching,
+    activeEnvironment,
     fetch,
     search,
     create,
     toggle,
     remove,
     saveMeta,
+    setActiveEnvironment,
   };
 });

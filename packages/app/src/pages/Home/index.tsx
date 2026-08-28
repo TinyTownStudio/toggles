@@ -204,9 +204,7 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
           </svg>
         </span>
       </button>
-      <p
-        class={`pb-4 text-sm text-content-tertiary leading-relaxed ${open.value ? "" : "hidden"}`}
-      >
+      <p class={`pb-4 text-sm text-content-tertiary leading-relaxed ${open.value ? "" : "hidden"}`}>
         {answer}
       </p>
     </div>

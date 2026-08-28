@@ -5,10 +5,11 @@ import { IconChevronRight, IconTrash } from "@tabler/icons-react";
 import { AuthModel } from "../../models/auth";
 import { ProjectsModel } from "../../models/projects";
 import { TogglesModel } from "../../models/toggles";
+import { EnvironmentsModel } from "../../models/environments";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { Modal } from "../../components/ui/Modal";
-import type { Toggle } from "../../lib/api";
+import type { Environment, Toggle } from "../../lib/api";
 
 type MetaRow = { key: string; value: string };
 
@@ -25,9 +26,12 @@ export function ProjectDetail({ id }: { id: string }) {
   const auth = useModel(AuthModel);
   const projectsModel = useModel(ProjectsModel);
   const togglesModel = useModel(TogglesModel);
+  const environmentsModel = useModel(EnvironmentsModel);
   const { route } = useLocation();
   const [newKey, setNewKey] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const [showEnvModal, setShowEnvModal] = useState(false);
+  const [newEnvName, setNewEnvName] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [editingMetaId, setEditingMetaId] = useState<string | null>(null);
   const [metaRows, setMetaRows] = useState<MetaRow[]>([]);
@@ -41,12 +45,21 @@ export function ProjectDetail({ id }: { id: string }) {
       }
       await Promise.all([
         projectsModel.projects.value.length === 0 ? projectsModel.fetch() : Promise.resolve(),
-        togglesModel.fetch(id),
+        environmentsModel.fetch(id),
       ]);
+      const defaultEnv =
+        environmentsModel.environments.value.find((e) => e.isDefault) ??
+        environmentsModel.environments.value[0];
+      if (defaultEnv) {
+        togglesModel.setActiveEnvironment(defaultEnv.slug);
+        await togglesModel.fetch(id, undefined, defaultEnv.slug);
+      } else {
+        await togglesModel.fetch(id);
+      }
     });
   }, [id]);
 
-  if (auth.loading.value || togglesModel.loading.value) {
+  if (auth.loading.value || togglesModel.loading.value || environmentsModel.loading.value) {
     return (
       <div class="min-h-screen bg-page pt-16 flex items-center justify-center">
         <p class="text-content-tertiary text-sm">Loading...</p>
@@ -55,6 +68,10 @@ export function ProjectDetail({ id }: { id: string }) {
   }
 
   const project = projectsModel.projects.value.find((p: { id: string }) => p.id === id);
+  const envs = environmentsModel.environments.value;
+  const activeSlug = togglesModel.activeEnvironment.value;
+  const activeEnv = envs.find((e) => e.slug === activeSlug) ?? envs.find((e) => e.isDefault);
+  const defaultEnv = envs.find((e) => e.isDefault);
 
   const handleCreate = async (e: Event) => {
     e.preventDefault();
@@ -63,6 +80,20 @@ export function ProjectDetail({ id }: { id: string }) {
     await togglesModel.create(id, key);
     setNewKey("");
     setShowModal(false);
+  };
+
+  const handleCreateEnv = async (e: Event) => {
+    e.preventDefault();
+    const name = newEnvName.trim();
+    if (!name) return;
+    const created = await environmentsModel.create(id, name);
+    setNewEnvName("");
+    if (created) await handleEnvChange(created);
+  };
+
+  const handleEnvChange = async (env: Environment) => {
+    togglesModel.setActiveEnvironment(env.slug);
+    await togglesModel.fetch(id, searchQuery || undefined, env.slug);
   };
 
   const handleSearch = (query: string) => {
@@ -115,6 +146,38 @@ export function ProjectDetail({ id }: { id: string }) {
           </div>
         </div>
 
+        {envs.length > 0 && (
+          <div class="mb-6 flex flex-wrap items-center gap-2">
+            <label class="flex items-center gap-2 text-sm text-content-tertiary">
+              <span>Environment</span>
+              <select
+                value={activeSlug ?? ""}
+                onChange={(e) => {
+                  const env = envs.find((item) => item.slug === e.currentTarget.value);
+                  if (env) handleEnvChange(env);
+                }}
+                class="rounded-lg border border-edge bg-page text-content text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent/20"
+              >
+                {envs.map((env) => (
+                  <option key={env.id} value={env.slug}>
+                    {env.name}
+                    {env.isDefault ? " (default)" : ""}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <Button variant="secondary" size="sm" onClick={() => setShowEnvModal(true)}>
+              Manage
+            </Button>
+          </div>
+        )}
+
+        {activeEnv && !activeEnv.isDefault && defaultEnv && (
+          <p class="text-xs text-content-faint mb-4">
+            Inherited flags use values from <span class="font-mono">{defaultEnv.name}</span>.
+          </p>
+        )}
+
         {togglesModel.error.value && (
           <p class="text-sm text-error-text mb-4">{togglesModel.error.value}</p>
         )}
@@ -152,6 +215,11 @@ export function ProjectDetail({ id }: { id: string }) {
                           }`}
                         />
                         <span class="text-content text-sm font-mono truncate">{t.key}</span>
+                        {t.inherited && (
+                          <span class="text-[10px] uppercase tracking-wide text-content-faint">
+                            inherited
+                          </span>
+                        )}
                       </div>
                       {!isOpen && (
                         <div class="mt-1 ml-[22px] flex flex-wrap items-center gap-1.5">
@@ -189,7 +257,7 @@ export function ProjectDetail({ id }: { id: string }) {
                         onClick={() => togglesModel.toggle(id, t.id, !t.enabled)}
                         class={`relative mt-0.5 inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-accent/20 ${
                           t.enabled ? "bg-accent" : "bg-raised-hover"
-                        }`}
+                        } ${t.inherited ? "opacity-70" : ""}`}
                       >
                         <span
                           class={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
@@ -263,12 +331,7 @@ export function ProjectDetail({ id }: { id: string }) {
                           + Add field
                         </Button>
                         <div class="flex-1" />
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          size="sm"
-                          onClick={closeMeta}
-                        >
+                        <Button type="button" variant="secondary" size="sm" onClick={closeMeta}>
                           Cancel
                         </Button>
                         <Button
@@ -309,6 +372,74 @@ export function ProjectDetail({ id }: { id: string }) {
               </Button>
             </div>
           </form>
+        </Modal>
+      )}
+
+      {showEnvModal && (
+        <Modal title="Manage Environments" onClose={() => setShowEnvModal(false)}>
+          <div class="flex flex-col gap-4">
+            <p class="text-xs text-content-tertiary">
+              {envs.length} of 3 environments used on the free plan.
+            </p>
+
+            {environmentsModel.error.value && (
+              <p class="text-sm text-error-text">{environmentsModel.error.value}</p>
+            )}
+
+            <ul class="space-y-2">
+              {envs.map((env) => (
+                <li
+                  key={env.id}
+                  class="flex items-center justify-between gap-2 rounded-lg border border-edge px-3 py-2"
+                >
+                  <div>
+                    <p class="text-sm font-medium text-content">{env.name}</p>
+                    <p class="text-xs font-mono text-content-faint">{env.slug}</p>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    {env.isDefault ? (
+                      <span class="text-xs text-content-faint">Default</span>
+                    ) : (
+                      <>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => environmentsModel.setDefault(id, env.id)}
+                        >
+                          Set default
+                        </Button>
+                        <Button
+                          variant="danger-icon"
+                          size="sm"
+                          aria-label={`Delete ${env.name}`}
+                          onClick={() => environmentsModel.remove(id, env.id)}
+                        >
+                          <IconTrash size={14} stroke={2} />
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+
+            <form onSubmit={handleCreateEnv} class="flex gap-2">
+              <Input
+                type="text"
+                value={newEnvName}
+                onInput={(e) => setNewEnvName((e.target as HTMLInputElement).value)}
+                placeholder="New environment name"
+                disabled={environmentsModel.creating.value}
+                class="flex-1"
+              />
+              <Button
+                type="submit"
+                disabled={environmentsModel.creating.value || !newEnvName.trim()}
+              >
+                Add
+              </Button>
+            </form>
+          </div>
         </Modal>
       )}
     </div>

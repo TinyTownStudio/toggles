@@ -28,6 +28,41 @@ describe("GET /api/v1/projects", () => {
     const data = (await res.json()) as unknown[];
     expect(data).toEqual([]);
   });
+
+  it("returns 200 with projects after creation", async () => {
+    const listCookie = await signUp("list@example.com", "password1234", "List User");
+    const createRes = await apiPost("/api/v1/projects", {
+      cookie: listCookie,
+      body: { name: "Listed Project" },
+    });
+    expect(createRes.status).toBe(201);
+    const { id, name } = (await createRes.json()) as { id: string; name: string };
+
+    const res = await apiGet("/api/v1/projects", { cookie: listCookie });
+    expect(res.status).toBe(200);
+    const data = (await res.json()) as { id: string; name: string; userId: string }[];
+    const project = data.find((p) => p.id === id);
+    expect(project).toBeDefined();
+    expect(project?.name).toBe(name);
+    expect(project?.userId).toBeTruthy();
+  });
+
+  it("does not require environments to exist when listing projects", async () => {
+    const listCookie = await signUp("list2@example.com", "password1234", "List User 2");
+    const createRes = await apiPost("/api/v1/projects", {
+      cookie: listCookie,
+      body: { name: "No Env Yet" },
+    });
+    const { id } = (await createRes.json()) as { id: string };
+
+    const listRes = await apiGet("/api/v1/projects", { cookie: listCookie });
+    expect(listRes.status).toBe(200);
+
+    const envRes = await apiGet(`/api/v1/projects/${id}/environments`, { cookie: listCookie });
+    expect(envRes.status).toBe(200);
+    const envs = (await envRes.json()) as { slug: string }[];
+    expect(envs.some((e) => e.slug === "production")).toBe(true);
+  });
 });
 
 describe("POST /api/v1/projects", () => {

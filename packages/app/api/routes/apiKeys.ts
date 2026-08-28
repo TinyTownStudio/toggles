@@ -42,9 +42,11 @@ apiKeys.post("/", async (c) => {
     name?: string;
     type?: TokenType;
     projectId?: string | null;
+    environmentSlug?: string | null;
   }>();
   const tokenType: TokenType = body.type === "admin" ? "admin" : "read";
   const projectId = body.projectId ?? null;
+  const environmentSlug = body.environmentSlug ?? null;
 
   const auth = createAuth(c.env, c.get("db"));
   const db = c.get("db");
@@ -57,9 +59,25 @@ apiKeys.post("/", async (c) => {
       .where(and(eq(schema.project.id, projectId), eq(schema.project.userId, userId)))
       .get();
     if (!project) return c.json({ error: "Project not found" }, 404);
+
+    if (environmentSlug) {
+      const env = await db
+        .select()
+        .from(schema.environment)
+        .where(
+          and(
+            eq(schema.environment.projectId, projectId),
+            eq(schema.environment.slug, environmentSlug),
+          ),
+        )
+        .get();
+      if (!env) return c.json({ error: "Environment not found" }, 404);
+    }
+  } else if (environmentSlug) {
+    return c.json({ error: "environmentSlug requires projectId" }, 400);
   }
 
-  const permissions = buildPermissions(tokenType, projectId);
+  const permissions = buildPermissions(tokenType, projectId, environmentSlug);
 
   const res = await auth.api.createApiKey({
     body: {

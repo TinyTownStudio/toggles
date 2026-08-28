@@ -6,20 +6,31 @@ export type TokenType = "read" | "admin";
  * Examples:
  *   buildPermissions("read", null)   → { projects: ["read"] }
  *   buildPermissions("read", "abc")  → { projects: ["read.abc"] }
+ *   buildPermissions("read", "abc", "staging") → { projects: ["read.abc"], environments: ["staging"] }
  *   buildPermissions("admin", null)  → { projects: ["read", "write"] }
  *   buildPermissions("admin", "abc") → { projects: ["read.abc", "write.abc"] }
  */
 export function buildPermissions(
   type: TokenType,
   projectId: string | null,
+  environmentSlug?: string | null,
 ): Record<string, string[]> {
+  const result: Record<string, string[]> = {};
+
   if (projectId) {
     const actions: string[] =
       type === "admin" ? [`read.${projectId}`, `write.${projectId}`] : [`read.${projectId}`];
-    return { projects: actions };
+    result.projects = actions;
+  } else {
+    const actions: string[] = type === "admin" ? ["read", "write"] : ["read"];
+    result.projects = actions;
   }
-  const actions: string[] = type === "admin" ? ["read", "write"] : ["read"];
-  return { projects: actions };
+
+  if (environmentSlug?.trim()) {
+    result.environments = [environmentSlug.trim()];
+  }
+
+  return result;
 }
 
 /**
@@ -44,16 +55,27 @@ export function isScopeViolation(
 ): boolean {
   if (!permissions) return false;
   const actions = permissions.projects ?? [];
-  // If there is any scoped entry (contains a dot) that doesn't match the requested project,
-  // and there is no global entry (no dot), it's a violation.
   const hasGlobalRead = actions.includes("read");
   const hasGlobalWrite = actions.includes("write");
   if (hasGlobalRead || hasGlobalWrite) return false;
-  // All entries are scoped — check if any match this project
   const matchesProject = actions.some(
     (a) => a === `read.${projectId}` || a === `write.${projectId}`,
   );
   return !matchesProject;
+}
+
+/**
+ * Returns true if the API key is scoped to a specific environment that doesn't
+ * match the requested env slug. Keys without an environments array are not blocked.
+ */
+export function isEnvScopeViolation(
+  permissions: Record<string, string[]> | null,
+  envSlug: string,
+): boolean {
+  if (!permissions) return false;
+  const envs = permissions.environments;
+  if (!envs || envs.length === 0) return false;
+  return !envs.includes(envSlug);
 }
 
 /**

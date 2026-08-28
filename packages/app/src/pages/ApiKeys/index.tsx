@@ -9,6 +9,7 @@ import { Modal } from "../../components/ui/Modal";
 import { ApiKeysModel } from "../../models/apiKeys";
 import { AuthModel } from "../../models/auth";
 import { ProjectsModel } from "../../models/projects";
+import { EnvironmentsModel } from "../../models/environments";
 import { timeAgo } from "../../lib/date";
 import type { Project, TokenType } from "../../lib/api";
 
@@ -17,9 +18,11 @@ export function ApiKeys() {
   const auth = useModel(AuthModel);
   const apiKeyModel = useModel(ApiKeysModel);
   const projectsModel = useModel(ProjectsModel);
+  const environmentsModel = useModel(EnvironmentsModel);
   const [showModal, setShowModal] = useState(false);
   const [newName, setNewName] = useState("");
   const [newProjectId, setNewProjectId] = useState<string>("__all__");
+  const [newEnvSlug, setNewEnvSlug] = useState<string>("");
   const [newType, setNewType] = useState<TokenType>("read");
   const [newKey, setNewKey] = useState<string | null>(null);
 
@@ -37,13 +40,28 @@ export function ApiKeys() {
   const handleCreate = async (e: Event) => {
     e.preventDefault();
     const projectId = newProjectId === "__all__" ? null : newProjectId;
-    const key = await apiKeyModel.create(newName.trim() || "Unnamed", projectId, newType);
+    const environmentSlug = newEnvSlug || null;
+    const key = await apiKeyModel.create(
+      newName.trim() || "Unnamed",
+      projectId,
+      newType,
+      environmentSlug,
+    );
     if (key) {
       setNewKey(key);
       setNewName("");
       setNewProjectId("__all__");
+      setNewEnvSlug("");
       setNewType("read");
       setShowModal(false);
+    }
+  };
+
+  const handleProjectChange = async (projectId: string) => {
+    setNewProjectId(projectId);
+    setNewEnvSlug("");
+    if (projectId !== "__all__") {
+      await environmentsModel.fetch(projectId);
     }
   };
 
@@ -143,7 +161,7 @@ export function ApiKeys() {
               </select>
               <select
                 value={newProjectId}
-                onChange={(e) => setNewProjectId((e.target as HTMLSelectElement).value)}
+                onChange={(e) => handleProjectChange((e.target as HTMLSelectElement).value)}
                 disabled={apiKeyModel.creating.value}
                 class="flex-1 rounded-lg border border-edge bg-page text-content text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent/20"
               >
@@ -155,6 +173,21 @@ export function ApiKeys() {
                 ))}
               </select>
             </div>
+            {newProjectId !== "__all__" && (
+              <select
+                value={newEnvSlug}
+                onChange={(e) => setNewEnvSlug((e.target as HTMLSelectElement).value)}
+                disabled={apiKeyModel.creating.value}
+                class="rounded-lg border border-edge bg-page text-content text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent/20"
+              >
+                <option value="">Any environment</option>
+                {environmentsModel.environments.value.map((env) => (
+                  <option key={env.id} value={env.slug}>
+                    {env.name}
+                  </option>
+                ))}
+              </select>
+            )}
             <div class="flex justify-end gap-2">
               <Button type="button" variant="secondary" onClick={() => setShowModal(false)}>
                 Cancel
@@ -196,20 +229,17 @@ interface ScopeBadgeProps {
 
 function ScopeBadge({ permissions, projectName }: ScopeBadgeProps) {
   const actions = permissions?.projects ?? [];
-  // Find a scoped entry (contains a dot, e.g. "read.abc" or "write.abc")
+  const envs = permissions?.environments ?? [];
   const scopedEntry = actions.find((a) => a.includes("."));
-  if (!scopedEntry) {
-    return (
-      <span class="text-xs px-1.5 py-0.5 rounded bg-raised border border-edge text-content-tertiary font-mono">
-        All projects
-      </span>
-    );
-  }
-  // Extract projectId from the first scoped entry (after the first dot)
-  const projectId = scopedEntry.slice(scopedEntry.indexOf(".") + 1);
+  const projectLabel = !scopedEntry
+    ? "All projects"
+    : projectName(scopedEntry.slice(scopedEntry.indexOf(".") + 1));
+  const envLabel = envs.length > 0 ? envs[0] : null;
+
   return (
     <span class="text-xs px-1.5 py-0.5 rounded bg-raised border border-edge text-content-tertiary font-mono">
-      {projectName(projectId)}
+      {projectLabel}
+      {envLabel ? ` · ${envLabel}` : ""}
     </span>
   );
 }
