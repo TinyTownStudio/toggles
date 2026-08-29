@@ -37,33 +37,63 @@ export async function getDefaultEnvironment(
     .get();
 }
 
+export async function backfillToggleStatesForDefaultEnv(
+  db: AgnosticDatabaseInstance<typeof schema>,
+  projectId: string,
+  defaultEnvId: string,
+) {
+  const toggles = await db
+    .select()
+    .from(schema.toggle)
+    .where(eq(schema.toggle.projectId, projectId))
+    .all();
+
+  const now = new Date();
+
+  for (const toggle of toggles) {
+    const existing = await getToggleState(db, toggle.id, defaultEnvId);
+    if (existing) continue;
+
+    await db.insert(schema.toggleState).values({
+      toggleId: toggle.id,
+      environmentId: defaultEnvId,
+      enabled: toggle.enabled,
+      meta: toggle.meta ?? null,
+      updatedAt: now,
+    });
+  }
+}
+
 export async function ensureDefaultEnvironment(
   db: AgnosticDatabaseInstance<typeof schema>,
   projectId: string,
 ): Promise<EnvironmentRow> {
-  const existing = await getDefaultEnvironment(db, projectId);
-  if (existing) return existing;
+  let defaultEnv = await getDefaultEnvironment(db, projectId);
 
-  const now = new Date();
-  const id = crypto.randomUUID();
+  if (!defaultEnv) {
+    const now = new Date();
+    const id = crypto.randomUUID();
 
-  try {
-    await db.insert(schema.environment).values({
-      id,
-      projectId,
-      name: DEFAULT_ENV_NAME,
-      slug: DEFAULT_ENV_SLUG,
-      isDefault: true,
-      createdAt: now,
-      updatedAt: now,
-    });
-  } catch {
-    // Another request may have created the default environment concurrently.
+    try {
+      await db.insert(schema.environment).values({
+        id,
+        projectId,
+        name: DEFAULT_ENV_NAME,
+        slug: DEFAULT_ENV_SLUG,
+        isDefault: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+    } catch {
+      // Another request may have created the default environment concurrently.
+    }
+
+    defaultEnv = await getDefaultEnvironment(db, projectId);
+    if (!defaultEnv) throw new Error("Failed to create default environment");
   }
 
-  const created = await getDefaultEnvironment(db, projectId);
-  if (!created) throw new Error("Failed to create default environment");
-  return created;
+  await backfillToggleStatesForDefaultEnv(db, projectId, defaultEnv.id);
+  return defaultEnv;
 }
 
 export async function resolveEnvironment(
@@ -110,14 +140,53 @@ export async function getToggleState(
 
 export async function resolveToggleForEnv(
   db: AgnosticDatabaseInstance<typeof schema>,
-  toggleId: string,
-  environmentId: string,
+  toggle: typeof schema.toggle.$inferSelect,
+  env: EnvironmentRow,
 ): Promise<{ enabled: boolean; meta: Record<string, string> | null }> {
-  const state = await getToggleState(db, toggleId, environmentId);
-  return {
-    enabled: state?.enabled ?? false,
-    meta: (state?.meta as Record<string, string> | null) ?? null,
-  };
+  const state = await getToggleState(db, toggle.id, env.id);
+  if (state) {
+    return {
+      enabled: state.enabled,
+      meta: (state.meta as Record<string, string> | null) ?? null,
+    };
+  }
+
+  if (env.isDefault) {
+    return {
+      enabled: toggle.enabled,
+      meta: (toggle.meta as Record<string, string> | null) ?? null,
+    };
+  }
+
+  return { enabled: false, meta: null };
+}
+
+export async function syncToggleTableFromEnvironment(
+  db: AgnosticDatabaseInstance<typeof schema>,
+  projectId: string,
+  environmentId: string,
+) {
+  const toggles = await db
+    .select()
+    .from(schema.toggle)
+    .where(eq(schema.toggle.projectId, projectId))
+    .all();
+
+  const now = new Date();
+
+  for (const toggle of toggles) {
+    const state = await getToggleState(db, toggle.id, environmentId);
+    if (!state) continue;
+
+    await db
+      .update(schema.toggle)
+      .set({
+        enabled: state.enabled,
+        meta: state.meta,
+        updatedAt: now,
+      })
+      .where(eq(schema.toggle.id, toggle.id));
+  }
 }
 
 export async function upsertToggleState(

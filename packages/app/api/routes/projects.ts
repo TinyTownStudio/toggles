@@ -155,7 +155,7 @@ async function formatToggleForEnv(
   toggle: typeof schema.toggle.$inferSelect,
   env: typeof schema.environment.$inferSelect,
 ) {
-  const { enabled, meta } = await resolveToggleForEnv(db, toggle.id, env.id);
+  const { enabled, meta } = await resolveToggleForEnv(db, toggle, env);
   return {
     id: toggle.id,
     key: toggle.key,

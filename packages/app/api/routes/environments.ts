@@ -6,6 +6,7 @@ import {
   listProjectEnvironments,
   seedToggleStatesForEnvironment,
   slugifyEnvironmentName,
+  syncToggleTableFromEnvironment,
 } from "../lib/environments";
 import { getUserPlan, PLAN_LIMITS } from "../lib/plans";
 import type { AgnosticDatabaseInstance, Bindings, Variables } from "../types";
@@ -143,6 +144,8 @@ environments.patch("/:id", async (c) => {
         updatedAt: now,
       })
       .where(eq(schema.environment.id, id));
+
+    await syncToggleTableFromEnvironment(db, projectId, id);
   } else if (body.name?.trim()) {
     await db
       .update(schema.environment)

@@ -231,6 +231,82 @@ describe("DELETE /api/v1/projects/:projectId/environments/:id", () => {
   });
 });
 
+describe("legacy toggle backfill", () => {
+  it("preserves toggle.enabled on first fetch when no toggle_state rows exist", async () => {
+    const createRes = await apiPost("/api/v1/projects", {
+      cookie,
+      body: { name: "Legacy Backfill Proj" },
+    });
+    const pid = ((await createRes.json()) as { id: string }).id;
+
+    const toggleId = crypto.randomUUID();
+    const now = Date.now();
+    await env.DB.prepare(
+      `INSERT INTO toggle (id, project_id, key, enabled, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+    )
+      .bind(toggleId, pid, "legacy-flag", 1, now, now)
+      .run();
+
+    const togglesRes = await apiGet(`/api/v1/projects/${pid}/toggles`, { cookie });
+    expect(togglesRes.status).toBe(200);
+    const toggles = (await togglesRes.json()) as { key: string; enabled: boolean }[];
+    const flag = toggles.find((t) => t.key === "legacy-flag");
+    expect(flag?.enabled).toBe(true);
+
+    const envsRes = await apiGet(`/api/v1/projects/${pid}/environments`, { cookie });
+    const envs = (await envsRes.json()) as { slug: string; isDefault: boolean }[];
+    const production = envs.find((e) => e.slug === "production");
+    expect(production?.isDefault).toBe(true);
+
+    const stateRow = await env.DB.prepare(
+      `SELECT enabled FROM toggle_state
+       WHERE toggle_id = ? AND environment_id = (
+         SELECT id FROM environment WHERE project_id = ? AND slug = 'production'
+       )`,
+    )
+      .bind(toggleId, pid)
+      .first<{ enabled: number }>();
+    expect(stateRow?.enabled).toBe(1);
+  });
+
+  it("does not duplicate or overwrite toggle_state on repeated fetches", async () => {
+    const createRes = await apiPost("/api/v1/projects", {
+      cookie,
+      body: { name: "Backfill Idempotent Proj" },
+    });
+    const pid = ((await createRes.json()) as { id: string }).id;
+
+    const toggleId = crypto.randomUUID();
+    const now = Date.now();
+    await env.DB.prepare(
+      `INSERT INTO toggle (id, project_id, key, enabled, meta, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    )
+      .bind(toggleId, pid, "idempotent-flag", 1, JSON.stringify({ region: "us-east" }), now, now)
+      .run();
+
+    await apiGet(`/api/v1/projects/${pid}/toggles`, { cookie });
+    const secondRes = await apiGet(`/api/v1/projects/${pid}/toggles`, { cookie });
+    expect(secondRes.status).toBe(200);
+    const toggles = (await secondRes.json()) as {
+      key: string;
+      enabled: boolean;
+      meta: Record<string, string> | null;
+    }[];
+    const flag = toggles.find((t) => t.key === "idempotent-flag");
+    expect(flag?.enabled).toBe(true);
+    expect(flag?.meta).toEqual({ region: "us-east" });
+
+    const countRow = await env.DB.prepare(
+      `SELECT COUNT(*) AS count FROM toggle_state WHERE toggle_id = ?`,
+    )
+      .bind(toggleId)
+      .first<{ count: number }>();
+    expect(countRow?.count).toBe(1);
+  });
+});
+
 describe("PATCH /api/v1/projects/:projectId/environments/:id", () => {
   it("promotes a new default environment", async () => {
     const createRes = await apiPost("/api/v1/projects", { cookie, body: { name: "Promote Proj" } });
@@ -272,5 +348,10 @@ describe("PATCH /api/v1/projects/:projectId/environments/:id", () => {
       (t) => t.key === "promote-flag",
     );
     expect(prod?.enabled).toBe(false);
+
+    const toggleRow = await env.DB.prepare(`SELECT enabled FROM toggle WHERE id = ?`)
+      .bind(toggle.id)
+      .first<{ enabled: number }>();
+    expect(toggleRow?.enabled).toBe(1);
   });
 });

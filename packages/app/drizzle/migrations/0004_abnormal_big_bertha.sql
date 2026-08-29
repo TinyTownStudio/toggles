@@ -15,6 +15,7 @@ CREATE TABLE `toggle_state` (
 	`toggle_id` text NOT NULL,
 	`environment_id` text NOT NULL,
 	`enabled` integer NOT NULL,
+	`meta` text,
 	`updated_at` integer NOT NULL,
 	FOREIGN KEY (`toggle_id`) REFERENCES `toggle`(`id`) ON UPDATE no action ON DELETE cascade,
 	FOREIGN KEY (`environment_id`) REFERENCES `environment`(`id`) ON UPDATE no action ON DELETE cascade
