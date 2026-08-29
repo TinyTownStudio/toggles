@@ -1,4 +1,3 @@
-import { IconCheck } from "@tabler/icons-react";
 import { useEffect, useId, useRef } from "preact/hooks";
 
 export interface SelectOption {

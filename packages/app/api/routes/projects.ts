@@ -214,7 +214,9 @@ projects.get("/:projectId/toggles", async (c) => {
     )
     .all();
 
-  const formatted = await Promise.all(rows.map((toggle) => formatToggleForEnv(db, toggle, ctx.env)));
+  const formatted = await Promise.all(
+    rows.map((toggle) => formatToggleForEnv(db, toggle, ctx.env)),
+  );
 
   return c.json(formatted);
 });

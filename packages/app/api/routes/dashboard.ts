@@ -83,92 +83,98 @@ dashboard.get("/", async (c) => {
   // Run all independent queries in parallel
   const [flagCountRows, recentlyModifiedRows, staleFlagRows, flagsPerProjectRows, apiKeyCountRows] =
     await Promise.all([
-    // Aggregate flag counts via SQL (default environment state)
-    db
-      .select({
-        total: sql<number>`count(${schema.toggle.id})`,
-        enabled: sql<number>`sum(case when ${schema.toggleState.enabled} = 1 then 1 else 0 end)`,
-      })
-      .from(schema.toggle)
-      .innerJoin(schema.project, eq(schema.toggle.projectId, schema.project.id))
-      .innerJoin(schema.environment, defaultEnvJoin)
-      .innerJoin(schema.toggleState, defaultStateJoin)
-      .where(eq(schema.project.userId, userId))
-      .all(),
+      // Aggregate flag counts via SQL (default environment state)
+      db
+        .select({
+          total: sql<number>`count(${schema.toggle.id})`,
+          enabled: sql<number>`sum(case when ${schema.toggleState.enabled} = 1 then 1 else 0 end)`,
+        })
+        .from(schema.toggle)
+        .innerJoin(schema.project, eq(schema.toggle.projectId, schema.project.id))
+        .innerJoin(schema.environment, defaultEnvJoin)
+        .innerJoin(schema.toggleState, defaultStateJoin)
+        .where(eq(schema.project.userId, userId))
+        .all(),
 
-    // Top 5 most recently modified flags
-    db
-      .select({
-        id: schema.toggle.id,
-        key: schema.toggle.key,
-        projectId: schema.toggle.projectId,
-        projectName: schema.project.name,
-        enabled: schema.toggleState.enabled,
-        updatedAt: schema.toggle.updatedAt,
-        createdAt: schema.toggle.createdAt,
-      })
-      .from(schema.toggle)
-      .innerJoin(schema.project, eq(schema.toggle.projectId, schema.project.id))
-      .innerJoin(schema.environment, defaultEnvJoin)
-      .innerJoin(schema.toggleState, defaultStateJoin)
-      .where(eq(schema.project.userId, userId))
-      .orderBy(sql`${schema.toggle.updatedAt} desc`)
-      .limit(5)
-      .all(),
+      // Top 5 most recently modified flags
+      db
+        .select({
+          id: schema.toggle.id,
+          key: schema.toggle.key,
+          projectId: schema.toggle.projectId,
+          projectName: schema.project.name,
+          enabled: schema.toggleState.enabled,
+          updatedAt: schema.toggle.updatedAt,
+          createdAt: schema.toggle.createdAt,
+        })
+        .from(schema.toggle)
+        .innerJoin(schema.project, eq(schema.toggle.projectId, schema.project.id))
+        .innerJoin(schema.environment, defaultEnvJoin)
+        .innerJoin(schema.toggleState, defaultStateJoin)
+        .where(eq(schema.project.userId, userId))
+        .orderBy(sql`${schema.toggle.updatedAt} desc`)
+        .limit(5)
+        .all(),
 
-    // Stale flags: not modified in STALE_FLAG_DAYS days, oldest first
-    db
-      .select({
-        id: schema.toggle.id,
-        key: schema.toggle.key,
-        projectId: schema.toggle.projectId,
-        projectName: schema.project.name,
-        enabled: schema.toggleState.enabled,
-        updatedAt: schema.toggle.updatedAt,
-        createdAt: schema.toggle.createdAt,
-      })
-      .from(schema.toggle)
-      .innerJoin(schema.project, eq(schema.toggle.projectId, schema.project.id))
-      .innerJoin(schema.environment, defaultEnvJoin)
-      .innerJoin(schema.toggleState, defaultStateJoin)
-      .where(and(eq(schema.project.userId, userId), lt(schema.toggle.updatedAt, staleThreshold)))
-      .orderBy(schema.toggle.updatedAt)
-      .all(),
+      // Stale flags: not modified in STALE_FLAG_DAYS days, oldest first
+      db
+        .select({
+          id: schema.toggle.id,
+          key: schema.toggle.key,
+          projectId: schema.toggle.projectId,
+          projectName: schema.project.name,
+          enabled: schema.toggleState.enabled,
+          updatedAt: schema.toggle.updatedAt,
+          createdAt: schema.toggle.createdAt,
+        })
+        .from(schema.toggle)
+        .innerJoin(schema.project, eq(schema.toggle.projectId, schema.project.id))
+        .innerJoin(schema.environment, defaultEnvJoin)
+        .innerJoin(schema.toggleState, defaultStateJoin)
+        .where(and(eq(schema.project.userId, userId), lt(schema.toggle.updatedAt, staleThreshold)))
+        .orderBy(schema.toggle.updatedAt)
+        .all(),
 
-    // Per-project flag counts via GROUP BY
-    db
-      .select({
-        projectId: schema.project.id,
-        projectName: schema.project.name,
-        totalFlags: sql<number>`count(${schema.toggle.id})`,
-        enabledFlags: sql<number>`sum(case when ${schema.toggleState.enabled} = 1 then 1 else 0 end)`,
-      })
-      .from(schema.project)
-      .leftJoin(schema.toggle, eq(schema.toggle.projectId, schema.project.id))
-      .leftJoin(schema.environment, and(eq(schema.environment.projectId, schema.project.id), eq(schema.environment.isDefault, true)))
-      .leftJoin(
-        schema.toggleState,
-        and(
-          eq(schema.toggleState.toggleId, schema.toggle.id),
-          eq(schema.toggleState.environmentId, schema.environment.id),
-        ),
-      )
-      .where(eq(schema.project.userId, userId))
-      .groupBy(schema.project.id, schema.project.name)
-      .all(),
+      // Per-project flag counts via GROUP BY
+      db
+        .select({
+          projectId: schema.project.id,
+          projectName: schema.project.name,
+          totalFlags: sql<number>`count(${schema.toggle.id})`,
+          enabledFlags: sql<number>`sum(case when ${schema.toggleState.enabled} = 1 then 1 else 0 end)`,
+        })
+        .from(schema.project)
+        .leftJoin(schema.toggle, eq(schema.toggle.projectId, schema.project.id))
+        .leftJoin(
+          schema.environment,
+          and(
+            eq(schema.environment.projectId, schema.project.id),
+            eq(schema.environment.isDefault, true),
+          ),
+        )
+        .leftJoin(
+          schema.toggleState,
+          and(
+            eq(schema.toggleState.toggleId, schema.toggle.id),
+            eq(schema.toggleState.environmentId, schema.environment.id),
+          ),
+        )
+        .where(eq(schema.project.userId, userId))
+        .groupBy(schema.project.id, schema.project.name)
+        .all(),
 
-    // API key aggregate counts via SQL
-    db
-      .select({
-        total: sql<number>`count(*)`,
-        active: sql<number>`sum(case when ${schema.apikey.enabled} != 0 then 1 else 0 end)`,
-        unused: sql<number>`sum(case when ${schema.apikey.lastRequest} is null then 1 else 0 end)`,
-        expiring: sql<number>`sum(case when ${schema.apikey.expiresAt} is not null and ${schema.apikey.expiresAt} <= ${sevenDaysFromNow.getTime()} then 1 else 0 end)`,
-      })
-      .from(schema.apikey)
-      .where(eq(schema.apikey.userId, userId))
-      .all(),
-  ]);
+      // API key aggregate counts via SQL
+      db
+        .select({
+          total: sql<number>`count(*)`,
+          active: sql<number>`sum(case when ${schema.apikey.enabled} != 0 then 1 else 0 end)`,
+          unused: sql<number>`sum(case when ${schema.apikey.lastRequest} is null then 1 else 0 end)`,
+          expiring: sql<number>`sum(case when ${schema.apikey.expiresAt} is not null and ${schema.apikey.expiresAt} <= ${sevenDaysFromNow.getTime()} then 1 else 0 end)`,
+        })
+        .from(schema.apikey)
+        .where(eq(schema.apikey.userId, userId))
+        .all(),
+    ]);
 
   const totalProjects = userProjects.length;
 

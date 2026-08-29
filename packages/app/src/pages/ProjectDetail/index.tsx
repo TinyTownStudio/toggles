@@ -2,7 +2,7 @@ import { useLocation } from "preact-iso";
 import { useModel } from "@preact/signals";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { toast } from "@preachjs/toast";
-import { IconChevronRight, IconSettings, IconTrash } from "@tabler/icons-react";
+import { IconChevronRight, IconTrash } from "@tabler/icons-react";
 import { AuthModel } from "../../models/auth";
 import { ProjectsModel } from "../../models/projects";
 import { TogglesModel } from "../../models/toggles";
@@ -142,39 +142,43 @@ export function ProjectDetail({ id }: { id: string }) {
             ← Projects
           </a>
           <h1 class="text-2xl font-bold tracking-tight text-content">
-              {project?.name ?? "Project"}
-            </h1>
+            {project?.name ?? "Project"}
+          </h1>
           <div class="mt-4 flex gap-4">
             <div class="flex justify-between w-full gap-3 shrink-0">
               <div class="flex flex-col w-1/4 gap-1.5">
-              {envs.length > 0 && (
-                <div class="flex w-full flex-col gap-1.5">
-                  <div class="flex items-stretch gap-2">
-                    <Select
-                      value={activeSlug ?? ""}
-                      options={envs.map((env) => ({
-                        value: env.slug,
-                        label: env.name,
-                        sublabel: env.slug,
-                        ...(env.isDefault ? { badge: "default" } : {}),
-                      })).concat([{
-                        value: "manage",
-                        label: "Manage",
-                        sublabel: "Manage environments"
-                      }])}
-                      onChange={(slug) => {
-                        if(slug === "manage") {
-                          setShowEnvModal(true);
-                          return;
-                        }
-                        const env = envs.find((item) => item.slug === slug);
-                        if (env) handleEnvChange(env);
-                      }}
-                      class="min-w-0 w-full flex-1"
-                    />
+                {envs.length > 0 && (
+                  <div class="flex w-full flex-col gap-1.5">
+                    <div class="flex items-stretch gap-2">
+                      <Select
+                        value={activeSlug ?? ""}
+                        options={envs
+                          .map((env) => ({
+                            value: env.slug,
+                            label: env.name,
+                            sublabel: env.slug,
+                            ...(env.isDefault ? { badge: "default" } : {}),
+                          }))
+                          .concat([
+                            {
+                              value: "manage",
+                              label: "Manage",
+                              sublabel: "Manage environments",
+                            },
+                          ])}
+                        onChange={(slug) => {
+                          if (slug === "manage") {
+                            setShowEnvModal(true);
+                            return;
+                          }
+                          const env = envs.find((item) => item.slug === slug);
+                          if (env) handleEnvChange(env);
+                        }}
+                        class="min-w-0 w-full flex-1"
+                      />
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
               </div>
               <div class="flex items-start gap-2">
                 <Input
@@ -222,8 +226,9 @@ export function ProjectDetail({ id }: { id: string }) {
                           size={14}
                           stroke={2}
                           aria-hidden="true"
-                          className={`shrink-0 text-content-faint transition-transform duration-100 ${isOpen ? "rotate-90" : ""
-                            }`}
+                          className={`shrink-0 text-content-faint transition-transform duration-100 ${
+                            isOpen ? "rotate-90" : ""
+                          }`}
                         />
                         <span class="text-content text-sm font-mono truncate">{t.key}</span>
                       </div>
@@ -261,12 +266,14 @@ export function ProjectDetail({ id }: { id: string }) {
                         aria-checked={t.enabled}
                         aria-label={t.enabled ? "Disable flag" : "Enable flag"}
                         onClick={() => togglesModel.toggle(id, t.id, !t.enabled)}
-                        class={`relative mt-0.5 inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-accent/20 ${t.enabled ? "bg-accent" : "bg-raised-hover"
-                          }`}
+                        class={`relative mt-0.5 inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-accent/20 ${
+                          t.enabled ? "bg-accent" : "bg-raised-hover"
+                        }`}
                       >
                         <span
-                          class={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${t.enabled ? "translate-x-5" : "translate-x-1"
-                            }`}
+                          class={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
+                            t.enabled ? "translate-x-5" : "translate-x-1"
+                          }`}
                         />
                       </button>
                       <Button

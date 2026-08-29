@@ -147,9 +147,9 @@ describe("toggle values across environments", () => {
     const stagingRes = await apiGet(`/api/v1/projects/${projectId}/toggles?env=staging`, {
       cookie,
     });
-    const prod = ((await prodRes.json()) as { key: string; meta: Record<string, string> | null }[]).find(
-      (t) => t.key === "env-flag",
-    );
+    const prod = (
+      (await prodRes.json()) as { key: string; meta: Record<string, string> | null }[]
+    ).find((t) => t.key === "env-flag");
     const staging = (
       (await stagingRes.json()) as { key: string; meta: Record<string, string> | null }[]
     ).find((t) => t.key === "env-flag");
