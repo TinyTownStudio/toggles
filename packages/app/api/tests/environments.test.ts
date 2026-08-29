@@ -232,7 +232,7 @@ describe("DELETE /api/v1/projects/:projectId/environments/:id", () => {
 });
 
 describe("legacy toggle backfill", () => {
-  it("preserves toggle.enabled on first fetch when no toggle_state rows exist", async () => {
+  it("backfills toggle_state from legacy toggle columns on first fetch", async () => {
     const createRes = await apiPost("/api/v1/projects", {
       cookie,
       body: { name: "Legacy Backfill Proj" },
@@ -348,10 +348,5 @@ describe("PATCH /api/v1/projects/:projectId/environments/:id", () => {
       (t) => t.key === "promote-flag",
     );
     expect(prod?.enabled).toBe(false);
-
-    const toggleRow = await env.DB.prepare(`SELECT enabled FROM toggle WHERE id = ?`)
-      .bind(toggle.id)
-      .first<{ enabled: number }>();
-    expect(toggleRow?.enabled).toBe(1);
   });
 });

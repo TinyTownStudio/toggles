@@ -3,10 +3,10 @@ import { eq, and } from "drizzle-orm";
 import * as schema from "../db/schema";
 import {
   ensureDefaultEnvironment,
+  backfillToggleStatesForDefaultEnv,
   listProjectEnvironments,
   seedToggleStatesForEnvironment,
   slugifyEnvironmentName,
-  syncToggleTableFromEnvironment,
 } from "../lib/environments";
 import { getOwnedProject } from "../lib/projects";
 import { getUserPlan, PLAN_LIMITS } from "../lib/plans";
@@ -29,7 +29,8 @@ environments.get("/", async (c) => {
   const project = await getOwnedProject(db, projectId, userId);
   if (!project) return c.json({ error: "Not found" }, 404);
 
-  await ensureDefaultEnvironment(db, projectId);
+  const defaultEnv = await ensureDefaultEnvironment(db, projectId);
+  await backfillToggleStatesForDefaultEnv(db, projectId, defaultEnv.id);
   const rows = await listProjectEnvironments(db, projectId);
 
   return c.json(rows);
@@ -133,8 +134,6 @@ environments.patch("/:id", async (c) => {
         updatedAt: now,
       })
       .where(eq(schema.environment.id, id));
-
-    await syncToggleTableFromEnvironment(db, projectId, id);
   } else if (body.name?.trim()) {
     await db
       .update(schema.environment)

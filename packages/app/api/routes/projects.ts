@@ -246,7 +246,7 @@ projects.post("/:projectId/toggles", async (c) => {
     id,
     projectId,
     key: body.key.trim(),
-    enabled: body.enabled ?? false,
+    enabled: false,
     createdAt: now,
     updatedAt: now,
   });
@@ -304,21 +304,16 @@ projects.patch("/:projectId/toggles/:id", async (c) => {
   if (!toggle) return c.json({ error: "Not found" }, 404);
 
   const now = new Date();
-  const toggleUpdates: Partial<typeof schema.toggle.$inferInsert> = { updatedAt: now };
 
   if (typeof body.enabled === "boolean") {
     await upsertToggleState(db, id, ctx.env.id, { enabled: body.enabled });
-    if (ctx.env.isDefault) toggleUpdates.enabled = body.enabled;
   }
 
   if ("meta" in body) {
     await upsertToggleState(db, id, ctx.env.id, { meta: body.meta });
-    if (ctx.env.isDefault) toggleUpdates.meta = body.meta;
   }
 
-  if (Object.keys(toggleUpdates).length > 1) {
-    await db.update(schema.toggle).set(toggleUpdates).where(eq(schema.toggle.id, id));
-  }
+  await db.update(schema.toggle).set({ updatedAt: now }).where(eq(schema.toggle.id, id));
 
   const row = await db.select().from(schema.toggle).where(eq(schema.toggle.id, id)).get();
   if (!row) return c.json({ error: "Not found" }, 404);
