@@ -141,54 +141,54 @@ export function ProjectDetail({ id }: { id: string }) {
           >
             ← Projects
           </a>
-          <div class="flex items-center justify-between gap-4">
+          <div class="flex items-start justify-between gap-4">
             <h1 class="text-2xl font-bold tracking-tight text-content">
               {project?.name ?? "Project"}
             </h1>
-            <div class="flex items-center gap-2">
-              <Input
-                type="search"
-                value={searchQuery}
-                onInput={(e) => handleSearch((e.target as HTMLInputElement).value)}
-                placeholder="Search…"
-                class="w-48"
-              />
-              <Button onClick={() => setShowModal(true)}>New Flag</Button>
+            <div class="flex flex-col items-end gap-3 shrink-0">
+              <div class="flex items-center gap-2">
+                <Input
+                  type="search"
+                  value={searchQuery}
+                  onInput={(e) => handleSearch((e.target as HTMLInputElement).value)}
+                  placeholder="Search…"
+                  class="w-48"
+                />
+                <Button onClick={() => setShowModal(true)}>New Flag</Button>
+              </div>
+              {envs.length > 0 && (
+                <div class="flex w-full flex-col gap-1.5">
+                  <span class="text-sm text-content-tertiary">Environment</span>
+                  <div class="flex items-stretch gap-2">
+                    <Select
+                      value={activeSlug ?? ""}
+                      options={envs.map((env) => ({
+                        value: env.slug,
+                        label: env.name,
+                        sublabel: env.slug,
+                        ...(env.isDefault ? { badge: "default" } : {}),
+                      }))}
+                      onChange={(slug) => {
+                        const env = envs.find((item) => item.slug === slug);
+                        if (env) handleEnvChange(env);
+                      }}
+                      class="min-w-0 w-full flex-1"
+                    />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      class="shrink-0 px-2.5"
+                      aria-label="Manage environments"
+                      onClick={() => setShowEnvModal(true)}
+                    >
+                      <IconSettings size={16} stroke={2} />
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
-
-        {envs.length > 0 && (
-          <div class="mb-6 flex flex-wrap items-center justify-end gap-2">
-            <label class="flex flex-col gap-1.5 text-sm text-content-tertiary">
-              <div class="flex items-center gap-2 justify-between">
-                <p>Environment</p>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  aria-label="Manage environments"
-                  onClick={() => setShowEnvModal(true)}
-                >
-                  <IconSettings size={16} stroke={2} />
-                </Button>
-              </div>
-              <Select
-                value={activeSlug ?? ""}
-                options={envs.map((env) => ({
-                  value: env.slug,
-                  label: env.name,
-                  sublabel: env.slug,
-                  ...(env.isDefault ? { badge: "default" } : {}),
-                }))}
-                onChange={(slug) => {
-                  const env = envs.find((item) => item.slug === slug);
-                  if (env) handleEnvChange(env);
-                }}
-                class="min-w-[12rem]"
-              />
-            </label>
-          </div>
-        )}
 
         {togglesModel.error.value && (
           <p class="text-sm text-error-text mb-4">{togglesModel.error.value}</p>

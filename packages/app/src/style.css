@@ -324,6 +324,10 @@ body {
 }
 
 /* Two-line selects (e.g. environment name + slug) */
+.select.w-full {
+  width: 100%;
+}
+
 .select[data-rich-options] > button {
   align-items: center;
   padding-block: 0.625rem;
