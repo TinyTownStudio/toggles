@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { eq, lt, and, sql } from "drizzle-orm";
 import * as schema from "../db/schema";
+import { ensureDefaultEnvironment, backfillToggleStatesForDefaultEnv } from "../lib/environments";
 import { getUserPlan, PLAN_LIMITS } from "../lib/plans";
 import type { Bindings, Variables } from "../types";
 import { env } from "hono/adapter";
@@ -57,30 +58,41 @@ dashboard.get("/", async (c) => {
   const staleThreshold = new Date(Date.now() - STALE_FLAG_DAYS * 24 * 60 * 60 * 1000);
   const sevenDaysFromNow = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
-  // Run all independent queries in parallel
-  const [
-    userProjects,
-    flagCountRows,
-    recentlyModifiedRows,
-    staleFlagRows,
-    flagsPerProjectRows,
-    apiKeyCountRows,
-  ] = await Promise.all([
-    // All user projects (needed for totalProjects and flagsPerProject join)
-    db
-      .select({ id: schema.project.id, name: schema.project.name })
-      .from(schema.project)
-      .where(eq(schema.project.userId, userId))
-      .all(),
+  const userProjects = await db
+    .select({ id: schema.project.id, name: schema.project.name })
+    .from(schema.project)
+    .where(eq(schema.project.userId, userId))
+    .all();
 
-    // Aggregate flag counts via SQL
+  await Promise.all(
+    userProjects.map(async (project) => {
+      const defaultEnv = await ensureDefaultEnvironment(db, project.id);
+      await backfillToggleStatesForDefaultEnv(db, project.id, defaultEnv.id);
+    }),
+  );
+
+  const defaultEnvJoin = and(
+    eq(schema.environment.projectId, schema.toggle.projectId),
+    eq(schema.environment.isDefault, true),
+  );
+  const defaultStateJoin = and(
+    eq(schema.toggleState.toggleId, schema.toggle.id),
+    eq(schema.toggleState.environmentId, schema.environment.id),
+  );
+
+  // Run all independent queries in parallel
+  const [flagCountRows, recentlyModifiedRows, staleFlagRows, flagsPerProjectRows, apiKeyCountRows] =
+    await Promise.all([
+    // Aggregate flag counts via SQL (default environment state)
     db
       .select({
-        total: sql<number>`count(*)`,
-        enabled: sql<number>`sum(case when ${schema.toggle.enabled} = 1 then 1 else 0 end)`,
+        total: sql<number>`count(${schema.toggle.id})`,
+        enabled: sql<number>`sum(case when ${schema.toggleState.enabled} = 1 then 1 else 0 end)`,
       })
       .from(schema.toggle)
       .innerJoin(schema.project, eq(schema.toggle.projectId, schema.project.id))
+      .innerJoin(schema.environment, defaultEnvJoin)
+      .innerJoin(schema.toggleState, defaultStateJoin)
       .where(eq(schema.project.userId, userId))
       .all(),
 
@@ -91,12 +103,14 @@ dashboard.get("/", async (c) => {
         key: schema.toggle.key,
         projectId: schema.toggle.projectId,
         projectName: schema.project.name,
-        enabled: schema.toggle.enabled,
+        enabled: schema.toggleState.enabled,
         updatedAt: schema.toggle.updatedAt,
         createdAt: schema.toggle.createdAt,
       })
       .from(schema.toggle)
       .innerJoin(schema.project, eq(schema.toggle.projectId, schema.project.id))
+      .innerJoin(schema.environment, defaultEnvJoin)
+      .innerJoin(schema.toggleState, defaultStateJoin)
       .where(eq(schema.project.userId, userId))
       .orderBy(sql`${schema.toggle.updatedAt} desc`)
       .limit(5)
@@ -109,12 +123,14 @@ dashboard.get("/", async (c) => {
         key: schema.toggle.key,
         projectId: schema.toggle.projectId,
         projectName: schema.project.name,
-        enabled: schema.toggle.enabled,
+        enabled: schema.toggleState.enabled,
         updatedAt: schema.toggle.updatedAt,
         createdAt: schema.toggle.createdAt,
       })
       .from(schema.toggle)
       .innerJoin(schema.project, eq(schema.toggle.projectId, schema.project.id))
+      .innerJoin(schema.environment, defaultEnvJoin)
+      .innerJoin(schema.toggleState, defaultStateJoin)
       .where(and(eq(schema.project.userId, userId), lt(schema.toggle.updatedAt, staleThreshold)))
       .orderBy(schema.toggle.updatedAt)
       .all(),
@@ -125,10 +141,18 @@ dashboard.get("/", async (c) => {
         projectId: schema.project.id,
         projectName: schema.project.name,
         totalFlags: sql<number>`count(${schema.toggle.id})`,
-        enabledFlags: sql<number>`sum(case when ${schema.toggle.enabled} = 1 then 1 else 0 end)`,
+        enabledFlags: sql<number>`sum(case when ${schema.toggleState.enabled} = 1 then 1 else 0 end)`,
       })
       .from(schema.project)
       .leftJoin(schema.toggle, eq(schema.toggle.projectId, schema.project.id))
+      .leftJoin(schema.environment, and(eq(schema.environment.projectId, schema.project.id), eq(schema.environment.isDefault, true)))
+      .leftJoin(
+        schema.toggleState,
+        and(
+          eq(schema.toggleState.toggleId, schema.toggle.id),
+          eq(schema.toggleState.environmentId, schema.environment.id),
+        ),
+      )
       .where(eq(schema.project.userId, userId))
       .groupBy(schema.project.id, schema.project.name)
       .all(),

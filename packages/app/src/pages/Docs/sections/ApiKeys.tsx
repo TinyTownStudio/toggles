@@ -65,6 +65,13 @@ const keys = await res.json();`}
             description:
               "Scope the key to a specific project. Omit for a global (all-projects) key.",
           },
+          {
+            field: "environmentSlug",
+            type: "string",
+            required: false,
+            description:
+              "Scope the key to a specific environment within the project. Requires projectId.",
+          },
         ]}
         responseExample={`{
   "key": "tgs_xxxxxxxxxxxxxxxxxxxxxxxx",

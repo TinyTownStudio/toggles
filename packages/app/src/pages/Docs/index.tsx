@@ -5,6 +5,7 @@ import { Sidebar } from "./Sidebar";
 import { Introduction } from "./sections/Introduction";
 import { Authentication } from "./sections/Authentication";
 import { Projects } from "./sections/Projects";
+import { Environments } from "./sections/Environments";
 import { Toggles } from "./sections/Toggles";
 import { Dashboard } from "./sections/Dashboard";
 import { ApiKeys } from "./sections/ApiKeys";
@@ -96,6 +97,7 @@ export function Docs() {
           <Introduction />
           <Authentication />
           <Projects />
+          <Environments />
           <Toggles />
           <Dashboard />
           <ApiKeys />

@@ -1,14 +1,17 @@
 import { useLocation } from "preact-iso";
 import { useModel } from "@preact/signals";
 import { useEffect, useRef, useState } from "preact/hooks";
-import { IconChevronRight, IconTrash } from "@tabler/icons-react";
+import { toast } from "@preachjs/toast";
+import { IconChevronRight, IconSettings, IconTrash } from "@tabler/icons-react";
 import { AuthModel } from "../../models/auth";
 import { ProjectsModel } from "../../models/projects";
 import { TogglesModel } from "../../models/toggles";
+import { EnvironmentsModel } from "../../models/environments";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { Modal } from "../../components/ui/Modal";
-import type { Toggle } from "../../lib/api";
+import { Select } from "../../components/ui/Select";
+import type { Environment, Toggle } from "../../lib/api";
 
 type MetaRow = { key: string; value: string };
 
@@ -25,9 +28,12 @@ export function ProjectDetail({ id }: { id: string }) {
   const auth = useModel(AuthModel);
   const projectsModel = useModel(ProjectsModel);
   const togglesModel = useModel(TogglesModel);
+  const environmentsModel = useModel(EnvironmentsModel);
   const { route } = useLocation();
   const [newKey, setNewKey] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const [showEnvModal, setShowEnvModal] = useState(false);
+  const [newEnvName, setNewEnvName] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [editingMetaId, setEditingMetaId] = useState<string | null>(null);
   const [metaRows, setMetaRows] = useState<MetaRow[]>([]);
@@ -41,12 +47,21 @@ export function ProjectDetail({ id }: { id: string }) {
       }
       await Promise.all([
         projectsModel.projects.value.length === 0 ? projectsModel.fetch() : Promise.resolve(),
-        togglesModel.fetch(id),
+        environmentsModel.fetch(id),
       ]);
+      const defaultEnv =
+        environmentsModel.environments.value.find((e) => e.isDefault) ??
+        environmentsModel.environments.value[0];
+      if (defaultEnv) {
+        togglesModel.setActiveEnvironment(defaultEnv.slug);
+        await togglesModel.fetch(id, undefined, defaultEnv.slug);
+      } else {
+        await togglesModel.fetch(id);
+      }
     });
   }, [id]);
 
-  if (auth.loading.value || togglesModel.loading.value) {
+  if (auth.loading.value || togglesModel.loading.value || environmentsModel.loading.value) {
     return (
       <div class="min-h-screen bg-page pt-16 flex items-center justify-center">
         <p class="text-content-tertiary text-sm">Loading...</p>
@@ -55,6 +70,8 @@ export function ProjectDetail({ id }: { id: string }) {
   }
 
   const project = projectsModel.projects.value.find((p: { id: string }) => p.id === id);
+  const envs = environmentsModel.environments.value;
+  const activeSlug = togglesModel.activeEnvironment.value;
 
   const handleCreate = async (e: Event) => {
     e.preventDefault();
@@ -63,6 +80,31 @@ export function ProjectDetail({ id }: { id: string }) {
     await togglesModel.create(id, key);
     setNewKey("");
     setShowModal(false);
+  };
+
+  const handleCreateEnv = async (e: Event) => {
+    e.preventDefault();
+    const name = newEnvName.trim();
+    if (!name) return;
+    const created = await environmentsModel.create(id, name);
+    setNewEnvName("");
+    if (created) await environmentsModel.fetch(id);
+  };
+
+  const syncMetaEditor = (toggleId: string) => {
+    const t = togglesModel.toggles.value.find((item) => item.id === toggleId);
+    if (!t) {
+      closeMeta();
+      return;
+    }
+    const rows = metaToRows(t.meta);
+    setMetaRows(rows.length > 0 ? rows : [{ key: "", value: "" }]);
+  };
+
+  const handleEnvChange = async (env: Environment) => {
+    togglesModel.setActiveEnvironment(env.slug);
+    await togglesModel.fetch(id, searchQuery || undefined, env.slug);
+    if (editingMetaId) syncMetaEditor(editingMetaId);
   };
 
   const handleSearch = (query: string) => {
@@ -85,7 +127,8 @@ export function ProjectDetail({ id }: { id: string }) {
   };
 
   const handleSaveMeta = async (toggleId: string) => {
-    await togglesModel.saveMeta(id, toggleId, rowsToMeta(metaRows));
+    const ok = await togglesModel.saveMeta(id, toggleId, rowsToMeta(metaRows));
+    if (ok) toast.success("Metadata saved");
   };
 
   return (
@@ -98,19 +141,51 @@ export function ProjectDetail({ id }: { id: string }) {
           >
             ← Projects
           </a>
-          <div class="flex items-center justify-between gap-4">
+          <div class="flex items-start justify-between gap-4">
             <h1 class="text-2xl font-bold tracking-tight text-content">
               {project?.name ?? "Project"}
             </h1>
-            <div class="flex items-center gap-2">
-              <Input
-                type="search"
-                value={searchQuery}
-                onInput={(e) => handleSearch((e.target as HTMLInputElement).value)}
-                placeholder="Search…"
-                class="w-48"
-              />
-              <Button onClick={() => setShowModal(true)}>New Flag</Button>
+            <div class="flex flex-col items-end gap-3 shrink-0">
+              <div class="flex items-center gap-2">
+                <Input
+                  type="search"
+                  value={searchQuery}
+                  onInput={(e) => handleSearch((e.target as HTMLInputElement).value)}
+                  placeholder="Search…"
+                  class="w-48"
+                />
+                <Button onClick={() => setShowModal(true)}>New Flag</Button>
+              </div>
+              {envs.length > 0 && (
+                <div class="flex w-full flex-col gap-1.5">
+                  <span class="text-sm text-content-tertiary">Environment</span>
+                  <div class="flex items-stretch gap-2">
+                    <Select
+                      value={activeSlug ?? ""}
+                      options={envs.map((env) => ({
+                        value: env.slug,
+                        label: env.name,
+                        sublabel: env.slug,
+                        ...(env.isDefault ? { badge: "default" } : {}),
+                      }))}
+                      onChange={(slug) => {
+                        const env = envs.find((item) => item.slug === slug);
+                        if (env) handleEnvChange(env);
+                      }}
+                      class="min-w-0 w-full flex-1"
+                    />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      class="shrink-0 px-2.5"
+                      aria-label="Manage environments"
+                      onClick={() => setShowEnvModal(true)}
+                    >
+                      <IconSettings size={16} stroke={2} />
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -147,9 +222,8 @@ export function ProjectDetail({ id }: { id: string }) {
                           size={14}
                           stroke={2}
                           aria-hidden="true"
-                          className={`shrink-0 text-content-faint transition-transform duration-100 ${
-                            isOpen ? "rotate-90" : ""
-                          }`}
+                          className={`shrink-0 text-content-faint transition-transform duration-100 ${isOpen ? "rotate-90" : ""
+                            }`}
                         />
                         <span class="text-content text-sm font-mono truncate">{t.key}</span>
                       </div>
@@ -187,14 +261,12 @@ export function ProjectDetail({ id }: { id: string }) {
                         aria-checked={t.enabled}
                         aria-label={t.enabled ? "Disable flag" : "Enable flag"}
                         onClick={() => togglesModel.toggle(id, t.id, !t.enabled)}
-                        class={`relative mt-0.5 inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-accent/20 ${
-                          t.enabled ? "bg-accent" : "bg-raised-hover"
-                        }`}
+                        class={`relative mt-0.5 inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-accent/20 ${t.enabled ? "bg-accent" : "bg-raised-hover"
+                          }`}
                       >
                         <span
-                          class={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
-                            t.enabled ? "translate-x-5" : "translate-x-1"
-                          }`}
+                          class={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${t.enabled ? "translate-x-5" : "translate-x-1"
+                            }`}
                         />
                       </button>
                       <Button
@@ -263,12 +335,7 @@ export function ProjectDetail({ id }: { id: string }) {
                           + Add field
                         </Button>
                         <div class="flex-1" />
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          size="sm"
-                          onClick={closeMeta}
-                        >
+                        <Button type="button" variant="secondary" size="sm" onClick={closeMeta}>
                           Cancel
                         </Button>
                         <Button
@@ -309,6 +376,74 @@ export function ProjectDetail({ id }: { id: string }) {
               </Button>
             </div>
           </form>
+        </Modal>
+      )}
+
+      {showEnvModal && (
+        <Modal title="Manage Environments" onClose={() => setShowEnvModal(false)}>
+          <div class="flex flex-col gap-4">
+            <p class="text-xs text-content-tertiary">
+              {envs.length} of 3 environments used on the free plan.
+            </p>
+
+            {environmentsModel.error.value && (
+              <p class="text-sm text-error-text">{environmentsModel.error.value}</p>
+            )}
+
+            <ul class="space-y-2">
+              {envs.map((env) => (
+                <li
+                  key={env.id}
+                  class="flex items-center justify-between gap-2 rounded-lg border border-edge px-3 py-2"
+                >
+                  <div>
+                    <p class="text-sm font-medium text-content">{env.name}</p>
+                    <p class="text-xs font-mono text-content-faint">{env.slug}</p>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    {env.isDefault ? (
+                      <span class="text-xs text-content-faint">Default</span>
+                    ) : (
+                      <>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => environmentsModel.setDefault(id, env.id)}
+                        >
+                          Set default
+                        </Button>
+                        <Button
+                          variant="danger-icon"
+                          size="sm"
+                          aria-label={`Delete ${env.name}`}
+                          onClick={() => environmentsModel.remove(id, env.id)}
+                        >
+                          <IconTrash size={14} stroke={2} />
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+
+            <form onSubmit={handleCreateEnv} class="flex gap-2">
+              <Input
+                type="text"
+                value={newEnvName}
+                onInput={(e) => setNewEnvName((e.target as HTMLInputElement).value)}
+                placeholder="New environment name"
+                disabled={environmentsModel.creating.value}
+                class="flex-1"
+              />
+              <Button
+                type="submit"
+                disabled={environmentsModel.creating.value || !newEnvName.trim()}
+              >
+                Add
+              </Button>
+            </form>
+          </div>
         </Modal>
       )}
     </div>
