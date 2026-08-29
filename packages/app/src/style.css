@@ -317,3 +317,24 @@ body {
     transform: none;
   }
 }
+
+/* Basecoat copies option innerHTML into the trigger span; hide list-only chrome */
+.select > button > span .select-option-check {
+  display: none;
+}
+
+/* Two-line selects (e.g. environment name + slug) */
+.select[data-rich-options] > button {
+  align-items: center;
+  padding-block: 0.625rem;
+  padding-inline: 0.75rem;
+  min-height: 3.25rem;
+}
+
+.select[data-rich-options] > button > span {
+  white-space: normal;
+}
+
+.select[data-rich-options] [role="option"].select-rich-option {
+  padding: 0.625rem 0.75rem;
+}

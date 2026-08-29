@@ -2,7 +2,7 @@ import { useLocation } from "preact-iso";
 import { useModel } from "@preact/signals";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { toast } from "@preachjs/toast";
-import { IconChevronRight, IconTrash } from "@tabler/icons-react";
+import { IconChevronRight, IconSettings, IconTrash } from "@tabler/icons-react";
 import { AuthModel } from "../../models/auth";
 import { ProjectsModel } from "../../models/projects";
 import { TogglesModel } from "../../models/toggles";
@@ -159,25 +159,34 @@ export function ProjectDetail({ id }: { id: string }) {
         </div>
 
         {envs.length > 0 && (
-          <div class="mb-6 flex flex-wrap items-center gap-2">
-            <label class="flex items-center gap-2 text-sm text-content-tertiary">
-              <span>Environment</span>
+          <div class="mb-6 flex flex-wrap items-center justify-end gap-2">
+            <label class="flex flex-col gap-1.5 text-sm text-content-tertiary">
+              <div class="flex items-center gap-2 justify-between">
+                <p>Environment</p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  aria-label="Manage environments"
+                  onClick={() => setShowEnvModal(true)}
+                >
+                  <IconSettings size={16} stroke={2} />
+                </Button>
+              </div>
               <Select
                 value={activeSlug ?? ""}
                 options={envs.map((env) => ({
                   value: env.slug,
-                  label: `${env.name}${env.isDefault ? " (default)" : ""}`,
+                  label: env.name,
+                  sublabel: env.slug,
+                  ...(env.isDefault ? { badge: "default" } : {}),
                 }))}
                 onChange={(slug) => {
                   const env = envs.find((item) => item.slug === slug);
                   if (env) handleEnvChange(env);
                 }}
-                class="min-w-[10rem]"
+                class="min-w-[12rem]"
               />
             </label>
-            <Button variant="secondary" size="sm" onClick={() => setShowEnvModal(true)}>
-              Manage
-            </Button>
           </div>
         )}
 
@@ -213,9 +222,8 @@ export function ProjectDetail({ id }: { id: string }) {
                           size={14}
                           stroke={2}
                           aria-hidden="true"
-                          className={`shrink-0 text-content-faint transition-transform duration-100 ${
-                            isOpen ? "rotate-90" : ""
-                          }`}
+                          className={`shrink-0 text-content-faint transition-transform duration-100 ${isOpen ? "rotate-90" : ""
+                            }`}
                         />
                         <span class="text-content text-sm font-mono truncate">{t.key}</span>
                       </div>
@@ -253,14 +261,12 @@ export function ProjectDetail({ id }: { id: string }) {
                         aria-checked={t.enabled}
                         aria-label={t.enabled ? "Disable flag" : "Enable flag"}
                         onClick={() => togglesModel.toggle(id, t.id, !t.enabled)}
-                        class={`relative mt-0.5 inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-accent/20 ${
-                          t.enabled ? "bg-accent" : "bg-raised-hover"
-                        }`}
+                        class={`relative mt-0.5 inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-accent/20 ${t.enabled ? "bg-accent" : "bg-raised-hover"
+                          }`}
                       >
                         <span
-                          class={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
-                            t.enabled ? "translate-x-5" : "translate-x-1"
-                          }`}
+                          class={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${t.enabled ? "translate-x-5" : "translate-x-1"
+                            }`}
                         />
                       </button>
                       <Button

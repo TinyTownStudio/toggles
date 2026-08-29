@@ -1,8 +1,11 @@
+import { IconCheck } from "@tabler/icons-react";
 import { useEffect, useId, useRef } from "preact/hooks";
 
 export interface SelectOption {
   value: string;
   label: string;
+  sublabel?: string;
+  badge?: string;
 }
 
 interface SelectChangeEvent extends Event {
@@ -26,6 +29,30 @@ interface SelectProps {
   name?: string;
 }
 
+function hasRichContent(option: SelectOption) {
+  return Boolean(option.sublabel || option.badge);
+}
+
+function SelectOptionContent({ option }: { option: SelectOption }) {
+  return (
+    <div class="select-rich-content min-w-0 text-left">
+      <div class="flex items-center gap-2 min-w-0">
+        <span class="truncate text-sm font-medium text-content">{option.label}</span>
+        {option.badge && (
+          <span class="shrink-0 text-[10px] px-1.5 py-0.5 rounded-full bg-accent-surface text-accent-text">
+            {option.badge}
+          </span>
+        )}
+      </div>
+      {option.sublabel && (
+        <span class="block truncate text-[11px] font-mono text-content-faint mt-0.5">
+          {option.sublabel}
+        </span>
+      )}
+    </div>
+  );
+}
+
 export function Select({
   value,
   options,
@@ -40,6 +67,7 @@ export function Select({
   const triggerId = `${uid}-trigger`;
   const listboxId = `${uid}-listbox`;
   const popoverId = `${uid}-popover`;
+  const hasRichOptions = options.some(hasRichContent);
 
   const handleChange = (event: Event) => {
     onChange((event as SelectChangeEvent).detail.value);
@@ -48,7 +76,11 @@ export function Select({
   useEffect(() => {
     const root = rootRef.current;
     if (!root) return;
-    root.refresh?.() ?? window.basecoat?.refresh(root);
+    if (root.refresh) {
+      root.refresh();
+    } else {
+      window.basecoat?.refresh(root);
+    }
   }, [value, options, placeholder]);
 
   return (
@@ -58,6 +90,7 @@ export function Select({
       class={`select ${className ?? ""}`.trim()}
       onChange={handleChange}
       {...(placeholder ? { "data-placeholder": placeholder } : {})}
+      {...(hasRichOptions ? { "data-rich-options": "" } : {})}
     >
       <button
         type="button"
@@ -92,11 +125,26 @@ export function Select({
           aria-orientation="vertical"
           aria-labelledby={triggerId}
         >
-          {options.map((option) => (
-            <div key={option.value || "__empty__"} role="option" data-value={option.value} data-label={option.label}>
-              {option.label}
-            </div>
-          ))}
+          {options.map((option) => {
+            const rich = hasRichContent(option);
+            return (
+              <div
+                key={option.value || "__empty__"}
+                role="option"
+                data-value={option.value}
+                {...(!rich ? { "data-label": option.label } : {})}
+                class={rich ? "select-rich-option flex items-center gap-2" : undefined}
+              >
+                {rich ? (
+                  <>
+                    <SelectOptionContent option={option} />
+                  </>
+                ) : (
+                  option.label
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
       <input type="hidden" name={name ?? `${uid}-value`} value={value} />
