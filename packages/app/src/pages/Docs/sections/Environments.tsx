@@ -19,7 +19,7 @@ export function Environments() {
         method="GET"
         path="/api/v1/projects/:projectId/environments"
         description="Returns all environments for a project. Creates a default Production environment lazily if none exist."
-        authNote="Requires session auth."
+        authNote="Readable with any API key scoped to this project (read or admin), or session auth."
         responseExample={`[
   {
     "id": "env_01hz...",
@@ -32,9 +32,11 @@ export function Environments() {
   }
 ]`}
         curlExample={`curl ${BASE}/api/v1/projects/proj_01hz.../environments \\
-  -H "Cookie: better-auth.session_token=<session>"`}
+  -H "Authorization: Bearer tgs_xxxxxxxxxxxxxxxxxxxxxxxx"`}
         jsExample={`const res = await fetch("${BASE}/api/v1/projects/proj_01hz.../environments", {
-  credentials: "include",
+  headers: {
+    Authorization: "Bearer tgs_xxxxxxxxxxxxxxxxxxxxxxxx",
+  },
 });
 const environments = await res.json();`}
       />

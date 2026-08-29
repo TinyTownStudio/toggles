@@ -9,6 +9,7 @@ import {
   slugifyEnvironmentName,
 } from "../lib/environments";
 import { getOwnedProject } from "../lib/projects";
+import { isScopeViolation } from "../lib/permissions";
 import { getUserPlan, PLAN_LIMITS } from "../lib/plans";
 import type { Bindings, Variables } from "../types";
 
@@ -24,10 +25,24 @@ environments.get("/", async (c) => {
 
   const projectId = c.req.param("projectId");
   if (!projectId) return c.json({ error: "Not found" }, 404);
+
+  const keyData = c.get("apiKeyData");
+  if (keyData && isScopeViolation(keyData.permissions, projectId))
+    return c.json({ error: "Forbidden" }, 403);
+
   const db = c.get("db");
 
-  const project = await getOwnedProject(db, projectId, userId);
-  if (!project) return c.json({ error: "Not found" }, 404);
+  if (keyData) {
+    const project = await db
+      .select()
+      .from(schema.project)
+      .where(eq(schema.project.id, projectId))
+      .get();
+    if (!project) return c.json({ error: "Not found" }, 404);
+  } else {
+    const project = await getOwnedProject(db, projectId, userId);
+    if (!project) return c.json({ error: "Not found" }, 404);
+  }
 
   const defaultEnv = await ensureDefaultEnvironment(db, projectId);
   await backfillToggleStatesForDefaultEnv(db, projectId, defaultEnv.id);

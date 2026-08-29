@@ -145,6 +145,41 @@ describe("all-projects API key", () => {
   });
 });
 
+describe("list environments", () => {
+  it("project-scoped read key lists environments for its project", async () => {
+    const res = await apiGet(`/api/v1/projects/${projectAId}/environments`, {
+      bearer: scopedKey,
+    });
+    expect(res.status).toBe(200);
+    const data = (await res.json()) as { slug: string }[];
+    expect(data.some((e) => e.slug === "production")).toBe(true);
+  });
+
+  it("project-scoped key cannot list another project's environments (403)", async () => {
+    const res = await apiGet(`/api/v1/projects/${projectBId}/environments`, {
+      bearer: scopedKey,
+    });
+    expect(res.status).toBe(403);
+  });
+
+  it("all-projects read key lists environments for any project", async () => {
+    const resA = await apiGet(`/api/v1/projects/${projectAId}/environments`, {
+      bearer: allProjectsKey,
+    });
+    expect(resA.status).toBe(200);
+
+    const resB = await apiGet(`/api/v1/projects/${projectBId}/environments`, {
+      bearer: allProjectsKey,
+    });
+    expect(resB.status).toBe(200);
+  });
+
+  it("no auth returns 401", async () => {
+    const res = await apiGet(`/api/v1/projects/${projectAId}/environments`);
+    expect(res.status).toBe(401);
+  });
+});
+
 describe("invalid credentials", () => {
   it("no auth returns 401", async () => {
     const res = await apiGet(`/api/v1/projects/${projectAId}/toggles`);
@@ -196,5 +231,15 @@ describe("environment-scoped API key", () => {
       bearer: allProjectsKey,
     });
     expect(res.status).toBe(200);
+  });
+
+  it("lists environments for its project", async () => {
+    const res = await apiGet(`/api/v1/projects/${projectAId}/environments`, {
+      bearer: stagingKey,
+    });
+    expect(res.status).toBe(200);
+    const data = (await res.json()) as { slug: string }[];
+    expect(data.some((e) => e.slug === "staging")).toBe(true);
+    expect(data.some((e) => e.slug === "production")).toBe(true);
   });
 });
