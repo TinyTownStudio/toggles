@@ -53,16 +53,6 @@ export const EnvironmentsModel = createModel(() => {
     }
   };
 
-  const rename = async (projectId: string, id: string, name: string) => {
-    error.value = null;
-    try {
-      const updated = await updateEnvironment(projectId, id, { name });
-      environments.value = environments.value.map((e) => (e.id === id ? updated : e));
-    } catch (err) {
-      error.value = err instanceof Error ? err.message : "Failed to rename environment";
-    }
-  };
-
   const remove = async (projectId: string, id: string) => {
     const prev = environments.value;
     environments.value = prev.filter((e) => e.id !== id);
@@ -83,7 +73,6 @@ export const EnvironmentsModel = createModel(() => {
     fetch,
     create,
     setDefault,
-    rename,
     remove,
   };
 });

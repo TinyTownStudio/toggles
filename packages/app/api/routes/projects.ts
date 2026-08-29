@@ -9,6 +9,7 @@ import {
   upsertToggleState,
 } from "../lib/environments";
 import { hasWriteAccess, isEnvScopeViolation, isScopeViolation } from "../lib/permissions";
+import { getOwnedProject } from "../lib/projects";
 import { getUserPlan, PLAN_LIMITS } from "../lib/plans";
 import type { AgnosticDatabaseInstance, Bindings, Variables } from "../types";
 import { environments } from "./environments";
@@ -114,18 +115,6 @@ projects.delete("/:id", async (c) => {
 projects.route("/:projectId/environments", environments);
 
 // ── Toggle routes ─────────────────────────────────────────────
-
-async function getOwnedProject(
-  db: AgnosticDatabaseInstance<typeof schema>,
-  projectId: string,
-  userId: string,
-) {
-  return db
-    .select()
-    .from(schema.project)
-    .where(and(eq(schema.project.id, projectId), eq(schema.project.userId, userId)))
-    .get();
-}
 
 async function resolveToggleContext(
   db: AgnosticDatabaseInstance<typeof schema>,

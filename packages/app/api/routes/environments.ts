@@ -8,25 +8,14 @@ import {
   slugifyEnvironmentName,
   syncToggleTableFromEnvironment,
 } from "../lib/environments";
+import { getOwnedProject } from "../lib/projects";
 import { getUserPlan, PLAN_LIMITS } from "../lib/plans";
-import type { AgnosticDatabaseInstance, Bindings, Variables } from "../types";
+import type { Bindings, Variables } from "../types";
 
 export const environments = new Hono<{
   Bindings: Bindings;
   Variables: Variables<typeof schema>;
 }>();
-
-async function getOwnedProject(
-  db: AgnosticDatabaseInstance<typeof schema>,
-  projectId: string,
-  userId: string,
-) {
-  return db
-    .select()
-    .from(schema.project)
-    .where(and(eq(schema.project.id, projectId), eq(schema.project.userId, userId)))
-    .get();
-}
 
 // GET / - list environments for a project
 environments.get("/", async (c) => {
