@@ -17,6 +17,7 @@ interface SelectChangeEvent extends Event {
 
 interface SelectElement extends HTMLDivElement {
   refresh?: () => void;
+  togglePopover?: () => void;
 }
 
 interface SelectProps {
@@ -83,6 +84,38 @@ export function Select({
     }
   }, [value, options, placeholder]);
 
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root || disabled) return;
+
+    let detach: (() => void) | undefined;
+
+    const attachTriggerClick = () => {
+      detach?.();
+      const button = root.querySelector<HTMLButtonElement>(":scope > button");
+      if (!button || typeof root.togglePopover !== "function") return;
+
+      const onTriggerClick = (event: Event) => {
+        event.stopImmediatePropagation();
+        root.togglePopover!();
+      };
+
+      button.addEventListener("click", onTriggerClick, true);
+      detach = () => button.removeEventListener("click", onTriggerClick, true);
+    };
+
+    if (root.dataset.selectInitialized) {
+      attachTriggerClick();
+    } else {
+      root.addEventListener("basecoat:initialized", attachTriggerClick, { once: true });
+    }
+
+    return () => {
+      detach?.();
+      root.removeEventListener("basecoat:initialized", attachTriggerClick);
+    };
+  }, [disabled, uid]);
+
   return (
     <div
       ref={rootRef}
@@ -119,12 +152,7 @@ export function Select({
         </svg>
       </button>
       <div id={popoverId} data-popover aria-hidden="true">
-        <div
-          role="listbox"
-          id={listboxId}
-          aria-orientation="vertical"
-          aria-labelledby={triggerId}
-        >
+        <div role="listbox" id={listboxId} aria-orientation="vertical" aria-labelledby={triggerId}>
           {options.map((option) => {
             const rich = hasRichContent(option);
             return (

@@ -323,6 +323,30 @@ body {
   display: none;
 }
 
+/* Ensure trigger fills the select wrapper (Basecoat sets width: fit-content) */
+.select:not(select) > button {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  min-width: 0;
+}
+
+/* Label content must not steal clicks from the trigger button */
+.select:not(select) > button > span,
+.select:not(select) > button > span * {
+  pointer-events: none;
+}
+
+/* Keep closed popover behind the trigger; open popover stays on top */
+.select:not(select) > [data-popover][aria-hidden="true"] {
+  pointer-events: none;
+  z-index: 0;
+}
+
+.select:not(select) > [data-popover][aria-hidden="false"] {
+  z-index: 50;
+}
+
 /* Two-line selects (e.g. environment name + slug) */
 .select.w-full {
   width: 100%;
@@ -333,6 +357,7 @@ body {
   padding-block: 0.625rem;
   padding-inline: 0.75rem;
   min-height: 3.25rem;
+  white-space: normal;
 }
 
 .select[data-rich-options] > button > span {
