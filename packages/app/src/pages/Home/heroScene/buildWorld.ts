@@ -2,7 +2,6 @@ import {
   BoxGeometry,
   BufferAttribute,
   BufferGeometry,
-  CapsuleGeometry,
   Group,
   Mesh,
   MeshStandardMaterial,
@@ -37,52 +36,68 @@ export function walkSurfaceCenterY(): number {
 
 const PARTICLE_COUNT = 28;
 
-export const TOGGLE_TRACK_WIDTH = 0.52;
-export const TOGGLE_TRACK_HEIGHT = 0.14;
-export const TOGGLE_THUMB_RADIUS = 0.054;
-export const TOGGLE_THUMB_X_OFF = -0.17;
-export const TOGGLE_THUMB_TRAVEL = 0.34;
-export const TOGGLE_BASE_Y = 2.15;
+export const LEVER_ANGLE_OFF = 0.25;
+export const LEVER_ANGLE_ON = -0.95;
 
-function createToggle(colors: ThemeColors): {
+function createLever(
+  colors: ThemeColors,
+  baseMaterial: MeshStandardMaterial,
+): {
   group: Group;
-  trackMaterial: MeshStandardMaterial;
-  thumb: Mesh;
+  baseMaterial: MeshStandardMaterial;
+  handle: Group;
 } {
   const group = new Group();
 
-  const trackRadius = TOGGLE_TRACK_HEIGHT / 2;
-  const trackGeo = new CapsuleGeometry(
-    trackRadius,
-    TOGGLE_TRACK_WIDTH - TOGGLE_TRACK_HEIGHT,
-    8,
-    16,
-  );
-  trackGeo.rotateZ(Math.PI / 2);
-  const trackMaterial = new MeshStandardMaterial({
+  const leverBaseMaterial = new MeshStandardMaterial({
     color: toThreeColor(colors.raisedHover),
-    roughness: 0.55,
-    metalness: 0.02,
+    emissive: toThreeColor(colors.accent),
+    emissiveIntensity: 0,
+    roughness: 0.6,
+    metalness: 0.05,
   });
-  const track = new Mesh(trackGeo, trackMaterial);
-  group.add(track);
+  const baseGeo = new BoxGeometry(0.22, 0.1, 0.18);
+  const base = new Mesh(baseGeo, leverBaseMaterial);
+  base.position.set(0, 0.05, 0);
+  group.add(base);
 
-  const thumbGeo = new SphereGeometry(TOGGLE_THUMB_RADIUS, 12, 12);
-  const thumb = new Mesh(
-    thumbGeo,
+  const pivotGeo = new BoxGeometry(0.08, 0.14, 0.08);
+  const pivot = new Mesh(pivotGeo, baseMaterial);
+  pivot.position.set(0, 0.14, 0);
+  group.add(pivot);
+
+  const handle = new Group();
+  handle.position.set(0, 0.2, 0);
+
+  const armGeo = new BoxGeometry(0.06, 0.32, 0.06);
+  const arm = new Mesh(
+    armGeo,
     new MeshStandardMaterial({
-      color: toThreeColor("#ffffff"),
-      roughness: 0.35,
+      color: toThreeColor(colors.raisedHover),
+      roughness: 0.5,
+      metalness: 0.08,
+    }),
+  );
+  arm.position.set(0, 0.16, 0);
+  handle.add(arm);
+
+  const knobGeo = new SphereGeometry(0.06, 10, 10);
+  const knob = new Mesh(
+    knobGeo,
+    new MeshStandardMaterial({
+      color: toThreeColor(colors.accentText),
+      roughness: 0.4,
       metalness: 0.05,
     }),
   );
-  thumb.position.set(TOGGLE_THUMB_X_OFF, 0, trackRadius + 0.01);
-  group.add(thumb);
+  knob.position.set(0, 0.34, 0);
+  handle.add(knob);
 
-  group.position.set(2.85, TOGGLE_BASE_Y, 0.75);
-  group.rotation.set(-0.22, 0.48, 0.06);
+  group.add(handle);
 
-  return { group, trackMaterial, thumb };
+  group.position.set(-2.08, WALK_SURFACE_TOP + 0.06, 0.28);
+
+  return { group, baseMaterial: leverBaseMaterial, handle };
 }
 
 function createParticles(colors: ThemeColors): { points: Points; material: PointsMaterial } {
@@ -200,19 +215,19 @@ export function buildWorld(colors: ThemeColors): WorldMeshes {
   root.add(points);
 
   const {
-    group: toggle,
-    trackMaterial: toggleTrackMaterial,
-    thumb: toggleThumb,
-  } = createToggle(colors);
-  root.add(toggle);
+    group: lever,
+    baseMaterial: leverBaseMaterial,
+    handle: leverHandle,
+  } = createLever(colors, leftLedgeMat);
+  root.add(lever);
 
   return {
     root,
     bridge,
     bridgeMaterial,
-    toggle,
-    toggleTrackMaterial,
-    toggleThumb,
+    lever,
+    leverBaseMaterial,
+    leverHandle,
     tower,
     towerMaterial,
     towerGlow,
@@ -236,8 +251,8 @@ export function applyThemeToWorld(world: WorldMeshes, colors: ThemeColors, isDar
   const accentColor = toThreeColor(colors.accent);
   const structureGlow = isDark ? 0.2 : 0;
 
-  world.toggleTrackMaterial.color.copy(raisedHoverColor);
-  world.toggleTrackMaterial.emissive.copy(accentColor);
+  world.leverBaseMaterial.color.copy(raisedHoverColor);
+  world.leverBaseMaterial.emissive.copy(accentColor);
   world.towerMaterial.color.copy(raisedColor);
   world.towerMaterial.emissive.copy(raisedColor);
   world.towerMaterial.emissiveIntensity = structureGlow;
