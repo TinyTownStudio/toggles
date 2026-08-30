@@ -37,7 +37,8 @@
     "preact": "^10.28.3",
     "preact-iso": "^2.11.1",
     "preact-render-to-string": "^6.6.5",
-    "tailwindcss": "^4.1.18"
+    "tailwindcss": "^4.1.18",
+    "three": "^0.185.1"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.23.1",
@@ -50,6 +51,7 @@
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",
+    "@types/three": "^0.185.4",
     "@vitejs/plugin-react": "^5.1.1",
     "@vitest/coverage-istanbul": "^4.1.4",
     "drizzle-kit": "^0.31.8",

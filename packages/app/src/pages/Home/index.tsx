@@ -1,7 +1,7 @@
 import { useSignal } from "@preact/signals";
 import { useLocation } from "preact-iso";
 import { Button } from "../../components/ui/Button";
-import { HeroAnimation } from "./HeroAnimation";
+import { HeroScene3D } from "./HeroScene3D";
 
 export function Home() {
   const { route } = useLocation();
@@ -18,17 +18,19 @@ export function Home() {
 
 function Hero({ onGetStarted }: { onGetStarted: () => void }) {
   return (
-    <section class="py-32 px-6">
-      <div class="max-w-2xl mx-auto">
+    <section class="relative overflow-hidden py-32 px-6 min-h-[70vh]">
+      <HeroScene3D />
+      <div
+        class="absolute inset-0 pointer-events-none bg-gradient-to-b from-page/63 via-page/43 to-page/82 dark:from-page/33 dark:via-page/18 dark:to-page/48"
+        aria-hidden="true"
+      />
+      <div class="relative z-10 max-w-2xl mx-auto">
         <p class="font-mono text-xs text-content-faint tracking-widest uppercase mb-8">
           Feature flags
         </p>
         <h1 class="text-4xl md:text-5xl font-semibold tracking-tight text-content leading-[1.15] mb-6">
           Ship features <span class="underline-wavy">on your terms</span>.
         </h1>
-        <div class="my-1 mb-4">
-          <HeroAnimation />
-        </div>
         <p class="text-base text-content-tertiary leading-relaxed mb-10 max-w-[52ch]">
           Toggles lets you manage feature flags across your projects. Enable or disable features at
           runtime - no redeployment needed.
