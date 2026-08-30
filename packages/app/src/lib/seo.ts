@@ -14,6 +14,8 @@ const HOME_DESCRIPTION =
 const DOCS_DESCRIPTION =
   "API documentation for Toggles — manage feature flags, projects, and API keys over a simple REST API.";
 
+const OG_IMAGE = "https://toggles.tinytown.studio/og.png";
+
 const FAQ_ITEMS = [
   {
     q: "Do I need an account?",
@@ -80,6 +82,7 @@ export function getHeadMeta(url: string): HeadMeta {
         og("og:title", title),
         og("og:description", DOCS_DESCRIPTION),
         og("og:type", "website"),
+        og("og:image", OG_IMAGE),
       ]),
     };
   }
@@ -92,6 +95,7 @@ export function getHeadMeta(url: string): HeadMeta {
       og("og:title", title),
       og("og:description", HOME_DESCRIPTION),
       og("og:type", "website"),
+      og("og:image", OG_IMAGE),
       faqJsonLd(),
     ]),
   };
