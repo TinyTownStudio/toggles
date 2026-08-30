@@ -38,11 +38,5 @@ export function HeroScene3D() {
     if (ctx && mod) mod.updateSceneTheme(ctx);
   }, [theme.isDark.value]);
 
-  return (
-    <div
-      ref={containerRef}
-      class="absolute inset-0 overflow-hidden"
-      aria-hidden="true"
-    />
-  );
+  return <div ref={containerRef} class="absolute inset-0 overflow-hidden" aria-hidden="true" />;
 }

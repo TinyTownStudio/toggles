@@ -48,7 +48,7 @@ beforeAll(async () => {
   expect(projBRes.status).toBe(201);
   projectBId = ((await projBRes.json()) as { id: string }).id;
 
-  // Create two flags in Alpha — one enabled, one disabled
+  // Create two flags in Alpha - one enabled, one disabled
   const t1Res = await apiPost(`/api/v1/projects/${projectAId}/toggles`, {
     cookie,
     body: { key: "flag-enabled" },
@@ -161,7 +161,7 @@ describe("GET /api/v1/dashboard", () => {
     const res = await apiGet("/api/v1/dashboard", { cookie });
     const data = (await res.json()) as DashboardResponse;
 
-    // All flags were just created — none should be stale
+    // All flags were just created - none should be stale
     expect(data.staleFlags.length).toBe(0);
   });
 

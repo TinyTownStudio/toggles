@@ -9,10 +9,10 @@ interface HeadMeta {
 }
 
 const HOME_DESCRIPTION =
-  "Toggles lets you manage feature flags across your projects. Enable or disable features at runtime — no redeployment needed.";
+  "Toggles lets you manage feature flags across your projects. Enable or disable features at runtime - no redeployment needed.";
 
 const DOCS_DESCRIPTION =
-  "API documentation for Toggles — manage feature flags, projects, and API keys over a simple REST API.";
+  "API documentation for Toggles - manage feature flags, projects, and API keys over a simple REST API.";
 
 const OG_IMAGE = "https://toggles.tinytown.studio/og.png";
 
@@ -74,7 +74,7 @@ function faqJsonLd(): HeadElement {
 
 export function getHeadMeta(url: string): HeadMeta {
   if (url === "/docs") {
-    const title = "API Documentation — Toggles";
+    const title = "API Documentation - Toggles";
     return {
       title,
       elements: new Set([
@@ -87,7 +87,7 @@ export function getHeadMeta(url: string): HeadMeta {
     };
   }
 
-  const title = "Toggles — Feature flags for your projects";
+  const title = "Toggles - Feature flags for your projects";
   return {
     title,
     elements: new Set([

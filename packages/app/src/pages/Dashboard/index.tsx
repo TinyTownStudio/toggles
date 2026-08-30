@@ -50,7 +50,7 @@ export function Dashboard() {
 
   const maxFlagsInProject = Math.max(...s.flagsPerProject.map((p) => p.totalFlags), 1);
 
-  // Plan limits — may be Infinity or missing keys depending on plan
+  // Plan limits - may be Infinity or missing keys depending on plan
   const projectLimit =
     "product" in s.beta && s.beta.product
       ? Infinity

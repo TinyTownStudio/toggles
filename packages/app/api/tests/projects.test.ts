@@ -163,13 +163,13 @@ describe("free-plan project limit", () => {
       limitProjectIds.push(((await res.json()) as { id: string }).id);
     }
 
-    // Attempt to create the 11th — should be blocked
+    // Attempt to create the 11th - should be blocked
     eleventh = await apiPost("/api/v1/projects", {
       cookie: limitCookie,
       body: { name: "Project 11" },
     });
 
-    // Delete one project and try again — should succeed
+    // Delete one project and try again - should succeed
     await apiDelete(`/api/v1/projects/${limitProjectIds[0]}`, { cookie: limitCookie });
     postDeleteRes = await apiPost("/api/v1/projects", {
       cookie: limitCookie,

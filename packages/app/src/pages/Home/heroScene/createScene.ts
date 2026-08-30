@@ -7,11 +7,7 @@ import {
   Scene,
   WebGLRenderer,
 } from "three";
-import {
-  applyAnimationState,
-  computeAnimationState,
-  staticAnimationState,
-} from "./animate";
+import { applyAnimationState, computeAnimationState, staticAnimationState } from "./animate";
 import { applyThemeToWorld, buildWorld } from "./buildWorld";
 import { isSceneDark, readSceneColors, toThreeColor } from "./colors";
 import type { SceneContext } from "./types";
@@ -137,9 +133,7 @@ export function createHeroScene(container: HTMLElement): SceneContext | null {
       elapsed = (now - startTime) / 1000;
     }
 
-    const state = ctx.reducedMotion
-      ? staticAnimationState()
-      : computeAnimationState(elapsed);
+    const state = ctx.reducedMotion ? staticAnimationState() : computeAnimationState(elapsed);
 
     applySceneTheme();
     ctx.isDark = lastAppliedDark;

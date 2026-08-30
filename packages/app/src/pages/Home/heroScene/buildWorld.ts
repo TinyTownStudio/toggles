@@ -70,7 +70,7 @@ export function buildWorld(colors: ThemeColors): WorldMeshes {
   platform.position.set(0, 0, 0);
   root.add(platform);
 
-  // Left gap — raised ledge the character starts on
+  // Left gap - raised ledge the character starts on
   const walkY = walkSurfaceCenterY();
   const leftLedgeGeo = new BoxGeometry(1.2, BRIDGE_HEIGHT, BRIDGE_DEPTH);
   const leftLedgeMat = new MeshStandardMaterial({ color: raisedColor, roughness: 0.8 });
@@ -90,7 +90,7 @@ export function buildWorld(colors: ThemeColors): WorldMeshes {
   lockedWall.position.set(BRIDGE_LEFT + 0.05, WALK_SURFACE_TOP + 0.375 - BRIDGE_HEIGHT / 2, 0);
   root.add(lockedWall);
 
-  // Bridge — spans from the gate to the tower landing
+  // Bridge - spans from the gate to the tower landing
   const bridgeGeo = new BoxGeometry(BRIDGE_LENGTH, BRIDGE_HEIGHT, BRIDGE_DEPTH);
   const bridgeMaterial = new MeshStandardMaterial({
     color: raisedColor,
@@ -110,7 +110,7 @@ export function buildWorld(colors: ThemeColors): WorldMeshes {
   landing.position.set(1.55, walkY, -0.05);
   root.add(landing);
 
-  // Tower / beacon — base sits on the right landing
+  // Tower / beacon - base sits on the right landing
   const towerGeo = new BoxGeometry(0.55, 1.1, 0.55);
   const towerMaterial = new MeshStandardMaterial({
     color: raisedColor,

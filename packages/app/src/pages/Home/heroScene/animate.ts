@@ -98,7 +98,7 @@ export function applyAnimationState(
   const accent = toThreeColor(colors.accent);
   const raised = toThreeColor(colors.raised);
 
-  // Bridge — grows from the left gate toward the tower landing
+  // Bridge - grows from the left gate toward the tower landing
   const scaleX = Math.max(0.001, state.bridgeOpacity);
   world.bridge.scale.x = scaleX;
   world.bridge.position.x = bridgeCenterX(scaleX);
@@ -117,8 +117,7 @@ export function applyAnimationState(
 
   // Character walks along the bridge once it has appeared
   const walkT = state.bridgeOpacity > 0.2 ? state.characterT : 0;
-  world.character.position.x =
-    CHARACTER_START_X + (CHARACTER_END_X - CHARACTER_START_X) * walkT;
+  world.character.position.x = CHARACTER_START_X + (CHARACTER_END_X - CHARACTER_START_X) * walkT;
   world.character.position.y = CHARACTER_Y + Math.sin(walkT * Math.PI * 4) * 0.03;
 
   // Particles burst at the bridge leading edge

@@ -12,7 +12,7 @@ export function Authentication() {
       <SubHeading id="auth-session">Session (cookie-based)</SubHeading>
       <p class="text-sm text-content-tertiary leading-relaxed mb-4">
         When you use the Toggles dashboard, your browser authenticates via a session cookie managed
-        by BetterAuth. This is handled automatically — no extra headers needed.
+        by BetterAuth. This is handled automatically - no extra headers needed.
       </p>
       <p class="text-sm text-content-tertiary leading-relaxed mb-6">
         Sign in at{" "}
@@ -40,7 +40,7 @@ export function Authentication() {
       </p>
       <CodeBlock code={`Authorization: Bearer tgs_xxxxxxxxxxxxxxxxxxxxxxxx`} language="http" />
       <p class="text-sm text-content-tertiary leading-relaxed mt-4 mb-6">
-        The raw key value is only shown once at creation time. Store it securely — you cannot
+        The raw key value is only shown once at creation time. Store it securely - you cannot
         retrieve it later.
       </p>
 
@@ -72,7 +72,7 @@ export function Authentication() {
               <td class="px-4 py-2.5 font-mono text-accent-text">read</td>
               <td class="px-4 py-2.5 text-content-tertiary">scoped (one project)</td>
               <td class="px-4 py-2.5 text-content-tertiary">
-                Read toggles for that project only — scope violations return 403
+                Read toggles for that project only - scope violations return 403
               </td>
             </tr>
             <tr class="bg-page">

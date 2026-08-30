@@ -14,7 +14,7 @@ export function ApiKeys() {
       <Endpoint
         method="GET"
         path="/api/v1/api-keys"
-        description="Returns all API keys belonging to the authenticated user. The raw key value is never returned — only the first few characters (start) for identification."
+        description="Returns all API keys belonging to the authenticated user. The raw key value is never returned - only the first few characters (start) for identification."
         authNote="Requires session auth."
         responseExample={`[
   {
@@ -43,7 +43,7 @@ const keys = await res.json();`}
       <Endpoint
         method="POST"
         path="/api/v1/api-keys"
-        description="Creates a new API key. The full key value is returned only in this response — store it securely. If projectId is provided, the key is scoped to that project only."
+        description="Creates a new API key. The full key value is returned only in this response - store it securely. If projectId is provided, the key is scoped to that project only."
         authNote="Requires session auth."
         requestBody={[
           {
@@ -104,7 +104,7 @@ const res = await fetch("https://toggles.tinytown.studio/api/v1/api-keys", {
   }),
 });
 const { key } = await res.json();
-// Store key securely — it won't be shown again
+// Store key securely - it won't be shown again
 
 // Scoped admin key
 const res2 = await fetch("https://toggles.tinytown.studio/api/v1/api-keys", {

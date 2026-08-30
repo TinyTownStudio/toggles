@@ -76,13 +76,13 @@ deployment. Worker handles `/api/*` first; everything else serves the SPA.
 ### TypeScript
 
 - **Strict mode** is enabled. All `tsconfig*.json` files use `strict: true`.
-- `verbatimModuleSyntax: true` is set — **always** use `import type` for
+- `verbatimModuleSyntax: true` is set - **always** use `import type` for
   type-only imports:
   ```ts
   import type { JSX } from "preact";
   import type { Bindings } from "./types";
   ```
-- `erasableSyntaxOnly: true` — **no `enum`**, **no `namespace`**, no parameter
+- `erasableSyntaxOnly: true` - **no `enum`**, **no `namespace`**, no parameter
   decorators. Only type-level constructs that are erased at compile time.
 - `noUnusedLocals` and `noUnusedParameters` are enabled. Remove unused
   variables and parameters; don't suppress with `_` prefixes unless necessary.
@@ -104,7 +104,7 @@ deployment. Worker handles `/api/*` first; everything else serves the SPA.
 
 ### Imports
 
-- All imports within the monorepo are **relative** — no `@/` or `~/` path
+- All imports within the monorepo are **relative** - no `@/` or `~/` path
   aliases are configured.
 - Use the `node:` protocol for Node built-ins: `import path from "node:path"`.
 - Group third-party imports before local imports (no enforced tool, but follow
@@ -115,7 +115,7 @@ deployment. Worker handles `/api/*` first; everything else serves the SPA.
 - **Files/folders:** `camelCase` for utility files (`api.ts`, `plans.ts`),
   `PascalCase` for component files (`Button.tsx`, `AuthForm.tsx`) and page
   folders (`Home/`, `ProjectDetail/`).
-- **Models:** Named `*Model` suffix — exported as a `createModel()` factory
+- **Models:** Named `*Model` suffix - exported as a `createModel()` factory
   call returning signals and actions.
 - **Components:** PascalCase. Variant logic lives in a `variantClasses` record
   keyed by the variant string union.
@@ -124,11 +124,11 @@ deployment. Worker handles `/api/*` first; everything else serves the SPA.
 
 ### Formatting
 
-- Formatter: **oxfmt** (no config file — defaults apply).
-- Linter: **oxlint** (no config file — `--fix` is applied on lint).
+- Formatter: **oxfmt** (no config file - defaults apply).
+- Linter: **oxlint** (no config file - `--fix` is applied on lint).
 - Pre-commit hook (`nano-staged`) auto-runs `oxfmt --write` on staged
   `*.{js,ts,tsx,jsx,json}` files. Do not skip hooks.
-- Do not introduce Prettier, Biome, or ESLint config files — those packages
+- Do not introduce Prettier, Biome, or ESLint config files - those packages
   exist in devDependencies but are not actively used.
 
 ## Frontend Patterns (`src/`)
@@ -162,7 +162,7 @@ export const SomeModel = () => {
 };
 ```
 
-- Every async model action uses `loading`/`error`/`finally` — never leave
+- Every async model action uses `loading`/`error`/`finally` - never leave
   `loading` stuck on error.
 - **Optimistic updates:** snapshot previous state, apply immediately, rollback
   on failure:
@@ -189,7 +189,7 @@ export async function fetchApi<T>(path: string, options?: RequestInit): Promise<
   `getToggles`, `createToggle`, `deleteToggle`).
 - Add explicit return type annotations to exported API functions.
 - `fetchApi` throws `Error` with the server's `error` field or
-  `HTTP {status}` as fallback — catch these in model functions.
+  `HTTP {status}` as fallback - catch these in model functions.
 
 ### Components
 
@@ -205,7 +205,7 @@ export async function fetchApi<T>(path: string, options?: RequestInit): Promise<
 ### Route Structure
 
 ```ts
-// api/index.ts — mount routes
+// api/index.ts - mount routes
 import { projectsRouter } from "./routes/projects";
 app.route("/api/v1/projects", projectsRouter);
 ```
@@ -244,7 +244,7 @@ return c.json({ error: "Internal Server Error" }, 500);
 ## Testing
 
 Tests are in `api/tests/` and run inside the Cloudflare Workers Miniflare
-runtime — standard Node.js APIs may not be available.
+runtime - standard Node.js APIs may not be available.
 
 - Use `SELF` from `cloudflare:test` for in-process HTTP calls.
 - Apply D1 migrations in `beforeAll` using the `TEST_MIGRATIONS` binding.

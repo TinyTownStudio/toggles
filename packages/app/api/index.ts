@@ -58,7 +58,7 @@ app.use(
 );
 
 app.get("/api/billing-success", async (c) => {
-  // Require an authenticated session — only the paying user should trigger their own upgrade.
+  // Require an authenticated session - only the paying user should trigger their own upgrade.
   const auth = createAuth(c.env, c.get("db"));
   const session = await auth.api.getSession({ headers: c.req.raw.headers });
   if (!session) {
@@ -115,7 +115,7 @@ app.get("/api/billing-success", async (c) => {
     return c.json({ error: "No active subscription found" }, 404);
   }
 
-  // Upsert the subscription row — idempotent if this URL is replayed.
+  // Upsert the subscription row - idempotent if this URL is replayed.
   // The UNIQUE constraint on userId ensures only one row exists per user.
   const now = new Date();
   await db

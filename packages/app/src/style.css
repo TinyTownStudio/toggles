@@ -34,7 +34,7 @@
   --t-edge: #e7e5e3;
   --t-edge-hover: #d6d3d1;
 
-  /* Accent — teal #5bb7ca */
+  /* Accent - teal #5bb7ca */
   --t-accent: #5bb7ca;
   --t-accent-hover: #3fa3b8;
   --t-accent-text: #2d8fa3;
@@ -83,7 +83,7 @@
   --t-edge: #292524;
   --t-edge-hover: #44403c;
 
-  /* Accent — teal, brightened for dark backgrounds */
+  /* Accent - teal, brightened for dark backgrounds */
   --t-accent: #7dcfdf;
   --t-accent-hover: #9adce8;
   --t-accent-text: #9adce8;
@@ -114,7 +114,7 @@
   --font-sans: "DM Sans", system-ui, -apple-system, sans-serif;
   --font-mono: "DM Mono", ui-monospace, monospace;
 
-  /* Button shadows — slightly punchier than before */
+  /* Button shadows - slightly punchier than before */
   --shadow-btn: 0 1px 3px 0 rgb(0 0 0 / 0.12), inset 0 1px 0 rgb(255 255 255 / 0.12);
   --shadow-btn-dark: 0 1px 3px 0 rgb(0 0 0 / 0.3), inset 0 1px 0 rgb(255 255 255 / 0.08);
 
@@ -164,7 +164,7 @@ body {
   margin: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* Subtle grain texture — very low opacity for warmth */
+  /* Subtle grain texture - very low opacity for warmth */
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23noise)' opacity='0.035'/%3E%3C/svg%3E");
   background-repeat: repeat;
 }
@@ -176,7 +176,7 @@ body {
 }
 
 /* ----------------------------------------------------------------
-   Wavy underline utility — used on hero headline key word
+   Wavy underline utility - used on hero headline key word
    ---------------------------------------------------------------- */
 .underline-wavy {
   text-decoration: underline wavy var(--t-accent);
