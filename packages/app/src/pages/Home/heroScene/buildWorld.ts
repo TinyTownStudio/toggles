@@ -2,6 +2,7 @@ import {
   BoxGeometry,
   BufferAttribute,
   BufferGeometry,
+  CapsuleGeometry,
   Group,
   Mesh,
   MeshStandardMaterial,
@@ -35,6 +36,54 @@ export function walkSurfaceCenterY(): number {
 }
 
 const PARTICLE_COUNT = 28;
+
+export const TOGGLE_TRACK_WIDTH = 0.52;
+export const TOGGLE_TRACK_HEIGHT = 0.14;
+export const TOGGLE_THUMB_RADIUS = 0.054;
+export const TOGGLE_THUMB_X_OFF = -0.17;
+export const TOGGLE_THUMB_TRAVEL = 0.34;
+export const TOGGLE_BASE_Y = 2.15;
+
+function createToggle(colors: ThemeColors): {
+  group: Group;
+  trackMaterial: MeshStandardMaterial;
+  thumb: Mesh;
+} {
+  const group = new Group();
+
+  const trackRadius = TOGGLE_TRACK_HEIGHT / 2;
+  const trackGeo = new CapsuleGeometry(
+    trackRadius,
+    TOGGLE_TRACK_WIDTH - TOGGLE_TRACK_HEIGHT,
+    8,
+    16,
+  );
+  trackGeo.rotateZ(Math.PI / 2);
+  const trackMaterial = new MeshStandardMaterial({
+    color: toThreeColor(colors.raisedHover),
+    roughness: 0.55,
+    metalness: 0.02,
+  });
+  const track = new Mesh(trackGeo, trackMaterial);
+  group.add(track);
+
+  const thumbGeo = new SphereGeometry(TOGGLE_THUMB_RADIUS, 12, 12);
+  const thumb = new Mesh(
+    thumbGeo,
+    new MeshStandardMaterial({
+      color: toThreeColor("#ffffff"),
+      roughness: 0.35,
+      metalness: 0.05,
+    }),
+  );
+  thumb.position.set(TOGGLE_THUMB_X_OFF, 0, trackRadius + 0.01);
+  group.add(thumb);
+
+  group.position.set(2.85, TOGGLE_BASE_Y, 0.75);
+  group.rotation.set(-0.22, 0.48, 0.06);
+
+  return { group, trackMaterial, thumb };
+}
 
 function createParticles(colors: ThemeColors): { points: Points; material: PointsMaterial } {
   const positions = new Float32Array(PARTICLE_COUNT * 3);
@@ -150,10 +199,20 @@ export function buildWorld(colors: ThemeColors): WorldMeshes {
   const { points, material: particleMaterial } = createParticles(colors);
   root.add(points);
 
+  const {
+    group: toggle,
+    trackMaterial: toggleTrackMaterial,
+    thumb: toggleThumb,
+  } = createToggle(colors);
+  root.add(toggle);
+
   return {
     root,
     bridge,
     bridgeMaterial,
+    toggle,
+    toggleTrackMaterial,
+    toggleThumb,
     tower,
     towerMaterial,
     towerGlow,
@@ -172,11 +231,13 @@ export function buildWorld(colors: ThemeColors): WorldMeshes {
 export function applyThemeToWorld(world: WorldMeshes, colors: ThemeColors, isDark = false): void {
   const surfaceColor = toThreeColor(colors.surface);
   const raisedColor = toThreeColor(colors.raised);
+  const raisedHoverColor = toThreeColor(colors.raisedHover);
   const faintColor = toThreeColor(colors.contentFaint);
   const accentColor = toThreeColor(colors.accent);
   const structureGlow = isDark ? 0.2 : 0;
 
-  (world.bridge.material as MeshStandardMaterial).emissive.copy(accentColor);
+  world.toggleTrackMaterial.color.copy(raisedHoverColor);
+  world.toggleTrackMaterial.emissive.copy(accentColor);
   world.towerMaterial.color.copy(raisedColor);
   world.towerMaterial.emissive.copy(raisedColor);
   world.towerMaterial.emissiveIntensity = structureGlow;
@@ -191,4 +252,5 @@ export function applyThemeToWorld(world: WorldMeshes, colors: ThemeColors, isDar
   world.walkSurfaceMaterial.emissive.copy(raisedColor);
   world.walkSurfaceMaterial.emissiveIntensity = structureGlow;
   (world.character.material as MeshStandardMaterial).color.copy(toThreeColor(colors.accentText));
+  (world.bridge.material as MeshStandardMaterial).emissive.copy(accentColor);
 }

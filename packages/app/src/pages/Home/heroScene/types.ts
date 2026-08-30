@@ -25,6 +25,9 @@ export interface WorldMeshes {
   root: Group;
   bridge: Mesh;
   bridgeMaterial: MeshStandardMaterial;
+  toggle: Group;
+  toggleTrackMaterial: MeshStandardMaterial;
+  toggleThumb: Mesh;
   tower: Mesh;
   towerMaterial: MeshStandardMaterial;
   towerGlow: Mesh;
@@ -57,6 +60,8 @@ export interface SceneContext {
 }
 
 export interface AnimationState {
+  toggleT: number;
+  toggleFloatY: number;
   bridgeOpacity: number;
   towerGlow: number;
   characterT: number;

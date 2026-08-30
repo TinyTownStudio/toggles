@@ -5,6 +5,9 @@ import {
   CHARACTER_END_X,
   CHARACTER_START_X,
   CHARACTER_Y,
+  TOGGLE_BASE_Y,
+  TOGGLE_THUMB_TRAVEL,
+  TOGGLE_THUMB_X_OFF,
   bridgeCenterX,
 } from "./buildWorld";
 import type { AnimationState, ThemeColors, WorldMeshes } from "./types";
@@ -38,6 +41,17 @@ function between(t: number, start: number, end: number): number {
 export function computeAnimationState(elapsedSeconds: number): AnimationState {
   const t = (elapsedSeconds % LOOP_DURATION) / LOOP_DURATION;
 
+  const toggleT =
+    t < 0.22
+      ? 0
+      : t <= 0.27
+        ? phase(t, 0.22, 0.27)
+        : t <= 0.72
+          ? 1
+          : t <= 0.77
+            ? phaseOut(t, 0.72, 0.77)
+            : 0;
+
   const bridgeOpacity =
     t < 0.27
       ? 0
@@ -70,8 +84,11 @@ export function computeAnimationState(elapsedSeconds: number): AnimationState {
           : 0;
 
   const particleBurst = between(t, 0.28, 0.38);
+  const toggleFloatY = Math.sin(elapsedSeconds * 1.6) * 0.04;
 
   return {
+    toggleT,
+    toggleFloatY,
     bridgeOpacity,
     towerGlow,
     characterT,
@@ -82,6 +99,8 @@ export function computeAnimationState(elapsedSeconds: number): AnimationState {
 /** Static unlocked frame for prefers-reduced-motion. */
 export function staticAnimationState(): AnimationState {
   return {
+    toggleT: 1,
+    toggleFloatY: 0,
     bridgeOpacity: 1,
     towerGlow: 0.8,
     characterT: 0.5,
@@ -97,6 +116,14 @@ export function applyAnimationState(
 ): void {
   const accent = toThreeColor(colors.accent);
   const raised = toThreeColor(colors.raised);
+  const raisedHover = toThreeColor(colors.raisedHover);
+
+  // Toggle - flips on before the bridge extends, off as it retracts
+  world.toggleTrackMaterial.color.copy(raisedHover).lerp(accent, state.toggleT);
+  world.toggleTrackMaterial.emissive.copy(accent);
+  world.toggleTrackMaterial.emissiveIntensity = state.toggleT * (isDark ? 0.35 : 0.2);
+  world.toggleThumb.position.x = TOGGLE_THUMB_X_OFF + state.toggleT * TOGGLE_THUMB_TRAVEL;
+  world.toggle.position.y = TOGGLE_BASE_Y + state.toggleFloatY;
 
   // Bridge - grows from the left gate toward the tower landing
   const scaleX = Math.max(0.001, state.bridgeOpacity);
