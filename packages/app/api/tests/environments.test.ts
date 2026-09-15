@@ -213,28 +213,32 @@ describe("DELETE /api/v1/projects/:projectId/environments/:id", () => {
   });
 
   it("deletes non-default environment", async () => {
+    const userCookie = await signUp("delenv@example.com", "password1234", "Del Env");
     const createRes = await apiPost("/api/v1/projects", {
-      cookie,
+      cookie: userCookie,
       body: { name: "Delete Env Proj" },
     });
     const pid = ((await createRes.json()) as { id: string }).id;
 
-    await apiGet(`/api/v1/projects/${pid}/environments`, { cookie });
+    await apiGet(`/api/v1/projects/${pid}/environments`, { cookie: userCookie });
     const createEnvRes = await apiPost(`/api/v1/projects/${pid}/environments`, {
-      cookie,
+      cookie: userCookie,
       body: { name: "Temp" },
     });
     const envRow = (await createEnvRes.json()) as { id: string };
 
-    const res = await apiDelete(`/api/v1/projects/${pid}/environments/${envRow.id}`, { cookie });
+    const res = await apiDelete(`/api/v1/projects/${pid}/environments/${envRow.id}`, {
+      cookie: userCookie,
+    });
     expect(res.status).toBe(204);
   });
 });
 
 describe("legacy toggle backfill", () => {
   it("backfills toggle_state from legacy toggle columns on first fetch", async () => {
+    const userCookie = await signUp("legacy@example.com", "password1234", "Legacy");
     const createRes = await apiPost("/api/v1/projects", {
-      cookie,
+      cookie: userCookie,
       body: { name: "Legacy Backfill Proj" },
     });
     const pid = ((await createRes.json()) as { id: string }).id;
@@ -248,13 +252,13 @@ describe("legacy toggle backfill", () => {
       .bind(toggleId, pid, "legacy-flag", 1, now, now)
       .run();
 
-    const togglesRes = await apiGet(`/api/v1/projects/${pid}/toggles`, { cookie });
+    const togglesRes = await apiGet(`/api/v1/projects/${pid}/toggles`, { cookie: userCookie });
     expect(togglesRes.status).toBe(200);
     const toggles = (await togglesRes.json()) as { key: string; enabled: boolean }[];
     const flag = toggles.find((t) => t.key === "legacy-flag");
     expect(flag?.enabled).toBe(true);
 
-    const envsRes = await apiGet(`/api/v1/projects/${pid}/environments`, { cookie });
+    const envsRes = await apiGet(`/api/v1/projects/${pid}/environments`, { cookie: userCookie });
     const envs = (await envsRes.json()) as { slug: string; isDefault: boolean }[];
     const production = envs.find((e) => e.slug === "production");
     expect(production?.isDefault).toBe(true);
@@ -271,8 +275,9 @@ describe("legacy toggle backfill", () => {
   });
 
   it("does not duplicate or overwrite toggle_state on repeated fetches", async () => {
+    const userCookie = await signUp("idempotent@example.com", "password1234", "Idempotent");
     const createRes = await apiPost("/api/v1/projects", {
-      cookie,
+      cookie: userCookie,
       body: { name: "Backfill Idempotent Proj" },
     });
     const pid = ((await createRes.json()) as { id: string }).id;
@@ -286,8 +291,8 @@ describe("legacy toggle backfill", () => {
       .bind(toggleId, pid, "idempotent-flag", 1, JSON.stringify({ region: "us-east" }), now, now)
       .run();
 
-    await apiGet(`/api/v1/projects/${pid}/toggles`, { cookie });
-    const secondRes = await apiGet(`/api/v1/projects/${pid}/toggles`, { cookie });
+    await apiGet(`/api/v1/projects/${pid}/toggles`, { cookie: userCookie });
+    const secondRes = await apiGet(`/api/v1/projects/${pid}/toggles`, { cookie: userCookie });
     expect(secondRes.status).toBe(200);
     const toggles = (await secondRes.json()) as {
       key: string;
@@ -309,41 +314,47 @@ describe("legacy toggle backfill", () => {
 
 describe("PATCH /api/v1/projects/:projectId/environments/:id", () => {
   it("promotes a new default environment", async () => {
-    const createRes = await apiPost("/api/v1/projects", { cookie, body: { name: "Promote Proj" } });
+    const userCookie = await signUp("promote@example.com", "password1234", "Promote");
+    const createRes = await apiPost("/api/v1/projects", {
+      cookie: userCookie,
+      body: { name: "Promote Proj" },
+    });
     const pid = ((await createRes.json()) as { id: string }).id;
 
-    await apiGet(`/api/v1/projects/${pid}/environments`, { cookie });
+    await apiGet(`/api/v1/projects/${pid}/environments`, { cookie: userCookie });
     const stagingRes = await apiPost(`/api/v1/projects/${pid}/environments`, {
-      cookie,
+      cookie: userCookie,
       body: { name: "Staging" },
     });
     const staging = (await stagingRes.json()) as { id: string };
 
     const toggleRes = await apiPost(`/api/v1/projects/${pid}/toggles`, {
-      cookie,
+      cookie: userCookie,
       body: { key: "promote-flag", enabled: false },
     });
     const toggle = (await toggleRes.json()) as { id: string };
 
     await apiPatch(`/api/v1/projects/${pid}/toggles/${toggle.id}?env=staging`, {
-      cookie,
+      cookie: userCookie,
       body: { enabled: true },
     });
 
     const patchRes = await apiPatch(`/api/v1/projects/${pid}/environments/${staging.id}`, {
-      cookie,
+      cookie: userCookie,
       body: { isDefault: true },
     });
     expect(patchRes.status).toBe(200);
     const updated = (await patchRes.json()) as { isDefault: boolean };
     expect(updated.isDefault).toBe(true);
 
-    const listRes = await apiGet(`/api/v1/projects/${pid}/toggles`, { cookie });
+    const listRes = await apiGet(`/api/v1/projects/${pid}/toggles`, { cookie: userCookie });
     const list = (await listRes.json()) as { key: string; enabled: boolean }[];
     const flag = list.find((t) => t.key === "promote-flag");
     expect(flag?.enabled).toBe(true);
 
-    const prodRes = await apiGet(`/api/v1/projects/${pid}/toggles?env=production`, { cookie });
+    const prodRes = await apiGet(`/api/v1/projects/${pid}/toggles?env=production`, {
+      cookie: userCookie,
+    });
     const prod = ((await prodRes.json()) as { key: string; enabled: boolean }[]).find(
       (t) => t.key === "promote-flag",
     );
