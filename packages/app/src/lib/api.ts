@@ -76,6 +76,7 @@ export interface DashboardResponse {
   activeApiKeys: number;
   unusedApiKeys: number;
   expiringApiKeys: number;
+  apiReadsThisMonth: number;
   recentlyModified: DashboardFlagEntry[];
   staleFlags: DashboardFlagEntry[];
   flagsPerProject: DashboardProjectEntry[];

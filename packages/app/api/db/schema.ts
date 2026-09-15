@@ -153,6 +153,22 @@ export const subscription = sqliteTable(
   (t) => [uniqueIndex("subscription_user_unique").on(t.userId)],
 );
 
+export const apiUsage = sqliteTable(
+  "api_usage",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    month: text("month").notNull(), // YYYY-MM
+    reads: integer("reads").notNull().default(0),
+    projectId: text("project_id").references(() => project.id, { onDelete: "cascade" }),
+  },
+  (t) => [
+    uniqueIndex("api_usage_user_month_unique").on(t.userId, t.month),
+    index("api_usage_project_idx").on(t.projectId),
+  ],
+);
+
 // ── API Keys ─────────────────────────────────────────────
 
 export const apikey = sqliteTable(

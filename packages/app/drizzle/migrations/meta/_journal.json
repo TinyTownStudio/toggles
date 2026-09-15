@@ -36,6 +36,20 @@
       "when": 1788023234981,
       "tag": "0004_abnormal_big_bertha",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1789499776633,
+      "tag": "0005_vengeful_speed",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1789500809560,
+      "tag": "0006_next_quasar",
+      "breakpoints": true
     }
   ]
 }

@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { eq, and, like } from "drizzle-orm";
+import { eq, and, like, sql } from "drizzle-orm";
 import * as schema from "../db/schema";
 import {
   getDefaultEnvironment,
@@ -11,6 +11,7 @@ import {
 import { hasWriteAccess, isEnvScopeViolation, isScopeViolation } from "../lib/permissions";
 import { getOwnedProject } from "../lib/projects";
 import { getUserPlan, PLAN_LIMITS } from "../lib/plans";
+import { consumeApiRead } from "../lib/usage";
 import type { AgnosticDatabaseInstance, Bindings, Variables } from "../types";
 import { environments } from "./environments";
 
@@ -182,6 +183,9 @@ projects.get("/:projectId/toggles", async (c) => {
     const ctx = await resolveToggleContext(db, projectId, envSlug, keyData.permissions);
     if ("error" in ctx) return c.json({ error: ctx.error }, ctx.status);
 
+    const allowed = await consumeApiRead(db, project.userId);
+    if (!allowed) return c.json({ error: "API read limit reached for your plan" }, 429);
+
     const rows = await db
       .select()
       .from(schema.toggle)
@@ -240,6 +244,19 @@ projects.post("/:projectId/toggles", async (c) => {
 
   const body = await c.req.json<{ key?: string; enabled?: boolean }>();
   if (!body.key?.trim()) return c.json({ error: "key is required" }, 400);
+
+  const plan = await getUserPlan(db, project.userId);
+  const flagLimit = PLAN_LIMITS[plan].flags;
+  if (flagLimit !== Infinity) {
+    const countRow = await db
+      .select({ total: sql<number>`count(${schema.toggle.id})` })
+      .from(schema.toggle)
+      .where(eq(schema.toggle.projectId, projectId))
+      .get();
+    if ((countRow?.total ?? 0) >= flagLimit) {
+      return c.json({ error: "Flag limit reached for your plan" }, 403);
+    }
+  }
 
   const now = new Date();
   const id = crypto.randomUUID();
@@ -349,6 +366,11 @@ projects.get("/:projectId/toggles/one", async (c) => {
 
   const ctx = await resolveToggleContext(db, projectId, envSlug, keyData?.permissions ?? null);
   if ("error" in ctx) return c.json({ error: ctx.error }, ctx.status);
+
+  if (keyData) {
+    const allowed = await consumeApiRead(db, project.userId);
+    if (!allowed) return c.json({ error: "API read limit reached for your plan" }, 429);
+  }
 
   let toggle;
   if (pattern) {

@@ -1,3 +1,5 @@
+import { formatCompact } from "../../lib/format";
+
 interface QuotaBarProps {
   label: string;
   used: number;
@@ -10,7 +12,7 @@ export function QuotaBar({ label, used, limit }: QuotaBarProps) {
       <div class="flex items-center justify-between py-2">
         <span class="text-sm text-content-secondary">{label}</span>
         <span class="text-sm font-medium text-content">
-          {used} <span class="text-content-faint font-normal">/ unlimited</span>
+          {formatCompact(used)} <span class="text-content-faint font-normal">/ unlimited</span>
         </span>
       </div>
     );
@@ -22,7 +24,8 @@ export function QuotaBar({ label, used, limit }: QuotaBarProps) {
       <div class="flex items-center justify-between mb-1.5">
         <span class="text-sm text-content-secondary">{label}</span>
         <span class="text-sm font-medium text-content">
-          {used} <span class="text-content-faint font-normal">/ {limit}</span>
+          {formatCompact(used)}{" "}
+          <span class="text-content-faint font-normal">/ {formatCompact(limit)}</span>
         </span>
       </div>
       <div class="h-1.5 bg-raised rounded-full overflow-hidden">

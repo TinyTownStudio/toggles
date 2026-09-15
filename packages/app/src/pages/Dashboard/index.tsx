@@ -3,6 +3,7 @@ import { useLocation } from "preact-iso";
 import { useModel } from "@preact/signals";
 import { AuthModel } from "../../models/auth";
 import { DashboardModel } from "../../models/dashboard";
+import { formatCompact } from "../../lib/format";
 import { StatCard } from "./StatCard";
 import { ApiKeyCard } from "./ApiKeyCard";
 import { QuotaBar } from "./QuotaBar";
@@ -59,6 +60,11 @@ export function Dashboard() {
         ? ((s.limits as Record<string, unknown>).projects as number)
         : null;
 
+  const apiReadsLimit =
+    typeof s.limits.apiReadsPerMonth === "number" && isFinite(s.limits.apiReadsPerMonth)
+      ? s.limits.apiReadsPerMonth
+      : null;
+
   const apiKeyAttentionCount = s.unusedApiKeys + s.expiringApiKeys;
 
   return (
@@ -71,7 +77,7 @@ export function Dashboard() {
         </div>
 
         {/* ── Row 1: KPI cards ─────────────────────────────────── */}
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
           <StatCard label="Projects" value={s.totalProjects} />
           <StatCard label="Total Flags" value={s.totalFlags} />
           <StatCard
@@ -91,6 +97,11 @@ export function Dashboard() {
                 : undefined
             }
           />
+          <StatCard
+            label="API Reads"
+            value={formatCompact(s.apiReadsThisMonth)}
+            sub={apiReadsLimit !== null ? `of ${formatCompact(apiReadsLimit)}` : "unlimited"}
+          />
           <ApiKeyCard
             active={s.activeApiKeys}
             total={s.totalApiKeys}
@@ -109,6 +120,7 @@ export function Dashboard() {
           <div class="divide-y divide-edge">
             <QuotaBar label="Projects" used={s.totalProjects} limit={projectLimit} />
             <QuotaBar label="Feature Flags" used={s.totalFlags} limit={null} />
+            <QuotaBar label="API Reads" used={s.apiReadsThisMonth} limit={apiReadsLimit} />
           </div>
         </div>
 

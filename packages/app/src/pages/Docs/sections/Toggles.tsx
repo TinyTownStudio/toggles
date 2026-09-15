@@ -15,7 +15,7 @@ export function Toggles() {
         method="GET"
         path="/api/v1/projects/:projectId/toggles"
         description="Returns all toggles for the given project. Pass ?env=<slug> to read each flag's enabled state and metadata for that environment (defaults to the project's default environment)."
-        authNote="Readable with any API key scoped to this project (read or admin)."
+        authNote="Readable with any API key scoped to this project (read or admin). API-key reads count toward your monthly quota."
         queryParams={[
           {
             field: "env",
@@ -55,7 +55,7 @@ const toggles = await res.json();`}
         method="GET"
         path="/api/v1/projects/:projectId/toggles/one"
         description="Fetch a single toggle by key name or glob pattern. Use ?flag= for an exact key match or ?pattern= for a glob match (e.g. checkout-*). Returns the first matching toggle."
-        authNote="Readable with any API key scoped to this project (read or admin). This is the primary endpoint for runtime flag checks."
+        authNote="Readable with any API key scoped to this project (read or admin). This is the primary endpoint for runtime flag checks. API-key reads count toward your monthly quota."
         queryParams={[
           {
             field: "flag",
