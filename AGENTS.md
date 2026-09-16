@@ -2,6 +2,10 @@
 
 Guidance for agentic coding assistants operating in this repository.
 
+## Cloud Version 
+
+The cloud version of the app runs on https://toggles.tinytown.studio
+
 ## Repository Layout
 
 ```
