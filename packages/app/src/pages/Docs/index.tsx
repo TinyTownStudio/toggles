@@ -9,6 +9,7 @@ import { Environments } from "./sections/Environments";
 import { Toggles } from "./sections/Toggles";
 import { Dashboard } from "./sections/Dashboard";
 import { ApiKeys } from "./sections/ApiKeys";
+import { API_BASE_URL } from "../../lib/constants";
 
 export function Docs() {
   const activeId = useSignal("introduction");
@@ -52,7 +53,7 @@ export function Docs() {
           </p>
           <div class="mt-4 inline-flex items-center gap-2 font-mono text-xs bg-raised border border-edge px-3 py-1.5 rounded-lg text-content-secondary">
             <span class="text-content-faint">Base URL</span>
-            <span class="text-accent-text">https://toggles.tinytown.studio</span>
+            <span class="text-accent-text">{API_BASE_URL}</span>
           </div>
         </div>
       </div>

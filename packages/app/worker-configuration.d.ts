@@ -9,11 +9,13 @@ declare namespace Cloudflare {
     DB: D1Database;
     BETTER_AUTH_SECRET: string;
     BETTER_AUTH_URL: string;
+    APP_ORIGIN: string;
     POLAR_ACCESS_TOKEN: string;
     POLAR_WEBHOOK_SECRET: string;
     POLAR_PRO_PRODUCT_ID: string;
     LOCAL: string;
     PRODUCT_BETA: string;
+    TOGGLES_MAIL_FROM?: string;
   }
 }
 interface CloudflareBindings extends Cloudflare.Env {}
@@ -27,6 +29,7 @@ declare namespace NodeJS {
       | "DATABASE_URL"
       | "BETTER_AUTH_SECRET"
       | "BETTER_AUTH_URL"
+      | "APP_ORIGIN"
       | "POLAR_ACCESS_TOKEN"
       | "POLAR_WEBHOOK_SECRET"
       | "POLAR_PRO_PRODUCT_ID"

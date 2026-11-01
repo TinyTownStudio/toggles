@@ -1,3 +1,5 @@
+import { getPublicAppOrigin } from "./site";
+
 interface HeadElement {
   type: string;
   props: Record<string, string>;
@@ -14,7 +16,11 @@ const HOME_DESCRIPTION =
 const DOCS_DESCRIPTION =
   "API documentation for Toggles - manage feature flags, projects, and API keys over a simple REST API.";
 
-const OG_IMAGE = "https://toggles.tinytown.studio/og.png";
+const OG_IMAGE_PATH = "/og.png";
+
+function ogImageUrl(): string {
+  return `${getPublicAppOrigin()}${OG_IMAGE_PATH}`;
+}
 
 const FAQ_ITEMS = [
   {
@@ -82,7 +88,7 @@ export function getHeadMeta(url: string): HeadMeta {
         og("og:title", title),
         og("og:description", DOCS_DESCRIPTION),
         og("og:type", "website"),
-        og("og:image", OG_IMAGE),
+        og("og:image", ogImageUrl()),
       ]),
     };
   }
@@ -95,7 +101,7 @@ export function getHeadMeta(url: string): HeadMeta {
       og("og:title", title),
       og("og:description", HOME_DESCRIPTION),
       og("og:type", "website"),
-      og("og:image", OG_IMAGE),
+      og("og:image", ogImageUrl()),
       faqJsonLd(),
     ]),
   };

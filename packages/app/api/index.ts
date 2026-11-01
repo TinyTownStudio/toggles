@@ -9,6 +9,7 @@ import { dashboard } from "./routes/dashboard";
 import { portal } from "./routes/portal";
 import type { Bindings, Variables } from "./types";
 import { isProduction } from "./utils/isProduction";
+import { billingSuccessRedirect, getAppOrigin } from "./lib/appOrigin";
 import * as schema from "./db/schema";
 import { env } from "hono/adapter";
 
@@ -49,8 +50,7 @@ app.use("/api/*", async (c, next) => {
 app.use(
   "/api/*",
   cors({
-    origin: (_origin, c) =>
-      isProduction(c.env) ? "https://toggles.tinytown.studio" : "http://localhost:5173",
+    origin: (_origin, c) => getAppOrigin(c.env),
     credentials: true,
     allowHeaders: ["Content-Type", "Authorization"],
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
@@ -147,11 +147,7 @@ app.get("/api/billing-success", async (c) => {
       },
     });
 
-  return c.redirect(
-    isProduction(c.env)
-      ? "https://toggles.tinytown.studio/app/billing?success=true"
-      : "http://localhost:5173/app/billing?success=true",
-  );
+  return c.redirect(billingSuccessRedirect(c.env));
 });
 
 // Mount BetterAuth handler
