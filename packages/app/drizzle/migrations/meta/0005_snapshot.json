@@ -105,12 +105,8 @@
           "name": "account_user_id_user_id_fk",
           "tableFrom": "account",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -148,10 +144,7 @@
       "indexes": {
         "api_usage_user_month_unique": {
           "name": "api_usage_user_month_unique",
-          "columns": [
-            "user_id",
-            "month"
-          ],
+          "columns": ["user_id", "month"],
           "isUnique": true
         }
       },
@@ -160,12 +153,8 @@
           "name": "api_usage_user_id_user_id_fk",
           "tableFrom": "api_usage",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -331,9 +320,7 @@
       "indexes": {
         "apikey_user_idx": {
           "name": "apikey_user_idx",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         }
       },
@@ -342,12 +329,8 @@
           "name": "apikey_user_id_user_id_fk",
           "tableFrom": "apikey",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -413,17 +396,12 @@
       "indexes": {
         "environment_project_idx": {
           "name": "environment_project_idx",
-          "columns": [
-            "project_id"
-          ],
+          "columns": ["project_id"],
           "isUnique": false
         },
         "environment_project_slug_unique": {
           "name": "environment_project_slug_unique",
-          "columns": [
-            "project_id",
-            "slug"
-          ],
+          "columns": ["project_id", "slug"],
           "isUnique": true
         }
       },
@@ -432,12 +410,8 @@
           "name": "environment_project_id_project_id_fk",
           "tableFrom": "environment",
           "tableTo": "project",
-          "columnsFrom": [
-            "project_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["project_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -488,9 +462,7 @@
       "indexes": {
         "project_user_idx": {
           "name": "project_user_idx",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         }
       },
@@ -499,12 +471,8 @@
           "name": "project_user_id_user_id_fk",
           "tableFrom": "project",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -576,9 +544,7 @@
       "indexes": {
         "session_token_unique": {
           "name": "session_token_unique",
-          "columns": [
-            "token"
-          ],
+          "columns": ["token"],
           "isUnique": true
         }
       },
@@ -587,12 +553,8 @@
           "name": "session_user_id_user_id_fk",
           "tableFrom": "session",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -673,9 +635,7 @@
       "indexes": {
         "subscription_user_unique": {
           "name": "subscription_user_unique",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": true
         }
       },
@@ -684,12 +644,8 @@
           "name": "subscription_user_id_user_id_fk",
           "tableFrom": "subscription",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -755,17 +711,12 @@
       "indexes": {
         "toggle_project_idx": {
           "name": "toggle_project_idx",
-          "columns": [
-            "project_id"
-          ],
+          "columns": ["project_id"],
           "isUnique": false
         },
         "toggle_project_key_idx": {
           "name": "toggle_project_key_idx",
-          "columns": [
-            "project_id",
-            "key"
-          ],
+          "columns": ["project_id", "key"],
           "isUnique": false
         }
       },
@@ -774,12 +725,8 @@
           "name": "toggle_project_id_project_id_fk",
           "tableFrom": "toggle",
           "tableTo": "project",
-          "columnsFrom": [
-            "project_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["project_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -830,17 +777,12 @@
       "indexes": {
         "toggle_state_toggle_env_unique": {
           "name": "toggle_state_toggle_env_unique",
-          "columns": [
-            "toggle_id",
-            "environment_id"
-          ],
+          "columns": ["toggle_id", "environment_id"],
           "isUnique": true
         },
         "toggle_state_env_idx": {
           "name": "toggle_state_env_idx",
-          "columns": [
-            "environment_id"
-          ],
+          "columns": ["environment_id"],
           "isUnique": false
         }
       },
@@ -849,12 +791,8 @@
           "name": "toggle_state_toggle_id_toggle_id_fk",
           "tableFrom": "toggle_state",
           "tableTo": "toggle",
-          "columnsFrom": [
-            "toggle_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["toggle_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -862,12 +800,8 @@
           "name": "toggle_state_environment_id_environment_id_fk",
           "tableFrom": "toggle_state",
           "tableTo": "environment",
-          "columnsFrom": [
-            "environment_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["environment_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -932,9 +866,7 @@
       "indexes": {
         "user_email_unique": {
           "name": "user_email_unique",
-          "columns": [
-            "email"
-          ],
+          "columns": ["email"],
           "isUnique": true
         }
       },

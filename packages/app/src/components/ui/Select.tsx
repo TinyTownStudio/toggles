@@ -14,10 +14,10 @@ interface SelectChangeEvent extends Event {
   };
 }
 
-interface SelectElement extends HTMLDivElement {
+type SelectRoot = HTMLDivElement & {
   refresh?: () => void;
   togglePopover?: () => void;
-}
+};
 
 interface SelectProps {
   value: string;
@@ -63,7 +63,7 @@ export function Select({
   name,
 }: SelectProps) {
   const uid = useId().replace(/:/g, "");
-  const rootRef = useRef<SelectElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
   const triggerId = `${uid}-trigger`;
   const listboxId = `${uid}-listbox`;
   const popoverId = `${uid}-popover`;
@@ -74,7 +74,7 @@ export function Select({
   };
 
   useEffect(() => {
-    const root = rootRef.current;
+    const root = rootRef.current as SelectRoot | null;
     if (!root) return;
     if (root.refresh) {
       root.refresh();
@@ -84,7 +84,7 @@ export function Select({
   }, [value, options, placeholder]);
 
   useEffect(() => {
-    const root = rootRef.current;
+    const root = rootRef.current as SelectRoot | null;
     if (!root || disabled) return;
 
     let detach: (() => void) | undefined;
