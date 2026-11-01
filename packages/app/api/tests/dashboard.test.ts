@@ -146,9 +146,7 @@ describe("GET /api/v1/dashboard", () => {
     expect(data.apiReadsThisMonth).toBe(42_000);
 
     // Reset so later tests see a clean slate
-    await env.DB.prepare("DELETE FROM api_usage WHERE user_id = ?")
-      .bind(userId)
-      .run();
+    await env.DB.prepare("DELETE FROM api_usage WHERE user_id = ?").bind(userId).run();
   });
 
   it("populates recentlyModified with correct flags", async () => {

@@ -18,7 +18,6 @@ export function createAuth(env: Env, db: AgnosticDatabaseInstance<typeof schema>
   });
 
   return betterAuth({
-    // We can improve this with CloudFlare KV based rate limits in the future if needed
     database: drizzleAdapter(db, {
       provider: "sqlite",
       schema: {
@@ -37,6 +36,10 @@ export function createAuth(env: Env, db: AgnosticDatabaseInstance<typeof schema>
     plugins: [
       apiKey({
         enableMetadata: true,
+        // Better Auth defaults to 10 requests per 24h per key; we enforce plan limits ourselves.
+        rateLimit: {
+          enabled: false,
+        },
       }),
       polar({
         client: polarClient,

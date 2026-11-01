@@ -93,8 +93,8 @@ function Pricing({ onGetStarted }: { onGetStarted: () => void }) {
       <div class="mx-auto max-w-2xl">
         <h2 class="mb-6 font-mono text-xs tracking-widest text-content-faint uppercase">Pricing</h2>
         <p class="mb-8 rounded-lg bg-accent-surface px-4 py-3 text-sm text-accent-text">
-          <span class="font-semibold">Free during Beta</span> &mdash; all features are unlocked
-          while we&rsquo;re in early access. Upgrading to Pro helps us keep the lights on.
+          Start on the free plan and upgrade to Pro when you need higher limits. Paid plans help us
+          keep the lights on.
         </p>
         <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
           {/* Free */}
