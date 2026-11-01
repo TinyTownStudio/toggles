@@ -35,7 +35,7 @@ export function InviteAccept() {
 
       await billing.fetch();
 
-      if (!billing.isPro.value && !billing.isProductBeta.value) {
+      if (!billing.teamsAccessAllowed.value) {
         setStatus("error");
         setErrorMsg("A Pro plan is required to join a workspace.");
         return;

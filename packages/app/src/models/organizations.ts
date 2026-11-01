@@ -5,6 +5,7 @@ import {
   getMembers,
   inviteMember,
   removeMember,
+  updateMemberRole,
   getTeams,
   createTeam,
   addTeamMember,
@@ -71,7 +72,7 @@ export const OrganizationsModel = createModel(() => {
     }
   };
 
-  const invite = async (orgId: string, email: string, role: "owner" | "member") => {
+  const invite = async (orgId: string, email: string, role: "owner" | "admin" | "member") => {
     error.value = null;
     lastInviteUrl.value = null;
     try {
@@ -158,6 +159,22 @@ export const OrganizationsModel = createModel(() => {
     }
   };
 
+  const updateMemberRoleById = async (
+    orgId: string,
+    memberId: string,
+    role: "owner" | "admin" | "member",
+  ) => {
+    const prev = members.value;
+    members.value = prev.map((m) => (m.id === memberId ? { ...m, role } : m));
+    try {
+      await updateMemberRole(orgId, memberId, role);
+    } catch (err) {
+      members.value = prev;
+      error.value = err instanceof Error ? err.message : "Failed to update member role";
+      throw err;
+    }
+  };
+
   return {
     loading,
     error,
@@ -172,6 +189,7 @@ export const OrganizationsModel = createModel(() => {
     fetchMembers,
     invite,
     removeMemberById,
+    updateMemberRoleById,
     fetchTeams,
     createOrgTeam,
     addMemberToTeam,

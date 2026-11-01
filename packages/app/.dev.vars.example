@@ -5,6 +5,11 @@ BETTER_AUTH_URL=http://localhost:5173
 POLAR_ACCESS_TOKEN=your-polar-access-token
 POLAR_WEBHOOK_SECRET=your-polar-webhook-secret
 POLAR_PRO_PRODUCT_ID=your-polar-pro-product-id
+LOCAL=true
+PRODUCT_BETA=false
+# Self-hosted: teams are free (omit Polar secrets or set TOGGLES_BILLING_ENABLED=false).
+# TOGGLES_BILLING_ENABLED=false
+# TOGGLES_ORG_INVITES_PER_HOUR=20
 # Email (optional). Default: disabled — invitations return a copyable invite link instead.
 # TOGGLES_EMAIL_PROVIDER=none
 # Self-hosted SMTP (Node/Docker only):
@@ -16,19 +21,3 @@ POLAR_PRO_PRODUCT_ID=your-polar-pro-product-id
 # TOGGLES_EMAIL_FROM=invites@example.com
 # TOGGLES_EMAIL_FROM_NAME=Toggles
 # Hosted Workers: bind EMAIL in wrangler.jsonc; optional TOGGLES_EMAIL_PROVIDER=cloudflare
-LOCAL=true
-PRODUCT_BETA=false
-
-# Email (optional). Default: disabled — callers should degrade gracefully (e.g. copyable links).
-# Hosted (Wrangler / Workers): defaults to Cloudflare Email when the EMAIL send binding is present.
-# TOGGLES_EMAIL_PROVIDER=cloudflare
-# Self-hosted (Node / Docker): defaults to none until SMTP is fully configured below.
-# TOGGLES_EMAIL_PROVIDER=smtp
-# TOGGLES_EMAIL_PROVIDER=none
-# TOGGLES_EMAIL_FROM=noreply@example.com
-# TOGGLES_EMAIL_FROM_NAME=Toggles
-# TOGGLES_SMTP_HOST=smtp.example.com
-# TOGGLES_SMTP_PORT=587
-# TOGGLES_SMTP_SECURE=false
-# TOGGLES_SMTP_USER=your-smtp-user
-# TOGGLES_SMTP_PASSWORD=your-smtp-password

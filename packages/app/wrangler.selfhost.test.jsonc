@@ -1,0 +1,21 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "toggles-selfhost-test",
+  "compatibility_date": "2026-02-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "vars": {
+    "BETTER_AUTH_URL": "http://localhost",
+    "APP_ORIGIN": "http://localhost",
+    "LOCAL": "true",
+    "TOGGLES_BILLING_ENABLED": "false",
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "app-db-selfhost-test",
+      "database_id": "test-db-selfhost-id",
+      "migrations_dir": "drizzle/migrations",
+    },
+  ],
+  "main": "./api/index.ts",
+}

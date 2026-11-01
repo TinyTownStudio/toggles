@@ -21,7 +21,7 @@ export function Teams() {
   const [orgName, setOrgName] = useState("");
   const [orgSlug, setOrgSlug] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState<"owner" | "member">("member");
+  const [inviteRole, setInviteRole] = useState<"owner" | "admin" | "member">("member");
   const [inviting, setInviting] = useState(false);
   const [inviteSuccess, setInviteSuccess] = useState(false);
   const [copiedInviteLink, setCopiedInviteLink] = useState(false);
@@ -57,8 +57,8 @@ export function Teams() {
     );
   }
 
-  // Pro gate
-  if (!billing.isPro.value && !billing.isProductBeta.value) {
+  // Hosted billing gate — self-hosted installs skip this (billingEnforced=false).
+  if (!billing.teamsAccessAllowed.value) {
     return (
       <div class="min-h-screen bg-page pt-16">
         <div class="max-w-5xl mx-auto px-6 py-12">
@@ -262,10 +262,13 @@ export function Teams() {
                         class="h-9 rounded-lg border border-edge bg-page text-content text-sm px-2 focus:outline-none focus:ring-2 focus:ring-accent"
                         value={inviteRole}
                         onChange={(e) =>
-                          setInviteRole((e.target as HTMLSelectElement).value as "owner" | "member")
+                          setInviteRole(
+                            (e.target as HTMLSelectElement).value as "owner" | "admin" | "member",
+                          )
                         }
                       >
                         <option value="member">Member</option>
+                        <option value="admin">Admin</option>
                         <option value="owner">Owner</option>
                       </select>
                     </Label>
@@ -295,7 +298,25 @@ export function Teams() {
                       <p class="text-xs text-content-tertiary">{m.email}</p>
                     </div>
                     <div class="flex items-center gap-3">
-                      <span class="text-xs text-content-tertiary capitalize">{m.role}</span>
+                      {isOwner && m.userId !== currentUserId ? (
+                        <select
+                          class="h-8 rounded-lg border border-edge bg-page text-content text-xs px-2 capitalize"
+                          value={m.role}
+                          onChange={(e) =>
+                            orgsModel.updateMemberRoleById(
+                              org.id,
+                              m.id,
+                              (e.target as HTMLSelectElement).value as "owner" | "admin" | "member",
+                            )
+                          }
+                        >
+                          <option value="member">Member</option>
+                          <option value="admin">Admin</option>
+                          <option value="owner">Owner</option>
+                        </select>
+                      ) : (
+                        <span class="text-xs text-content-tertiary capitalize">{m.role}</span>
+                      )}
                       {isOwner && m.userId !== currentUserId && (
                         <button
                           type="button"

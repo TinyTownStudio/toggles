@@ -1,6 +1,14 @@
 import { applyD1Migrations, env } from "cloudflare:test";
 import { beforeAll, describe, expect, it, vi } from "vitest";
-import { apiDelete, apiGet, apiPost, getUserIdByEmail, grantProPlan, signUp } from "./helpers";
+import {
+  apiDelete,
+  apiGet,
+  apiPatch,
+  apiPost,
+  getUserIdByEmail,
+  grantProPlan,
+  signUp,
+} from "./helpers";
 
 describe("workspaces and teams", () => {
   let ownerCookie = "";
@@ -319,5 +327,72 @@ describe("workspaces and teams", () => {
 
     const toggles = await apiGet(`/api/v1/projects/${projectId}/toggles`, { cookie: soloCookie });
     expect(toggles.status).toBe(200);
+  });
+
+  it("updates member roles and blocks demoting the last owner", async () => {
+    const inviteRes = await apiPost(`/api/v1/organizations/${orgId}/invite`, {
+      cookie: ownerCookie,
+      body: { email: "promote@teams.test", role: "member" },
+    });
+    expect(inviteRes.status).toBe(201);
+    const { invitationId } = (await inviteRes.json()) as { invitationId: string };
+
+    const memberCookie = await signUp("promote@teams.test", "password1234", "Promote Me");
+    await grantProPlan("promote@teams.test");
+    await apiPost("/api/auth/organization/accept-invitation", {
+      cookie: memberCookie,
+      body: { invitationId },
+    });
+
+    const membersRes = await apiGet(`/api/v1/organizations/${orgId}/members`, {
+      cookie: ownerCookie,
+    });
+    const { members } = (await membersRes.json()) as {
+      members: { id: string; email: string; role: string }[];
+    };
+    const target = members.find((m) => m.email === "promote@teams.test");
+    expect(target).toBeDefined();
+
+    const promote = await apiPatch(`/api/v1/organizations/${orgId}/members/${target!.id}`, {
+      cookie: ownerCookie,
+      body: { role: "admin" },
+    });
+    expect(promote.status).toBe(200);
+    expect(((await promote.json()) as { role: string }).role).toBe("admin");
+
+    const ownerMember = members.find((m) => m.email === "owner@teams.test");
+    const demoteOwner = await apiPatch(
+      `/api/v1/organizations/${orgId}/members/${ownerMember!.id}`,
+      {
+        cookie: ownerCookie,
+        body: { role: "member" },
+      },
+    );
+    expect(demoteOwner.status).toBe(400);
+  });
+
+  it("enforces per-organization invite rate limits", async () => {
+    const cookie = await signUp("ratelimit@teams.test", "password1234", "Rate Limit");
+    await grantProPlan("ratelimit@teams.test");
+    const orgRes = await apiPost("/api/v1/organizations", {
+      cookie,
+      body: { name: "Rate Org", slug: "rate-org" },
+    });
+    expect(orgRes.status).toBe(201);
+    const rateOrgId = ((await orgRes.json()) as { id: string }).id;
+
+    for (let i = 0; i < 20; i++) {
+      const res = await apiPost(`/api/v1/organizations/${rateOrgId}/invite`, {
+        cookie,
+        body: { email: `rate-${i}@teams.test`, role: "member" },
+      });
+      expect(res.status).toBe(201);
+    }
+
+    const blocked = await apiPost(`/api/v1/organizations/${rateOrgId}/invite`, {
+      cookie,
+      body: { email: "rate-over@teams.test", role: "member" },
+    });
+    expect(blocked.status).toBe(429);
   });
 });

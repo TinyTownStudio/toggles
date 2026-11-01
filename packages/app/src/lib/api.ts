@@ -50,6 +50,7 @@ export interface SubscriptionResponse {
   plan: "free" | "pro";
   limits: Record<string, unknown>;
   beta: Record<string, boolean>;
+  billingEnforced: boolean;
 }
 
 export interface DashboardFlagEntry {
@@ -245,7 +246,7 @@ export interface Workspace {
   name: string;
   slug: string;
   createdAt: number;
-  role: "owner" | "member";
+  role: "owner" | "admin" | "member";
 }
 
 export interface WorkspaceMember {
@@ -253,7 +254,7 @@ export interface WorkspaceMember {
   userId: string;
   name: string;
   email: string;
-  role: "owner" | "member";
+  role: "owner" | "admin" | "member";
   joinedAt: number;
 }
 
@@ -266,7 +267,7 @@ export interface WorkspaceTeamMember {
 export interface Invitation {
   id: string;
   email: string;
-  role: "owner" | "member";
+  role: "owner" | "admin" | "member";
   status: "pending" | "accepted" | "rejected" | "canceled";
   createdAt: number;
 }
@@ -301,7 +302,7 @@ export async function getMembers(
 export async function inviteMember(
   orgId: string,
   email: string,
-  role: "owner" | "member",
+  role: "owner" | "admin" | "member",
 ): Promise<{ inviteUrl?: string; invitationId?: string }> {
   return fetchApi<{ inviteUrl?: string; invitationId?: string }>(
     `/api/v1/organizations/${orgId}/invite`,
@@ -316,6 +317,20 @@ export async function removeMember(orgId: string, memberId: string): Promise<voi
   await fetchApi<void>(`/api/v1/organizations/${orgId}/members/${memberId}`, {
     method: "DELETE",
   });
+}
+
+export async function updateMemberRole(
+  orgId: string,
+  memberId: string,
+  role: "owner" | "admin" | "member",
+): Promise<{ id: string; role: string }> {
+  return fetchApi<{ id: string; role: string }>(
+    `/api/v1/organizations/${orgId}/members/${memberId}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify({ role }),
+    },
+  );
 }
 
 export async function getTeams(orgId: string): Promise<WorkspaceTeam[]> {
