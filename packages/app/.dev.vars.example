@@ -10,7 +10,7 @@ PRODUCT_BETA=false
 # Self-hosted: teams are free (omit Polar secrets or set TOGGLES_BILLING_ENABLED=false).
 # TOGGLES_BILLING_ENABLED=false
 # TOGGLES_ORG_INVITES_PER_HOUR=20
-# Email (optional). Default: disabled — invitations return a copyable invite link instead.
+# Email (optional). Default: disabled; invitations return a copyable invite link instead.
 # TOGGLES_EMAIL_PROVIDER=none
 # Self-hosted SMTP (Node/Docker only):
 # TOGGLES_EMAIL_PROVIDER=smtp

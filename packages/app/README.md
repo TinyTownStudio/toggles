@@ -29,7 +29,7 @@ The production Worker uses the [`send_email`](https://developers.cloudflare.com/
 
 Optional Worker vars / secrets:
 
-- `TOGGLES_EMAIL_PROVIDER` — `cloudflare`, `none`, or omit (default `cloudflare` when `EMAIL` is bound)
-- `TOGGLES_EMAIL_FROM` / `TOGGLES_EMAIL_FROM_NAME` — verified sender on your Email Service domain
+- `TOGGLES_EMAIL_PROVIDER`: `cloudflare`, `none`, or omit (default `cloudflare` when `EMAIL` is bound)
+- `TOGGLES_EMAIL_FROM` / `TOGGLES_EMAIL_FROM_NAME`: verified sender on your Email Service domain
 
 Application code should import from `api/lib/email` (`sendEmail`, `resolveEmailProvider`, etc.).
