@@ -7,3 +7,15 @@ POLAR_WEBHOOK_SECRET=your-polar-webhook-secret
 POLAR_PRO_PRODUCT_ID=your-polar-pro-product-id
 LOCAL=true
 PRODUCT_BETA=false
+
+# Email (optional). Default: disabled; invitations return a copyable invite link instead.
+# TOGGLES_EMAIL_PROVIDER=none
+# Self-hosted SMTP (Node/Docker only):
+# TOGGLES_EMAIL_PROVIDER=smtp
+# TOGGLES_SMTP_HOST=smtp.example.com
+# TOGGLES_SMTP_PORT=587
+# TOGGLES_SMTP_USER=user
+# TOGGLES_SMTP_PASSWORD=secret
+# TOGGLES_EMAIL_FROM=invites@example.com
+# TOGGLES_EMAIL_FROM_NAME=Toggles
+# Hosted Workers: bind EMAIL in wrangler.jsonc; optional TOGGLES_EMAIL_PROVIDER=cloudflare

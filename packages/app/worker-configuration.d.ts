@@ -7,6 +7,7 @@ declare namespace Cloudflare {
   }
   interface Env {
     DB: D1Database;
+    EMAIL?: SendEmail;
     BETTER_AUTH_SECRET: string;
     BETTER_AUTH_URL: string;
     APP_ORIGIN: string;
@@ -15,6 +16,9 @@ declare namespace Cloudflare {
     POLAR_PRO_PRODUCT_ID: string;
     LOCAL: string;
     PRODUCT_BETA: string;
+    TOGGLES_EMAIL_PROVIDER?: string;
+    TOGGLES_EMAIL_FROM?: string;
+    TOGGLES_EMAIL_FROM_NAME?: string;
   }
 }
 interface CloudflareBindings extends Cloudflare.Env {}
@@ -34,6 +38,14 @@ declare namespace NodeJS {
       | "POLAR_PRO_PRODUCT_ID"
       | "LOCAL"
       | "PRODUCT_BETA"
+      | "TOGGLES_EMAIL_PROVIDER"
+      | "TOGGLES_EMAIL_FROM"
+      | "TOGGLES_EMAIL_FROM_NAME"
+      | "TOGGLES_SMTP_HOST"
+      | "TOGGLES_SMTP_PORT"
+      | "TOGGLES_SMTP_SECURE"
+      | "TOGGLES_SMTP_USER"
+      | "TOGGLES_SMTP_PASSWORD"
     >
   > {}
 }
