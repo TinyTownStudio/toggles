@@ -1,4 +1,5 @@
 import { SectionHeading, SubHeading } from "../headings";
+import { API_BASE_URL } from "../../../lib/constants";
 import { Endpoint } from "../Endpoint";
 
 export function Projects() {
@@ -25,9 +26,9 @@ export function Projects() {
     "updatedAt": "2024-01-15T10:30:00.000Z"
   }
 ]`}
-        curlExample={`curl https://toggles.tinytown.studio/api/v1/projects \\
+        curlExample={`curl ${API_BASE_URL}/api/v1/projects \\
   -H "Authorization: Bearer tgs_xxxxxxxxxxxxxxxxxxxxxxxx"`}
-        jsExample={`const res = await fetch("https://toggles.tinytown.studio/api/v1/projects", {
+        jsExample={`const res = await fetch("${API_BASE_URL}/api/v1/projects", {
   headers: {
     Authorization: "Bearer tgs_xxxxxxxxxxxxxxxxxxxxxxxx",
   },
@@ -56,11 +57,11 @@ const projects = await res.json();`}
   "createdAt": "2024-01-15T10:30:00.000Z",
   "updatedAt": "2024-01-15T10:30:00.000Z"
 }`}
-        curlExample={`curl -X POST https://toggles.tinytown.studio/api/v1/projects \\
+        curlExample={`curl -X POST ${API_BASE_URL}/api/v1/projects \\
   -H "Authorization: Bearer tgs_xxxxxxxxxxxxxxxxxxxxxxxx" \\
   -H "Content-Type: application/json" \\
   -d '{"name": "My New App"}'`}
-        jsExample={`const res = await fetch("https://toggles.tinytown.studio/api/v1/projects", {
+        jsExample={`const res = await fetch("${API_BASE_URL}/api/v1/projects", {
   method: "POST",
   headers: {
     Authorization: "Bearer tgs_xxxxxxxxxxxxxxxxxxxxxxxx",
@@ -78,9 +79,9 @@ const project = await res.json();`}
         description="Permanently deletes a project and all its toggles. This action is irreversible."
         authNote="Requires session auth or an admin API key. You must own the project."
         responseExample={`{ "success": true }`}
-        curlExample={`curl -X DELETE https://toggles.tinytown.studio/api/v1/projects/proj_01hz... \\
+        curlExample={`curl -X DELETE ${API_BASE_URL}/api/v1/projects/proj_01hz... \\
   -H "Authorization: Bearer tgs_xxxxxxxxxxxxxxxxxxxxxxxx"`}
-        jsExample={`const res = await fetch("https://toggles.tinytown.studio/api/v1/projects/proj_01hz...", {
+        jsExample={`const res = await fetch("${API_BASE_URL}/api/v1/projects/proj_01hz...", {
   method: "DELETE",
   headers: {
     Authorization: "Bearer tgs_xxxxxxxxxxxxxxxxxxxxxxxx",

@@ -8,6 +8,7 @@
     "run_worker_first": ["/api/*"],
   },
   "vars": {
+    "APP_ORIGIN": "https://toggles.tinytown.studio",
     "BETTER_AUTH_URL": "https://toggles.tinytown.studio",
     "LOCAL": "false",
     "PRODUCT_BETA": "true",

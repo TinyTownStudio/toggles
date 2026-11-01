@@ -263,10 +263,21 @@ Copy `.env.example` → `.env` and `.dev.vars.example` → `.dev.vars` before
 running locally. Required secrets for `.dev.vars`:
 
 ```
+APP_ORIGIN=http://localhost:5173
 BETTER_AUTH_SECRET=
+BETTER_AUTH_URL=http://localhost:5173
+LOCAL=true
 POLAR_ACCESS_TOKEN=
 POLAR_WEBHOOK_SECRET=
 POLAR_PRO_PRODUCT_ID=
 ```
+
+Optional:
+
+- `VITE_PUBLIC_APP_ORIGIN` — override build-time origin for prerendered meta/docs (defaults from `wrangler.jsonc` `APP_ORIGIN` on production builds unless `TOGGLES_SELF_HOST_BUILD=true`).
+
+Self-hosted installs must set `APP_ORIGIN` and `BETTER_AUTH_URL` to their own
+origin. Runtime code does not hardcode `tinytown.studio`; hosted defaults live
+in `wrangler.jsonc` and the deploy script only.
 
 Never commit `.env`, `.dev.vars`, or any file containing secrets.

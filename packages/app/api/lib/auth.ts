@@ -5,6 +5,7 @@ import { Polar } from "@polar-sh/sdk";
 import { polar, checkout, portal, webhooks } from "@polar-sh/better-auth";
 import * as schema from "../db/schema";
 import { isProduction } from "../utils/isProduction";
+import { getAppOrigin, polarCheckoutReturnUrl, polarCheckoutSuccessUrl } from "./appOrigin";
 import { apiKey } from "better-auth/plugins";
 import type { AgnosticDatabaseInstance } from "../types";
 
@@ -31,9 +32,7 @@ export function createAuth(env: Env, db: AgnosticDatabaseInstance<typeof schema>
     emailAndPassword: {
       enabled: true,
     },
-    trustedOrigins: isProduction(env)
-      ? ["https://toggles.tinytown.studio"]
-      : ["http://localhost:5173"],
+    trustedOrigins: [getAppOrigin(env)],
     plugins: [
       apiKey({
         enableMetadata: true,
@@ -58,12 +57,8 @@ export function createAuth(env: Env, db: AgnosticDatabaseInstance<typeof schema>
             ],
             // This success URL is more to support local-dev so we don't have to only use
             // webhooks. All though local webhooks are now possible with https://polar.sh/docs/integrate/webhooks/locally
-            successUrl: isProduction(env)
-              ? "https://toggles.tinytown.studio/api/billing-success?checkout_id={CHECKOUT_ID}"
-              : "http://localhost:5173/api/billing-success?checkout_id={CHECKOUT_ID}",
-            returnUrl: isProduction(env)
-              ? "https://toggles.tinytown.studio/app/billing"
-              : "http://localhost:5173/app/billing",
+            successUrl: polarCheckoutSuccessUrl(env),
+            returnUrl: polarCheckoutReturnUrl(env),
           }),
           portal(),
           webhooks({

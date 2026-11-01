@@ -47,7 +47,7 @@ Pages live in `src/pages/`, components in `src/components/`. API calls go throug
 
 ### Backend (`api/`)
 
-`api/index.ts` is the Hono entry point. It sets up CORS (locked to localhost:5173 in dev, configurable for prod), security headers, and mounts routes:
+`api/index.ts` is the Hono entry point. It sets up CORS from `APP_ORIGIN` (localhost:5173 when `LOCAL=true`, otherwise env-driven), security headers, and mounts routes:
 
 - `GET /api/auth/*` - BetterAuth handler
 - `GET /api/v1/me` - current user (session-protected)
@@ -67,4 +67,4 @@ Defines per-plan limits (e.g., note count). `getUserPlan` reads subscription sta
 
 ## Environment Setup
 
-Copy `.env.example` → `.env` and `.dev.vars.example` → `.dev.vars` before running locally. The API needs `BETTER_AUTH_SECRET`, `POLAR_ACCESS_TOKEN`, `POLAR_WEBHOOK_SECRET`, and `POLAR_PRO_PRODUCT_ID`.
+Copy `.env.example` → `.env` and `.dev.vars.example` → `.dev.vars` before running locally. The API needs `APP_ORIGIN`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `POLAR_ACCESS_TOKEN`, `POLAR_WEBHOOK_SECRET`, and `POLAR_PRO_PRODUCT_ID` (see `.dev.vars.example`).

@@ -1,4 +1,5 @@
 import { SectionHeading, SubHeading } from "../headings";
+import { API_BASE_URL } from "../../../lib/constants";
 import { Endpoint } from "../Endpoint";
 
 export function ApiKeys() {
@@ -30,10 +31,10 @@ export function ApiKeys() {
     "expiresAt": null
   }
 ]`}
-        curlExample={`curl https://toggles.tinytown.studio/api/v1/api-keys \\
+        curlExample={`curl ${API_BASE_URL}/api/v1/api-keys \\
   -H "Cookie: better-auth.session_token=<session>"`}
         jsExample={`// Must use session auth (cookie) for this endpoint
-const res = await fetch("https://toggles.tinytown.studio/api/v1/api-keys", {
+const res = await fetch("${API_BASE_URL}/api/v1/api-keys", {
   credentials: "include",
 });
 const keys = await res.json();`}
@@ -83,18 +84,18 @@ const keys = await res.json();`}
   "createdAt": "2024-01-15T10:30:00.000Z"
 }`}
         curlExample={`# Global read key
-curl -X POST https://toggles.tinytown.studio/api/v1/api-keys \\
+curl -X POST ${API_BASE_URL}/api/v1/api-keys \\
   -H "Cookie: better-auth.session_token=<session>" \\
   -H "Content-Type: application/json" \\
   -d '{"name": "Production read key", "type": "read"}'
 
 # Scoped admin key
-curl -X POST https://toggles.tinytown.studio/api/v1/api-keys \\
+curl -X POST ${API_BASE_URL}/api/v1/api-keys \\
   -H "Cookie: better-auth.session_token=<session>" \\
   -H "Content-Type: application/json" \\
   -d '{"name": "CI deploy key", "type": "admin", "projectId": "proj_01hz..."}'`}
         jsExample={`// Global read key
-const res = await fetch("https://toggles.tinytown.studio/api/v1/api-keys", {
+const res = await fetch("${API_BASE_URL}/api/v1/api-keys", {
   method: "POST",
   credentials: "include",
   headers: { "Content-Type": "application/json" },
@@ -107,7 +108,7 @@ const { key } = await res.json();
 // Store key securely - it won't be shown again
 
 // Scoped admin key
-const res2 = await fetch("https://toggles.tinytown.studio/api/v1/api-keys", {
+const res2 = await fetch("${API_BASE_URL}/api/v1/api-keys", {
   method: "POST",
   credentials: "include",
   headers: { "Content-Type": "application/json" },
@@ -126,9 +127,9 @@ const res2 = await fetch("https://toggles.tinytown.studio/api/v1/api-keys", {
         description="Permanently revokes and deletes an API key. Any requests using this key will immediately start returning 401."
         authNote="Requires session auth. You must own the key."
         responseExample={`{ "success": true }`}
-        curlExample={`curl -X DELETE https://toggles.tinytown.studio/api/v1/api-keys/key_01hz... \\
+        curlExample={`curl -X DELETE ${API_BASE_URL}/api/v1/api-keys/key_01hz... \\
   -H "Cookie: better-auth.session_token=<session>"`}
-        jsExample={`await fetch("https://toggles.tinytown.studio/api/v1/api-keys/key_01hz...", {
+        jsExample={`await fetch("${API_BASE_URL}/api/v1/api-keys/key_01hz...", {
   method: "DELETE",
   credentials: "include",
 });`}

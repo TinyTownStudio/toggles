@@ -1,4 +1,5 @@
 import { SectionHeading, SubHeading } from "../headings";
+import { API_BASE_URL } from "../../../lib/constants";
 import { Endpoint } from "../Endpoint";
 
 export function Dashboard() {
@@ -71,9 +72,9 @@ export function Dashboard() {
     "product": false
   }
 }`}
-        curlExample={`curl https://toggles.tinytown.studio/api/v1/dashboard \\
+        curlExample={`curl ${API_BASE_URL}/api/v1/dashboard \\
   -H "Cookie: better-auth.session_token=<session>"`}
-        jsExample={`const res = await fetch("https://toggles.tinytown.studio/api/v1/dashboard", {
+        jsExample={`const res = await fetch("${API_BASE_URL}/api/v1/dashboard", {
   credentials: "include",
 });
 const dashboard = await res.json();
