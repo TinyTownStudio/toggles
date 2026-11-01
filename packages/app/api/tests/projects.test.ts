@@ -28,6 +28,41 @@ describe("GET /api/v1/projects", () => {
     const data = (await res.json()) as unknown[];
     expect(data).toEqual([]);
   });
+
+  it("returns 200 with projects after creation", async () => {
+    const listCookie = await signUp("list@example.com", "password1234", "List User");
+    const createRes = await apiPost("/api/v1/projects", {
+      cookie: listCookie,
+      body: { name: "Listed Project" },
+    });
+    expect(createRes.status).toBe(201);
+    const { id, name } = (await createRes.json()) as { id: string; name: string };
+
+    const res = await apiGet("/api/v1/projects", { cookie: listCookie });
+    expect(res.status).toBe(200);
+    const data = (await res.json()) as { id: string; name: string; userId: string }[];
+    const project = data.find((p) => p.id === id);
+    expect(project).toBeDefined();
+    expect(project?.name).toBe(name);
+    expect(project?.userId).toBeTruthy();
+  });
+
+  it("does not require environments to exist when listing projects", async () => {
+    const listCookie = await signUp("list2@example.com", "password1234", "List User 2");
+    const createRes = await apiPost("/api/v1/projects", {
+      cookie: listCookie,
+      body: { name: "No Env Yet" },
+    });
+    const { id } = (await createRes.json()) as { id: string };
+
+    const listRes = await apiGet("/api/v1/projects", { cookie: listCookie });
+    expect(listRes.status).toBe(200);
+
+    const envRes = await apiGet(`/api/v1/projects/${id}/environments`, { cookie: listCookie });
+    expect(envRes.status).toBe(200);
+    const envs = (await envRes.json()) as { slug: string }[];
+    expect(envs.some((e) => e.slug === "production")).toBe(true);
+  });
 });
 
 describe("POST /api/v1/projects", () => {
@@ -49,7 +84,11 @@ describe("POST /api/v1/projects", () => {
   });
 
   it("creates a project and returns 201", async () => {
-    const res = await apiPost("/api/v1/projects", { cookie, body: { name: "My Project" } });
+    const userCookie = await signUp("create@example.com", "password1234", "Create User");
+    const res = await apiPost("/api/v1/projects", {
+      cookie: userCookie,
+      body: { name: "My Project" },
+    });
     expect(res.status).toBe(201);
     const data = (await res.json()) as { id: string; name: string };
     expect(data.id).toBeTruthy();
@@ -59,7 +98,11 @@ describe("POST /api/v1/projects", () => {
 
 describe("DELETE /api/v1/projects/:id", () => {
   it("returns 401 when unauthenticated", async () => {
-    const createRes = await apiPost("/api/v1/projects", { cookie, body: { name: "To Delete" } });
+    const userCookie = await signUp("delauth@example.com", "password1234", "Del Auth");
+    const createRes = await apiPost("/api/v1/projects", {
+      cookie: userCookie,
+      body: { name: "To Delete" },
+    });
     const { id } = (await createRes.json()) as { id: string };
     const res = await apiDelete(`/api/v1/projects/${id}`);
     expect(res.status).toBe(401);
@@ -71,16 +114,24 @@ describe("DELETE /api/v1/projects/:id", () => {
   });
 
   it("returns 404 when another user tries to delete the project", async () => {
-    const createRes = await apiPost("/api/v1/projects", { cookie, body: { name: "Owner Only" } });
+    const ownerCookie = await signUp("owner@example.com", "password1234", "Owner");
+    const createRes = await apiPost("/api/v1/projects", {
+      cookie: ownerCookie,
+      body: { name: "Owner Only" },
+    });
     const { id } = (await createRes.json()) as { id: string };
     const res = await apiDelete(`/api/v1/projects/${id}`, { cookie: otherCookie });
     expect(res.status).toBe(404);
   });
 
   it("deletes a project and returns 204", async () => {
-    const createRes = await apiPost("/api/v1/projects", { cookie, body: { name: "Delete Me" } });
+    const userCookie = await signUp("deleter@example.com", "password1234", "Deleter");
+    const createRes = await apiPost("/api/v1/projects", {
+      cookie: userCookie,
+      body: { name: "Delete Me" },
+    });
     const { id } = (await createRes.json()) as { id: string };
-    const res = await apiDelete(`/api/v1/projects/${id}`, { cookie });
+    const res = await apiDelete(`/api/v1/projects/${id}`, { cookie: userCookie });
     expect(res.status).toBe(204);
   });
 });
@@ -91,11 +142,13 @@ describe("DELETE /api/v1/projects/:id", () => {
 
 describe("user isolation", () => {
   it("users cannot see each other's projects", async () => {
-    await apiPost("/api/v1/projects", { cookie, body: { name: "User A Project" } });
-    await apiPost("/api/v1/projects", { cookie: otherCookie, body: { name: "User B Project" } });
+    const cookieA = await signUp("isola@example.com", "password1234", "Iso A");
+    const cookieB = await signUp("isolb@example.com", "password1234", "Iso B");
+    await apiPost("/api/v1/projects", { cookie: cookieA, body: { name: "User A Project" } });
+    await apiPost("/api/v1/projects", { cookie: cookieB, body: { name: "User B Project" } });
 
-    const resA = await apiGet("/api/v1/projects", { cookie });
-    const resB = await apiGet("/api/v1/projects", { cookie: otherCookie });
+    const resA = await apiGet("/api/v1/projects", { cookie: cookieA });
+    const resB = await apiGet("/api/v1/projects", { cookie: cookieB });
 
     const projectsA = (await resA.json()) as { name: string }[];
     const projectsB = (await resB.json()) as { name: string }[];
@@ -112,14 +165,14 @@ describe("user isolation", () => {
 describe("free-plan project limit", () => {
   let limitCookie = "";
   let limitProjectIds: string[] = [];
-  let eleventh: Response;
+  let third: Response;
   let postDeleteRes: Response;
 
   beforeAll(async () => {
     limitCookie = await signUp("limit@example.com", "password1234", "Limit User");
 
-    // Create exactly 10 projects (the free-plan cap)
-    for (let i = 1; i <= 10; i++) {
+    // Create exactly 2 projects (the free-plan cap)
+    for (let i = 1; i <= 2; i++) {
       const res = await apiPost("/api/v1/projects", {
         cookie: limitCookie,
         body: { name: `Project ${i}` },
@@ -128,13 +181,13 @@ describe("free-plan project limit", () => {
       limitProjectIds.push(((await res.json()) as { id: string }).id);
     }
 
-    // Attempt to create the 11th — should be blocked
-    eleventh = await apiPost("/api/v1/projects", {
+    // Attempt to create the 3rd - should be blocked
+    third = await apiPost("/api/v1/projects", {
       cookie: limitCookie,
-      body: { name: "Project 11" },
+      body: { name: "Project 3" },
     });
 
-    // Delete one project and try again — should succeed
+    // Delete one project and try again - should succeed
     await apiDelete(`/api/v1/projects/${limitProjectIds[0]}`, { cookie: limitCookie });
     postDeleteRes = await apiPost("/api/v1/projects", {
       cookie: limitCookie,
@@ -142,13 +195,13 @@ describe("free-plan project limit", () => {
     });
   });
 
-  it("allows creating up to 10 projects", () => {
-    expect(limitProjectIds.length).toBe(10);
+  it("allows creating up to 2 projects", () => {
+    expect(limitProjectIds.length).toBe(2);
   });
 
-  it("blocks the 11th project with 403", async () => {
-    expect(eleventh.status).toBe(403);
-    const data = (await eleventh.json()) as { error: string };
+  it("blocks the 3rd project with 403", async () => {
+    expect(third.status).toBe(403);
+    const data = (await third.json()) as { error: string };
     expect(data.error).toBe("Project limit reached for your plan");
   });
 

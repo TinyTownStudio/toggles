@@ -1,7 +1,9 @@
 import { Hono } from "hono";
 import { eq, lt, and, sql } from "drizzle-orm";
 import * as schema from "../db/schema";
+import { ensureDefaultEnvironment, backfillToggleStatesForDefaultEnv } from "../lib/environments";
 import { getUserPlan, PLAN_LIMITS } from "../lib/plans";
+import { currentMonth } from "../lib/usage";
 import type { Bindings, Variables } from "../types";
 import { env } from "hono/adapter";
 
@@ -35,6 +37,7 @@ export interface DashboardResponse {
   activeApiKeys: number;
   unusedApiKeys: number;
   expiringApiKeys: number;
+  apiReadsThisMonth: number;
   recentlyModified: DashboardFlagEntry[];
   staleFlags: DashboardFlagEntry[];
   flagsPerProject: DashboardProjectEntry[];
@@ -48,6 +51,7 @@ export const dashboard = new Hono<{
   Variables: Variables<typeof schema>;
 }>();
 
+// TODO: break into smaller api routes. This is too complex and easy target for DOS
 dashboard.get("/", async (c) => {
   const userId = c.get("user")?.id;
   if (!userId) return c.json({ error: "Unauthorized" }, 401);
@@ -57,98 +61,185 @@ dashboard.get("/", async (c) => {
   const staleThreshold = new Date(Date.now() - STALE_FLAG_DAYS * 24 * 60 * 60 * 1000);
   const sevenDaysFromNow = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
+  const userProjects = await db
+    .select({ id: schema.project.id, name: schema.project.name })
+    .from(schema.project)
+    .where(eq(schema.project.userId, userId))
+    .all();
+
+  await Promise.all(
+    userProjects.map(async (project) => {
+      const defaultEnv = await ensureDefaultEnvironment(db, project.id);
+      await backfillToggleStatesForDefaultEnv(db, project.id, defaultEnv.id);
+    }),
+  );
+
+  const defaultEnvJoin = and(
+    eq(schema.environment.projectId, schema.toggle.projectId),
+    eq(schema.environment.isDefault, true),
+  );
+  const defaultStateJoin = and(
+    eq(schema.toggleState.toggleId, schema.toggle.id),
+    eq(schema.toggleState.environmentId, schema.environment.id),
+  );
+
+  const month = currentMonth();
+
   // Run all independent queries in parallel
-  const [userProjects, allTogglesWithProject, recentlyModifiedRows, staleFlagRows, allApiKeys] =
-    await Promise.all([
-      // All user projects
-      db.select().from(schema.project).where(eq(schema.project.userId, userId)).all(),
+  const [
+    flagCountRows,
+    recentlyModifiedRows,
+    staleFlagRows,
+    flagsPerProjectRows,
+    apiKeyCountRows,
+    apiUsageRow,
+  ] = await Promise.all([
+    // Aggregate flag counts via SQL (default environment state)
+    db
+      .select({
+        total: sql<number>`count(${schema.toggle.id})`,
+        enabled: sql<number>`sum(case when ${schema.toggleState.enabled} = 1 then 1 else 0 end)`,
+      })
+      .from(schema.toggle)
+      .innerJoin(schema.project, eq(schema.toggle.projectId, schema.project.id))
+      .innerJoin(schema.environment, defaultEnvJoin)
+      .innerJoin(schema.toggleState, defaultStateJoin)
+      .where(eq(schema.project.userId, userId))
+      .all(),
 
-      // All toggles joined with project for count aggregation
-      db
-        .select()
-        .from(schema.toggle)
-        .innerJoin(schema.project, eq(schema.toggle.projectId, schema.project.id))
-        .where(eq(schema.project.userId, userId))
-        .all(),
+    // Top 5 most recently modified flags
+    db
+      .select({
+        id: schema.toggle.id,
+        key: schema.toggle.key,
+        projectId: schema.toggle.projectId,
+        projectName: schema.project.name,
+        enabled: schema.toggleState.enabled,
+        updatedAt: schema.toggle.updatedAt,
+        createdAt: schema.toggle.createdAt,
+      })
+      .from(schema.toggle)
+      .innerJoin(schema.project, eq(schema.toggle.projectId, schema.project.id))
+      .innerJoin(schema.environment, defaultEnvJoin)
+      .innerJoin(schema.toggleState, defaultStateJoin)
+      .where(eq(schema.project.userId, userId))
+      .orderBy(sql`${schema.toggle.updatedAt} desc`)
+      .limit(5)
+      .all(),
 
-      // Top 5 most recently modified flags
-      db
-        .select()
-        .from(schema.toggle)
-        .innerJoin(schema.project, eq(schema.toggle.projectId, schema.project.id))
-        .where(eq(schema.project.userId, userId))
-        .orderBy(sql`${schema.toggle.updatedAt} desc`)
-        .limit(5)
-        .all(),
+    // Stale flags: not modified in STALE_FLAG_DAYS days, oldest first
+    db
+      .select({
+        id: schema.toggle.id,
+        key: schema.toggle.key,
+        projectId: schema.toggle.projectId,
+        projectName: schema.project.name,
+        enabled: schema.toggleState.enabled,
+        updatedAt: schema.toggle.updatedAt,
+        createdAt: schema.toggle.createdAt,
+      })
+      .from(schema.toggle)
+      .innerJoin(schema.project, eq(schema.toggle.projectId, schema.project.id))
+      .innerJoin(schema.environment, defaultEnvJoin)
+      .innerJoin(schema.toggleState, defaultStateJoin)
+      .where(and(eq(schema.project.userId, userId), lt(schema.toggle.updatedAt, staleThreshold)))
+      .orderBy(schema.toggle.updatedAt)
+      .all(),
 
-      // Stale flags: not modified in STALE_FLAG_DAYS days, oldest first
-      db
-        .select()
-        .from(schema.toggle)
-        .innerJoin(schema.project, eq(schema.toggle.projectId, schema.project.id))
-        .where(and(eq(schema.project.userId, userId), lt(schema.toggle.updatedAt, staleThreshold)))
-        .orderBy(schema.toggle.updatedAt)
-        .all(),
+    // Per-project flag counts via GROUP BY
+    db
+      .select({
+        projectId: schema.project.id,
+        projectName: schema.project.name,
+        totalFlags: sql<number>`count(${schema.toggle.id})`,
+        enabledFlags: sql<number>`sum(case when ${schema.toggleState.enabled} = 1 then 1 else 0 end)`,
+      })
+      .from(schema.project)
+      .leftJoin(schema.toggle, eq(schema.toggle.projectId, schema.project.id))
+      .leftJoin(
+        schema.environment,
+        and(
+          eq(schema.environment.projectId, schema.project.id),
+          eq(schema.environment.isDefault, true),
+        ),
+      )
+      .leftJoin(
+        schema.toggleState,
+        and(
+          eq(schema.toggleState.toggleId, schema.toggle.id),
+          eq(schema.toggleState.environmentId, schema.environment.id),
+        ),
+      )
+      .where(eq(schema.project.userId, userId))
+      .groupBy(schema.project.id, schema.project.name)
+      .all(),
 
-      // All API keys for the user
-      db.select().from(schema.apikey).where(eq(schema.apikey.userId, userId)).all(),
-    ]);
+    // API key aggregate counts via SQL
+    db
+      .select({
+        total: sql<number>`count(*)`,
+        active: sql<number>`sum(case when ${schema.apikey.enabled} != 0 then 1 else 0 end)`,
+        unused: sql<number>`sum(case when ${schema.apikey.lastRequest} is null then 1 else 0 end)`,
+        expiring: sql<number>`sum(case when ${schema.apikey.expiresAt} is not null and ${schema.apikey.expiresAt} <= ${sevenDaysFromNow.getTime()} then 1 else 0 end)`,
+      })
+      .from(schema.apikey)
+      .where(eq(schema.apikey.userId, userId))
+      .all(),
+
+    // API reads for the current UTC month
+    db
+      .select({ reads: schema.apiUsage.reads })
+      .from(schema.apiUsage)
+      .where(and(eq(schema.apiUsage.userId, userId), eq(schema.apiUsage.month, month)))
+      .get(),
+  ]);
 
   const totalProjects = userProjects.length;
 
-  const totalFlags = allTogglesWithProject.length;
-  const enabledFlags = allTogglesWithProject.filter((r) => r.toggle.enabled).length;
+  const flagCounts = flagCountRows[0] ?? { total: 0, enabled: 0 };
+  const totalFlags = Number(flagCounts.total);
+  const enabledFlags = Number(flagCounts.enabled ?? 0);
   const disabledFlags = totalFlags - enabledFlags;
 
-  const toEntry = (r: {
-    toggle: typeof schema.toggle.$inferSelect;
-    project: typeof schema.project.$inferSelect;
+  const toEntry = (t: {
+    id: string;
+    key: string;
+    projectId: string;
+    projectName: string;
+    enabled: boolean;
+    updatedAt: Date | number | null;
+    createdAt: Date | number | null;
   }): DashboardFlagEntry => ({
-    id: r.toggle.id,
-    key: r.toggle.key,
-    projectId: r.toggle.projectId,
-    projectName: r.project.name,
-    enabled: r.toggle.enabled,
-    updatedAt:
-      r.toggle.updatedAt instanceof Date
-        ? r.toggle.updatedAt.getTime()
-        : Number(r.toggle.updatedAt),
-    createdAt:
-      r.toggle.createdAt instanceof Date
-        ? r.toggle.createdAt.getTime()
-        : Number(r.toggle.createdAt),
+    id: t.id,
+    key: t.key,
+    projectId: t.projectId,
+    projectName: t.projectName,
+    enabled: t.enabled,
+    updatedAt: t.updatedAt instanceof Date ? t.updatedAt.getTime() : Number(t.updatedAt),
+    createdAt: t.createdAt instanceof Date ? t.createdAt.getTime() : Number(t.createdAt),
   });
 
   const recentlyModified = recentlyModifiedRows.map(toEntry);
   const staleFlags = staleFlagRows.map(toEntry);
 
-  // Compute flagsPerProject in memory
-  const projectFlagMap = new Map<string, { name: string; total: number; enabled: number }>();
-  for (const proj of userProjects) {
-    projectFlagMap.set(proj.id, { name: proj.name, total: 0, enabled: 0 });
-  }
-  for (const r of allTogglesWithProject) {
-    const entry = projectFlagMap.get(r.project.id);
-    if (entry) {
-      entry.total += 1;
-      if (r.toggle.enabled) entry.enabled += 1;
-    }
-  }
-  const flagsPerProject: DashboardProjectEntry[] = Array.from(projectFlagMap.entries()).map(
-    ([projectId, data]) => ({
-      projectId,
-      projectName: data.name,
-      totalFlags: data.total,
-      enabledFlags: data.enabled,
-    }),
-  );
+  const flagsPerProject: DashboardProjectEntry[] = flagsPerProjectRows.map((row) => ({
+    projectId: row.projectId,
+    projectName: row.projectName,
+    totalFlags: Number(row.totalFlags),
+    enabledFlags: Number(row.enabledFlags ?? 0),
+  }));
 
-  const totalApiKeys = allApiKeys.length;
-  const activeApiKeys = allApiKeys.filter((k) => k.enabled).length;
-  const unusedApiKeys = allApiKeys.filter((k) => k.lastRequest == null).length;
-  const expiringApiKeys = allApiKeys.filter(
-    (k) => k.expiresAt != null && new Date(k.expiresAt).getTime() <= sevenDaysFromNow.getTime(),
-  ).length;
+  const apiKeyCounts = apiKeyCountRows[0] ?? {
+    total: 0,
+    active: 0,
+    unused: 0,
+    expiring: 0,
+  };
+  const totalApiKeys = Number(apiKeyCounts.total);
+  const activeApiKeys = Number(apiKeyCounts.active ?? 0);
+  const unusedApiKeys = Number(apiKeyCounts.unused ?? 0);
+  const expiringApiKeys = Number(apiKeyCounts.expiring ?? 0);
+  const apiReadsThisMonth = Number(apiUsageRow?.reads ?? 0);
 
   // Plan info
   const plan = await getUserPlan(db, userId);
@@ -164,6 +255,7 @@ dashboard.get("/", async (c) => {
     activeApiKeys,
     unusedApiKeys,
     expiringApiKeys,
+    apiReadsThisMonth,
     recentlyModified,
     staleFlags,
     flagsPerProject,

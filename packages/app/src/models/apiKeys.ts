@@ -32,11 +32,12 @@ export const ApiKeysModel = createModel(() => {
     name: string,
     projectId: string | null,
     type: TokenType = "read",
+    environmentSlug?: string | null,
   ): Promise<string | null> => {
     creating.value = true;
     error.value = null;
     try {
-      const res = await createApiKey(name, projectId, type);
+      const res = await createApiKey(name, projectId, type, environmentSlug);
       await fetch();
       return res.key;
     } catch (err) {

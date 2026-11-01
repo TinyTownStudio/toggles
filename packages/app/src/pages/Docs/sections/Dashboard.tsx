@@ -6,9 +6,7 @@ export function Dashboard() {
     <div class="mt-14 mb-20">
       <SectionHeading id="dashboard">Dashboard</SectionHeading>
       <p class="text-sm text-content-tertiary leading-relaxed mb-8">
-        The dashboard endpoint returns an aggregated overview of your account: project and flag
-        counts, recently modified flags, stale flags (not updated in 30+ days), a per-project
-        breakdown, API key health metrics, and your current plan limits.
+        The dashboard endpoint returns an aggregated overview of your account.
       </p>
 
       <SubHeading id="dashboard-get">Get dashboard</SubHeading>
@@ -26,6 +24,7 @@ export function Dashboard() {
   "activeApiKeys": 3,
   "unusedApiKeys": 1,
   "expiringApiKeys": 0,
+  "apiReadsThisMonth": 12450,
   "recentlyModified": [
     {
       "id": "tgl_01hz...",
@@ -65,6 +64,7 @@ export function Dashboard() {
   "plan": "pro",
   "limits": {
     "projects": null,
+    "apiReadsPerMonth": 5000000,
     "teams": true
   },
   "beta": {
@@ -78,10 +78,11 @@ export function Dashboard() {
 });
 const dashboard = await res.json();
 
-console.log(dashboard.totalFlags);       // total flag count
-console.log(dashboard.recentlyModified); // last 5 modified flags
-console.log(dashboard.staleFlags);       // flags not updated in 30+ days
-console.log(dashboard.plan);             // "free" | "pro"`}
+console.log(dashboard.totalFlags);         // total flag count
+console.log(dashboard.apiReadsThisMonth);  // API reads this UTC month
+console.log(dashboard.recentlyModified);   // last 5 modified flags
+console.log(dashboard.staleFlags);         // flags not updated in 30+ days
+console.log(dashboard.plan);               // "free" | "pro"`}
       />
     </div>
   );

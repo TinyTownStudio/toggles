@@ -2,6 +2,13 @@ import { applyD1Migrations, env } from "cloudflare:test";
 import { beforeAll, describe, expect, it } from "vitest";
 import { apiGet, apiPost, apiPatch, signUp } from "./helpers";
 
+function currentMonth(): string {
+  const now = new Date();
+  const y = now.getUTCFullYear();
+  const m = String(now.getUTCMonth() + 1).padStart(2, "0");
+  return `${y}-${m}`;
+}
+
 interface DashboardResponse {
   totalProjects: number;
   totalFlags: number;
@@ -11,6 +18,7 @@ interface DashboardResponse {
   activeApiKeys: number;
   unusedApiKeys: number;
   expiringApiKeys: number;
+  apiReadsThisMonth: number;
   recentlyModified: {
     id: string;
     key: string;
@@ -34,6 +42,7 @@ let cookie = "";
 let projectAId = "";
 let projectBId = "";
 let toggleAId = "";
+let userId = "";
 
 beforeAll(async () => {
   await applyD1Migrations(env.DB, env.TEST_MIGRATIONS);
@@ -44,11 +53,16 @@ beforeAll(async () => {
   expect(projARes.status).toBe(201);
   projectAId = ((await projARes.json()) as { id: string }).id;
 
+  const owner = await env.DB.prepare("SELECT user_id FROM project WHERE id = ?")
+    .bind(projectAId)
+    .first<{ user_id: string }>();
+  userId = owner!.user_id;
+
   const projBRes = await apiPost("/api/v1/projects", { cookie, body: { name: "Beta" } });
   expect(projBRes.status).toBe(201);
   projectBId = ((await projBRes.json()) as { id: string }).id;
 
-  // Create two flags in Alpha — one enabled, one disabled
+  // Create two flags in Alpha - one enabled, one disabled
   const t1Res = await apiPost(`/api/v1/projects/${projectAId}/toggles`, {
     cookie,
     body: { key: "flag-enabled" },
@@ -110,6 +124,31 @@ describe("GET /api/v1/dashboard", () => {
     expect(data.unusedApiKeys).toBe(1); // never used yet
   });
 
+  it("returns zero apiReadsThisMonth when no usage has been recorded", async () => {
+    const res = await apiGet("/api/v1/dashboard", { cookie });
+    expect(res.status).toBe(200);
+
+    const data = (await res.json()) as DashboardResponse;
+    expect(data.apiReadsThisMonth).toBe(0);
+  });
+
+  it("returns apiReadsThisMonth from api_usage for the current month", async () => {
+    await env.DB.prepare(
+      "INSERT INTO api_usage (user_id, month, reads) VALUES (?, ?, ?) ON CONFLICT(user_id, month) DO UPDATE SET reads = excluded.reads",
+    )
+      .bind(userId, currentMonth(), 42_000)
+      .run();
+
+    const res = await apiGet("/api/v1/dashboard", { cookie });
+    expect(res.status).toBe(200);
+
+    const data = (await res.json()) as DashboardResponse;
+    expect(data.apiReadsThisMonth).toBe(42_000);
+
+    // Reset so later tests see a clean slate
+    await env.DB.prepare("DELETE FROM api_usage WHERE user_id = ?").bind(userId).run();
+  });
+
   it("populates recentlyModified with correct flags", async () => {
     const res = await apiGet("/api/v1/dashboard", { cookie });
     expect(res.status).toBe(200);
@@ -161,7 +200,7 @@ describe("GET /api/v1/dashboard", () => {
     const res = await apiGet("/api/v1/dashboard", { cookie });
     const data = (await res.json()) as DashboardResponse;
 
-    // All flags were just created — none should be stale
+    // All flags were just created - none should be stale
     expect(data.staleFlags.length).toBe(0);
   });
 
@@ -186,6 +225,7 @@ describe("GET /api/v1/dashboard", () => {
     expect(data.enabledFlags).toBe(0);
     expect(data.disabledFlags).toBe(0);
     expect(data.totalApiKeys).toBe(0);
+    expect(data.apiReadsThisMonth).toBe(0);
     expect(data.recentlyModified).toEqual([]);
     expect(data.staleFlags).toEqual([]);
     expect(data.flagsPerProject).toEqual([]);

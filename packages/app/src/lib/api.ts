@@ -19,8 +19,19 @@ export interface Toggle {
   id: string;
   key: string;
   enabled: boolean;
+  environment?: string;
   projectId: string;
   meta: Record<string, string> | null;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface Environment {
+  id: string;
+  projectId: string;
+  name: string;
+  slug: string;
+  isDefault: boolean;
   createdAt: number;
   updatedAt: number;
 }
@@ -67,6 +78,7 @@ export interface DashboardResponse {
   activeApiKeys: number;
   unusedApiKeys: number;
   expiringApiKeys: number;
+  apiReadsThisMonth: number;
   recentlyModified: DashboardFlagEntry[];
   staleFlags: DashboardFlagEntry[];
   flagsPerProject: DashboardProjectEntry[];
@@ -121,9 +133,16 @@ export async function deleteProject(id: string): Promise<void> {
   await fetchApi<void>(`/api/v1/projects/${id}`, { method: "DELETE" });
 }
 
-export async function getToggles(projectId: string, search?: string): Promise<Toggle[]> {
-  const params = search?.trim() ? `?search=${encodeURIComponent(search.trim())}` : "";
-  return fetchApi<Toggle[]>(`/api/v1/projects/${projectId}/toggles${params}`);
+export async function getToggles(
+  projectId: string,
+  search?: string,
+  env?: string,
+): Promise<Toggle[]> {
+  const params = new URLSearchParams();
+  if (search?.trim()) params.set("search", search.trim());
+  if (env?.trim()) params.set("env", env.trim());
+  const qs = params.toString() ? `?${params.toString()}` : "";
+  return fetchApi<Toggle[]>(`/api/v1/projects/${projectId}/toggles${qs}`);
 }
 
 export async function createToggle(projectId: string, key: string): Promise<Toggle> {
@@ -137,10 +156,12 @@ export async function updateToggle(
   projectId: string,
   id: string,
   enabled: boolean,
+  env?: string,
 ): Promise<Toggle> {
-  return fetchApi<Toggle>(`/api/v1/projects/${projectId}/toggles/${id}`, {
+  const params = env?.trim() ? `?env=${encodeURIComponent(env.trim())}` : "";
+  return fetchApi<Toggle>(`/api/v1/projects/${projectId}/toggles/${id}${params}`, {
     method: "PATCH",
-    body: JSON.stringify({ enabled }),
+    body: JSON.stringify({ enabled, ...(env ? { env } : {}) }),
   });
 }
 
@@ -148,10 +169,12 @@ export async function updateToggleMeta(
   projectId: string,
   id: string,
   meta: Record<string, string>,
+  env?: string,
 ): Promise<Toggle> {
-  return fetchApi<Toggle>(`/api/v1/projects/${projectId}/toggles/${id}`, {
+  const params = env?.trim() ? `?env=${encodeURIComponent(env.trim())}` : "";
+  return fetchApi<Toggle>(`/api/v1/projects/${projectId}/toggles/${id}${params}`, {
     method: "PATCH",
-    body: JSON.stringify({ meta }),
+    body: JSON.stringify({ meta, ...(env ? { env } : {}) }),
   });
 }
 
@@ -163,10 +186,43 @@ export async function createApiKey(
   name: string,
   projectId: string | null,
   type: TokenType = "read",
+  environmentSlug?: string | null,
 ): Promise<{ key: string } & ApiKeyItem> {
   return fetchApi<{ key: string } & ApiKeyItem>("/api/v1/api-keys", {
     method: "POST",
-    body: JSON.stringify({ name, projectId, type }),
+    body: JSON.stringify({ name, projectId, type, environmentSlug }),
+  });
+}
+
+export async function getEnvironments(projectId: string): Promise<Environment[]> {
+  return fetchApi<Environment[]>(`/api/v1/projects/${projectId}/environments`);
+}
+
+export async function createEnvironment(
+  projectId: string,
+  name: string,
+  slug?: string,
+): Promise<Environment> {
+  return fetchApi<Environment>(`/api/v1/projects/${projectId}/environments`, {
+    method: "POST",
+    body: JSON.stringify({ name, slug }),
+  });
+}
+
+export async function updateEnvironment(
+  projectId: string,
+  id: string,
+  data: { name?: string; isDefault?: boolean },
+): Promise<Environment> {
+  return fetchApi<Environment>(`/api/v1/projects/${projectId}/environments/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteEnvironment(projectId: string, id: string): Promise<void> {
+  await fetchApi<void>(`/api/v1/projects/${projectId}/environments/${id}`, {
+    method: "DELETE",
   });
 }
 
@@ -245,11 +301,14 @@ export async function inviteMember(
   orgId: string,
   email: string,
   role: "owner" | "member",
-): Promise<void> {
-  await fetchApi<void>(`/api/v1/organizations/${orgId}/invite`, {
-    method: "POST",
-    body: JSON.stringify({ email, role }),
-  });
+): Promise<{ inviteUrl?: string; invitationId?: string }> {
+  return fetchApi<{ inviteUrl?: string; invitationId?: string }>(
+    `/api/v1/organizations/${orgId}/invite`,
+    {
+      method: "POST",
+      body: JSON.stringify({ email, role }),
+    },
+  );
 }
 
 export async function removeMember(orgId: string, memberId: string): Promise<void> {

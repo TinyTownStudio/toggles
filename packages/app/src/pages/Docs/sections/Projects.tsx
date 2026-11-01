@@ -39,7 +39,7 @@ const projects = await res.json();`}
       <Endpoint
         method="POST"
         path="/api/v1/projects"
-        description="Creates a new project. Free plan is limited to 10 projects."
+        description="Creates a new project. Free plan is limited to 2 projects."
         authNote="Requires session auth or an admin API key."
         requestBody={[
           {

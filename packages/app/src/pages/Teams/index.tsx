@@ -24,6 +24,7 @@ export function Teams() {
   const [inviteRole, setInviteRole] = useState<"owner" | "member">("member");
   const [inviting, setInviting] = useState(false);
   const [inviteSuccess, setInviteSuccess] = useState(false);
+  const [copiedInviteLink, setCopiedInviteLink] = useState(false);
   const [newTeamName, setNewTeamName] = useState("");
   const [creatingTeam, setCreatingTeam] = useState(false);
 
@@ -138,6 +139,7 @@ export function Teams() {
     if (!email) return;
     setInviting(true);
     setInviteSuccess(false);
+    setCopiedInviteLink(false);
     try {
       await orgsModel.invite(org.id, email, inviteRole);
       setInviteEmail("");
@@ -202,8 +204,26 @@ export function Teams() {
               <h2 class="text-sm font-semibold text-content mb-4">Invite a member</h2>
               {inviteSuccess && (
                 <Alert variant="success" class="mb-4">
-                  Invitation sent successfully.
+                  {orgsModel.lastInviteUrl.value
+                    ? "Invitation created. Copy the link below and share it with your teammate."
+                    : "Invitation sent successfully."}
                 </Alert>
+              )}
+              {orgsModel.lastInviteUrl.value && (
+                <div class="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+                  <Input readOnly value={orgsModel.lastInviteUrl.value} class="font-mono text-xs" />
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={async () => {
+                      await navigator.clipboard.writeText(orgsModel.lastInviteUrl.value!);
+                      setCopiedInviteLink(true);
+                      setTimeout(() => setCopiedInviteLink(false), 2000);
+                    }}
+                  >
+                    {copiedInviteLink ? "Copied" : "Copy link"}
+                  </Button>
+                </div>
               )}
               <form onSubmit={handleInvite} class="flex gap-2 items-end flex-wrap">
                 <div class="flex-1 min-w-48">

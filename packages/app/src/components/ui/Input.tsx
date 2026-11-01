@@ -2,8 +2,7 @@ import type { JSX } from "preact";
 
 type InputProps = JSX.IntrinsicElements["input"] & { class?: string };
 
-const WIDTH_OVERRIDE =
-  /\b(w-|min-w-|max-w-|flex-\d|flex-auto|flex-none|grow|shrink)\b/;
+const WIDTH_OVERRIDE = /\b(w-|min-w-|max-w-|flex-\d|flex-auto|flex-none|grow|shrink)\b/;
 
 export function Input({ class: className, ...props }: InputProps) {
   const widthClass = className && WIDTH_OVERRIDE.test(className) ? "" : "w-full";

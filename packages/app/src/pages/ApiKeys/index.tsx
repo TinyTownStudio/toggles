@@ -6,9 +6,11 @@ import { Alert } from "../../components/ui/Alert";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { Modal } from "../../components/ui/Modal";
+import { Select } from "../../components/ui/Select";
 import { ApiKeysModel } from "../../models/apiKeys";
 import { AuthModel } from "../../models/auth";
 import { ProjectsModel } from "../../models/projects";
+import { EnvironmentsModel } from "../../models/environments";
 import { timeAgo } from "../../lib/date";
 import type { Project, TokenType } from "../../lib/api";
 
@@ -17,9 +19,11 @@ export function ApiKeys() {
   const auth = useModel(AuthModel);
   const apiKeyModel = useModel(ApiKeysModel);
   const projectsModel = useModel(ProjectsModel);
+  const environmentsModel = useModel(EnvironmentsModel);
   const [showModal, setShowModal] = useState(false);
   const [newName, setNewName] = useState("");
   const [newProjectId, setNewProjectId] = useState<string>("__all__");
+  const [newEnvSlug, setNewEnvSlug] = useState<string>("");
   const [newType, setNewType] = useState<TokenType>("read");
   const [newKey, setNewKey] = useState<string | null>(null);
 
@@ -37,13 +41,28 @@ export function ApiKeys() {
   const handleCreate = async (e: Event) => {
     e.preventDefault();
     const projectId = newProjectId === "__all__" ? null : newProjectId;
-    const key = await apiKeyModel.create(newName.trim() || "Unnamed", projectId, newType);
+    const environmentSlug = newEnvSlug || null;
+    const key = await apiKeyModel.create(
+      newName.trim() || "Unnamed",
+      projectId,
+      newType,
+      environmentSlug,
+    );
     if (key) {
       setNewKey(key);
       setNewName("");
       setNewProjectId("__all__");
+      setNewEnvSlug("");
       setNewType("read");
       setShowModal(false);
+    }
+  };
+
+  const handleProjectChange = async (projectId: string) => {
+    setNewProjectId(projectId);
+    setNewEnvSlug("");
+    if (projectId !== "__all__") {
+      await environmentsModel.fetch(projectId);
     }
   };
 
@@ -132,29 +151,41 @@ export function ApiKeys() {
               autoFocus
             />
             <div class="flex gap-2">
-              <select
+              <Select
                 value={newType}
-                onChange={(e) => setNewType((e.target as HTMLSelectElement).value as TokenType)}
+                onChange={(v) => setNewType(v as TokenType)}
                 disabled={apiKeyModel.creating.value}
-                class="rounded-lg border border-edge bg-page text-content text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent/20"
-              >
-                <option value="read">Read</option>
-                <option value="admin">Admin</option>
-              </select>
-              <select
+                options={[
+                  { value: "read", label: "Read" },
+                  { value: "admin", label: "Admin" },
+                ]}
+              />
+              <Select
                 value={newProjectId}
-                onChange={(e) => setNewProjectId((e.target as HTMLSelectElement).value)}
+                onChange={handleProjectChange}
                 disabled={apiKeyModel.creating.value}
-                class="flex-1 rounded-lg border border-edge bg-page text-content text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent/20"
-              >
-                <option value="__all__">All projects</option>
-                {projectsModel.projects.value.map((p: Project) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
+                class="flex-1"
+                options={[
+                  { value: "__all__", label: "All projects" },
+                  ...projectsModel.projects.value.map((p: Project) => ({
+                    value: p.id,
+                    label: p.name,
+                  })),
+                ]}
+              />
             </div>
+            {newProjectId !== "__all__" && (
+              <Select
+                value={newEnvSlug}
+                onChange={setNewEnvSlug}
+                disabled={apiKeyModel.creating.value}
+                placeholder="Any environment"
+                options={environmentsModel.environments.value.map((env) => ({
+                  value: env.slug,
+                  label: env.name,
+                }))}
+              />
+            )}
             <div class="flex justify-end gap-2">
               <Button type="button" variant="secondary" onClick={() => setShowModal(false)}>
                 Cancel
@@ -196,20 +227,17 @@ interface ScopeBadgeProps {
 
 function ScopeBadge({ permissions, projectName }: ScopeBadgeProps) {
   const actions = permissions?.projects ?? [];
-  // Find a scoped entry (contains a dot, e.g. "read.abc" or "write.abc")
+  const envs = permissions?.environments ?? [];
   const scopedEntry = actions.find((a) => a.includes("."));
-  if (!scopedEntry) {
-    return (
-      <span class="text-xs px-1.5 py-0.5 rounded bg-raised border border-edge text-content-tertiary font-mono">
-        All projects
-      </span>
-    );
-  }
-  // Extract projectId from the first scoped entry (after the first dot)
-  const projectId = scopedEntry.slice(scopedEntry.indexOf(".") + 1);
+  const projectLabel = !scopedEntry
+    ? "All projects"
+    : projectName(scopedEntry.slice(scopedEntry.indexOf(".") + 1));
+  const envLabel = envs.length > 0 ? envs[0] : null;
+
   return (
     <span class="text-xs px-1.5 py-0.5 rounded bg-raised border border-edge text-content-tertiary font-mono">
-      {projectName(projectId)}
+      {projectLabel}
+      {envLabel ? ` · ${envLabel}` : ""}
     </span>
   );
 }

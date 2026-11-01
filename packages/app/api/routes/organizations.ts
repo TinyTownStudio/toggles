@@ -2,7 +2,8 @@ import { Hono } from "hono";
 import { eq, and, inArray } from "drizzle-orm";
 import * as schema from "../db/schema";
 import { getUserPlan, PLAN_LIMITS } from "../lib/plans";
-import { sendInvitationEmail } from "../lib/email";
+import { sendInvitationEmailIfEnabled, type TogglesEmailEnv } from "../lib/email";
+import { buildInviteAcceptUrl } from "../lib/inviteLinks";
 import { env } from "hono/adapter";
 import type { Bindings, Variables, AgnosticDatabaseInstance } from "../types";
 
@@ -216,24 +217,21 @@ organizations.post("/:orgId/invite", async (c) => {
     createdAt: now,
   });
 
-  const { BETTER_AUTH_URL, POSTMARK_SERVER_TOKEN } = env(c);
-  const baseUrl = BETTER_AUTH_URL.replace("/api/auth", "");
-  const inviteUrl = `${baseUrl}/invite/accept?token=${invitationId}`;
+  const bindings = env(c);
+  const inviteUrl = buildInviteAcceptUrl(bindings.BETTER_AUTH_URL, invitationId);
 
   try {
-    await sendInvitationEmail({
+    await sendInvitationEmailIfEnabled(bindings as TogglesEmailEnv, {
       to: email,
       inviterName: inviterUser.name,
       workspaceName: org.name,
       inviteUrl,
-      serverToken: POSTMARK_SERVER_TOKEN,
     });
   } catch (err) {
     console.error("Failed to send invitation email:", err);
-    // Invitation record was created; don't fail the request over email delivery
   }
 
-  return c.json({ added: false, existing: false, invitationId }, 201);
+  return c.json({ added: false, existing: false, invitationId, inviteUrl }, 201);
 });
 
 // ── DELETE /:orgId/members/:memberId ─────────────────────────

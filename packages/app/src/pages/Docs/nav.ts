@@ -21,6 +21,16 @@ export const NAV: NavSection[] = [
     ],
   },
   {
+    id: "environments",
+    label: "Environments",
+    children: [
+      { id: "environments-list", label: "List environments" },
+      { id: "environments-create", label: "Create environment" },
+      { id: "environments-update", label: "Update environment" },
+      { id: "environments-delete", label: "Delete environment" },
+    ],
+  },
+  {
     id: "toggles",
     label: "Toggles",
     children: [

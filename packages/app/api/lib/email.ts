@@ -1,5 +1,14 @@
-const FROM_ADDRESS = "invites@toggles.tinytown.studio";
-const FROM_NAME = "Toggles";
+export type TogglesEmailProvider = "postmark" | "none";
+
+export interface TogglesEmailEnv {
+  TOGGLES_EMAIL_PROVIDER?: string;
+  POSTMARK_SERVER_TOKEN?: string;
+  TOGGLES_EMAIL_FROM?: string;
+  TOGGLES_EMAIL_FROM_NAME?: string;
+}
+
+const DEFAULT_FROM_ADDRESS = "invites@localhost";
+const DEFAULT_FROM_NAME = "Toggles";
 
 interface InvitationEmailOptions {
   to: string;
@@ -7,6 +16,43 @@ interface InvitationEmailOptions {
   workspaceName: string;
   inviteUrl: string;
   serverToken: string;
+  fromAddress: string;
+  fromName: string;
+}
+
+export function resolveEmailProvider(emailEnv: TogglesEmailEnv): TogglesEmailProvider {
+  const configured = emailEnv.TOGGLES_EMAIL_PROVIDER?.trim().toLowerCase();
+  if (configured === "none") return "none";
+  if (configured === "postmark") {
+    return emailEnv.POSTMARK_SERVER_TOKEN?.trim() ? "postmark" : "none";
+  }
+  return "none";
+}
+
+export function resolveEmailFrom(emailEnv: TogglesEmailEnv): { address: string; name: string } {
+  return {
+    address: emailEnv.TOGGLES_EMAIL_FROM?.trim() || DEFAULT_FROM_ADDRESS,
+    name: emailEnv.TOGGLES_EMAIL_FROM_NAME?.trim() || DEFAULT_FROM_NAME,
+  };
+}
+
+export async function sendInvitationEmailIfEnabled(
+  emailEnv: TogglesEmailEnv,
+  options: Omit<InvitationEmailOptions, "serverToken" | "fromAddress" | "fromName">,
+): Promise<{ sent: boolean }> {
+  if (resolveEmailProvider(emailEnv) === "none") {
+    return { sent: false };
+  }
+
+  const token = emailEnv.POSTMARK_SERVER_TOKEN!.trim();
+  const { address, name } = resolveEmailFrom(emailEnv);
+  await sendInvitationEmail({
+    ...options,
+    serverToken: token,
+    fromAddress: address,
+    fromName: name,
+  });
+  return { sent: true };
 }
 
 export async function sendInvitationEmail({
@@ -15,6 +61,8 @@ export async function sendInvitationEmail({
   workspaceName,
   inviteUrl,
   serverToken,
+  fromAddress,
+  fromName,
 }: InvitationEmailOptions): Promise<void> {
   const response = await fetch("https://api.postmarkapp.com/email", {
     method: "POST",
@@ -24,7 +72,7 @@ export async function sendInvitationEmail({
       "X-Postmark-Server-Token": serverToken,
     },
     body: JSON.stringify({
-      From: `${FROM_NAME} <${FROM_ADDRESS}>`,
+      From: `${fromName} <${fromAddress}>`,
       To: to,
       Subject: `${inviterName} invited you to ${workspaceName} on Toggles`,
       HtmlBody: buildInvitationHtml({ inviterName, workspaceName, inviteUrl }),
@@ -43,7 +91,7 @@ function buildInvitationHtml({
   inviterName,
   workspaceName,
   inviteUrl,
-}: Omit<InvitationEmailOptions, "to" | "serverToken">): string {
+}: Pick<InvitationEmailOptions, "inviterName" | "workspaceName" | "inviteUrl">): string {
   return `
 <!DOCTYPE html>
 <html>
@@ -70,7 +118,7 @@ function buildInvitationText({
   inviterName,
   workspaceName,
   inviteUrl,
-}: Omit<InvitationEmailOptions, "to" | "serverToken">): string {
+}: Pick<InvitationEmailOptions, "inviterName" | "workspaceName" | "inviteUrl">): string {
   return [
     `You've been invited to join the ${workspaceName} workspace on Toggles.`,
     ``,

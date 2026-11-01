@@ -176,6 +176,46 @@ export const toggle = sqliteTable(
   ],
 );
 
+// ── Environments ───────────────────────────────────────────────
+
+export const environment = sqliteTable(
+  "environment",
+  {
+    id: text("id").primaryKey(),
+    projectId: text("project_id")
+      .notNull()
+      .references(() => project.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    slug: text("slug").notNull(),
+    isDefault: integer("is_default", { mode: "boolean" }).notNull().default(false),
+    createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
+  },
+  (t) => [
+    index("environment_project_idx").on(t.projectId),
+    uniqueIndex("environment_project_slug_unique").on(t.projectId, t.slug),
+  ],
+);
+
+export const toggleState = sqliteTable(
+  "toggle_state",
+  {
+    toggleId: text("toggle_id")
+      .notNull()
+      .references(() => toggle.id, { onDelete: "cascade" }),
+    environmentId: text("environment_id")
+      .notNull()
+      .references(() => environment.id, { onDelete: "cascade" }),
+    enabled: integer("enabled", { mode: "boolean" }).notNull(),
+    meta: text("meta", { mode: "json" }),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
+  },
+  (t) => [
+    uniqueIndex("toggle_state_toggle_env_unique").on(t.toggleId, t.environmentId),
+    index("toggle_state_env_idx").on(t.environmentId),
+  ],
+);
+
 // ── Subscriptions ─────────────────────────────────────────────
 
 export const subscription = sqliteTable(
@@ -194,6 +234,22 @@ export const subscription = sqliteTable(
     updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
   },
   (t) => [uniqueIndex("subscription_user_unique").on(t.userId)],
+);
+
+export const apiUsage = sqliteTable(
+  "api_usage",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    month: text("month").notNull(), // YYYY-MM
+    reads: integer("reads").notNull().default(0),
+    projectId: text("project_id").references(() => project.id, { onDelete: "cascade" }),
+  },
+  (t) => [
+    uniqueIndex("api_usage_user_month_unique").on(t.userId, t.month),
+    index("api_usage_project_idx").on(t.projectId),
+  ],
 );
 
 // ── API Keys ─────────────────────────────────────────────

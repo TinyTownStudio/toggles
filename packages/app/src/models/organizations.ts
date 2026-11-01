@@ -24,6 +24,7 @@ export const OrganizationsModel = createModel(() => {
   const members = signal<WorkspaceMember[]>([]);
   const invitations = signal<Invitation[]>([]);
   const teams = signal<WorkspaceTeam[]>([]);
+  const lastInviteUrl = signal<string | null>(null);
 
   const fetchOrgs = async () => {
     loading.value = true;
@@ -72,8 +73,13 @@ export const OrganizationsModel = createModel(() => {
 
   const invite = async (orgId: string, email: string, role: "owner" | "member") => {
     error.value = null;
+    lastInviteUrl.value = null;
     try {
-      await inviteMember(orgId, email, role);
+      const res = await inviteMember(orgId, email, role);
+      if (res.inviteUrl) {
+        lastInviteUrl.value = res.inviteUrl;
+      }
+      return res;
     } catch (err) {
       error.value = err instanceof Error ? err.message : "Failed to send invitation";
       throw err;
@@ -160,6 +166,7 @@ export const OrganizationsModel = createModel(() => {
     members,
     invitations,
     teams,
+    lastInviteUrl,
     fetchOrgs,
     createOrg,
     fetchMembers,

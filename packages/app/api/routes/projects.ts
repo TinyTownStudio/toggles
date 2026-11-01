@@ -1,9 +1,19 @@
 import { Hono } from "hono";
-import { eq, and, like, inArray } from "drizzle-orm";
+import { eq, and, like, sql, inArray } from "drizzle-orm";
 import * as schema from "../db/schema";
-import { hasWriteAccess, isScopeViolation } from "../lib/permissions";
+import {
+  getDefaultEnvironment,
+  resolveEnvironment,
+  resolveToggleForEnv,
+  seedToggleStatesForToggle,
+  upsertToggleState,
+} from "../lib/environments";
+import { hasWriteAccess, isEnvScopeViolation, isScopeViolation } from "../lib/permissions";
+import { getOwnedProject } from "../lib/projects";
 import { getUserPlan, PLAN_LIMITS } from "../lib/plans";
+import { consumeApiRead } from "../lib/usage";
 import type { AgnosticDatabaseInstance, Bindings, Variables } from "../types";
+import { environments } from "./environments";
 
 export const projects = new Hono<{
   Bindings: Bindings;
@@ -22,7 +32,6 @@ projects.get("/", async (c) => {
   const searchFilter = search?.trim() ? like(schema.project.name, `%${search.trim()}%`) : undefined;
   const searchNeedle = search?.trim().toLowerCase();
 
-  // Get org IDs and team IDs the user belongs to
   const memberships = await db
     .select()
     .from(schema.member)
@@ -36,7 +45,6 @@ projects.get("/", async (c) => {
       : [];
   const teamIds = teamMemberships.map((tm) => tm.teamId);
 
-  // Fetch own projects
   const ownProjects = await db
     .select()
     .from(schema.project)
@@ -47,7 +55,6 @@ projects.get("/", async (c) => {
     )
     .all();
 
-  // Fetch org-scoped projects the user can access
   let sharedProjects: (typeof schema.project.$inferSelect)[] = [];
   if (orgIds.length > 0) {
     const orgProjects = await db
@@ -57,18 +64,13 @@ projects.get("/", async (c) => {
       .all();
 
     sharedProjects = orgProjects.filter((p) => {
-      // Owned by user — already in ownProjects, skip
       if (p.userId === userId) return false;
-      // Apply search filter client-side for shared projects
       if (searchNeedle && !p.name.toLowerCase().includes(searchNeedle)) return false;
-      // No team restriction — org-wide, visible to all members
       if (!p.teamId) return true;
-      // Team-restricted — only visible if user is in the team
       return teamIds.includes(p.teamId);
     });
   }
 
-  // Merge and deduplicate by id
   const seen = new Set<string>();
   const rows = [...ownProjects, ...sharedProjects].filter((p) => {
     if (seen.has(p.id)) return false;
@@ -100,17 +102,16 @@ projects.post("/", async (c) => {
   const plan = await getUserPlan(db, userId);
   const limit = PLAN_LIMITS[plan].projects;
   if (limit !== Infinity) {
-    const rows = await db
+    const existing = await db
       .select()
       .from(schema.project)
       .where(eq(schema.project.userId, userId))
       .all();
-    if (rows.length >= limit) {
+    if (existing.length >= limit) {
       return c.json({ error: "Project limit reached for your plan" }, 403);
     }
   }
 
-  // If associating with an org, verify the user is a member
   if (body.organizationId) {
     const membership = await db
       .select()
@@ -126,7 +127,6 @@ projects.post("/", async (c) => {
       return c.json({ error: "Not a member of that workspace" }, 403);
     }
 
-    // If specifying a team, verify it belongs to that org
     if (body.teamId) {
       const team = await db
         .select()
@@ -208,12 +208,10 @@ projects.patch("/:id", async (c) => {
   let newOrgId = "organizationId" in body ? (body.organizationId ?? null) : row.organizationId;
   let newTeamId = "teamId" in body ? (body.teamId ?? null) : row.teamId;
 
-  // Clearing the org also clears the team
   if (newOrgId === null) {
     newTeamId = null;
   }
 
-  // Validate org membership if setting an org
   if (newOrgId !== null) {
     const membership = await db
       .select()
@@ -222,7 +220,6 @@ projects.patch("/:id", async (c) => {
       .get();
     if (!membership) return c.json({ error: "Not a member of that workspace" }, 403);
 
-    // Validate team belongs to that org
     if (newTeamId !== null) {
       const team = await db
         .select()
@@ -243,9 +240,6 @@ projects.patch("/:id", async (c) => {
   return c.json(updated);
 });
 
-// ── Toggle routes ─────────────────────────────────────────────
-
-// Returns a project if the user owns it OR is an org member with access to it
 async function getAccessibleProject(
   db: AgnosticDatabaseInstance<typeof schema>,
   projectId: string,
@@ -259,10 +253,8 @@ async function getAccessibleProject(
 
   if (!project) return null;
 
-  // Owner always has access
   if (project.userId === userId) return project;
 
-  // Check org membership
   if (project.organizationId) {
     const membership = await db
       .select()
@@ -277,7 +269,6 @@ async function getAccessibleProject(
 
     if (!membership) return null;
 
-    // Team-restricted: also require team membership
     if (project.teamId) {
       const teamMembership = await db
         .select()
@@ -295,17 +286,50 @@ async function getAccessibleProject(
   return null;
 }
 
-// Returns a project only if strictly owned by userId (for mutations that require ownership)
-async function getOwnedProject(
+// Mount environment routes before toggle routes
+projects.route("/:projectId/environments", environments);
+
+// ── Toggle routes ─────────────────────────────────────────────
+
+async function resolveToggleContext(
   db: AgnosticDatabaseInstance<typeof schema>,
   projectId: string,
-  userId: string,
+  envSlug: string | undefined,
+  permissions: Record<string, string[]> | null,
 ) {
-  return db
-    .select()
-    .from(schema.project)
-    .where(and(eq(schema.project.id, projectId), eq(schema.project.userId, userId)))
-    .get();
+  let env;
+  try {
+    env = await resolveEnvironment(db, projectId, envSlug);
+  } catch {
+    return { error: "Environment not found" as const, status: 404 as const };
+  }
+
+  if (permissions && isEnvScopeViolation(permissions, env.slug)) {
+    return { error: "Forbidden" as const, status: 403 as const };
+  }
+
+  const defaultEnv = await getDefaultEnvironment(db, projectId);
+  if (!defaultEnv) return { error: "Default environment not found" as const, status: 500 as const };
+
+  return { env, defaultEnv };
+}
+
+async function formatToggleForEnv(
+  db: AgnosticDatabaseInstance<typeof schema>,
+  toggle: typeof schema.toggle.$inferSelect,
+  env: typeof schema.environment.$inferSelect,
+) {
+  const { enabled, meta } = await resolveToggleForEnv(db, toggle, env);
+  return {
+    id: toggle.id,
+    key: toggle.key,
+    projectId: toggle.projectId,
+    enabled,
+    meta,
+    environment: env.slug,
+    createdAt: toggle.createdAt,
+    updatedAt: toggle.updatedAt,
+  };
 }
 
 // GET /:projectId/toggles - list toggles for a project
@@ -319,7 +343,7 @@ projects.get("/:projectId/toggles", async (c) => {
     return c.json({ error: "Forbidden" }, 403);
 
   const db = c.get("db");
-  const { search } = c.req.query();
+  const { search, env: envSlug } = c.req.query();
   const searchFilter = search?.trim() ? like(schema.toggle.key, `%${search.trim()}%`) : undefined;
 
   if (keyData) {
@@ -330,6 +354,12 @@ projects.get("/:projectId/toggles", async (c) => {
       .get();
     if (!project) return c.json({ error: "Not found" }, 404);
 
+    const ctx = await resolveToggleContext(db, projectId, envSlug, keyData.permissions);
+    if ("error" in ctx) return c.json({ error: ctx.error }, ctx.status);
+
+    const allowed = await consumeApiRead(db, project.userId);
+    if (!allowed) return c.json({ error: "API read limit reached for your plan" }, 429);
+
     const rows = await db
       .select()
       .from(schema.toggle)
@@ -339,11 +369,18 @@ projects.get("/:projectId/toggles", async (c) => {
           : eq(schema.toggle.projectId, projectId),
       )
       .all();
-    return c.json(rows);
+
+    const formatted = await Promise.all(
+      rows.map((toggle) => formatToggleForEnv(db, toggle, ctx.env)),
+    );
+    return c.json(formatted);
   }
 
   const project = await getAccessibleProject(db, projectId, userId);
   if (!project) return c.json({ error: "Not found" }, 404);
+
+  const ctx = await resolveToggleContext(db, projectId, envSlug, null);
+  if ("error" in ctx) return c.json({ error: ctx.error }, ctx.status);
 
   const rows = await db
     .select()
@@ -355,7 +392,11 @@ projects.get("/:projectId/toggles", async (c) => {
     )
     .all();
 
-  return c.json(rows);
+  const formatted = await Promise.all(
+    rows.map((toggle) => formatToggleForEnv(db, toggle, ctx.env)),
+  );
+
+  return c.json(formatted);
 });
 
 // POST /:projectId/toggles - create a toggle
@@ -370,7 +411,6 @@ projects.post("/:projectId/toggles", async (c) => {
 
   const db = c.get("db");
 
-  // Session auth: must own the project. API key auth: just verify it exists.
   const project = keyData
     ? await db.select().from(schema.project).where(eq(schema.project.id, projectId)).get()
     : await getOwnedProject(db, projectId, userId);
@@ -379,6 +419,19 @@ projects.post("/:projectId/toggles", async (c) => {
   const body = await c.req.json<{ key?: string; enabled?: boolean }>();
   if (!body.key?.trim()) return c.json({ error: "key is required" }, 400);
 
+  const plan = await getUserPlan(db, project.userId);
+  const flagLimit = PLAN_LIMITS[plan].flags;
+  if (flagLimit !== Infinity) {
+    const countRow = await db
+      .select({ total: sql<number>`count(${schema.toggle.id})` })
+      .from(schema.toggle)
+      .where(eq(schema.toggle.projectId, projectId))
+      .get();
+    if ((countRow?.total ?? 0) >= flagLimit) {
+      return c.json({ error: "Flag limit reached for your plan" }, 403);
+    }
+  }
+
   const now = new Date();
   const id = crypto.randomUUID();
 
@@ -386,14 +439,22 @@ projects.post("/:projectId/toggles", async (c) => {
     id,
     projectId,
     key: body.key.trim(),
-    enabled: body.enabled ?? false,
+    enabled: false,
     createdAt: now,
     updatedAt: now,
   });
 
-  const row = await db.select().from(schema.toggle).where(eq(schema.toggle.id, id)).get();
+  await seedToggleStatesForToggle(db, projectId, id, { enabled: body.enabled ?? false });
 
-  return c.json(row, 201);
+  const row = await db.select().from(schema.toggle).where(eq(schema.toggle.id, id)).get();
+  if (!row) return c.json({ error: "Not found" }, 404);
+
+  const { env: envSlug } = c.req.query();
+  const ctx = await resolveToggleContext(db, projectId, envSlug, keyData?.permissions ?? null);
+  if ("error" in ctx) return c.json(row, 201);
+
+  const formatted = await formatToggleForEnv(db, row, ctx.env);
+  return c.json(formatted, 201);
 });
 
 // PATCH /:projectId/toggles/:id - update enabled state and/or meta
@@ -417,25 +478,41 @@ projects.patch("/:projectId/toggles/:id", async (c) => {
   const body = await c.req.json<{
     enabled?: boolean;
     meta?: Record<string, string> | null;
+    env?: string;
   }>();
   if (typeof body.enabled !== "boolean" && !("meta" in body)) {
     return c.json({ error: "enabled or meta is required" }, 400);
   }
 
+  const { env: queryEnv } = c.req.query();
+  const envSlug = body.env ?? queryEnv;
+  const ctx = await resolveToggleContext(db, projectId, envSlug, keyData?.permissions ?? null);
+  if ("error" in ctx) return c.json({ error: ctx.error }, ctx.status);
+
+  const toggle = await db
+    .select()
+    .from(schema.toggle)
+    .where(and(eq(schema.toggle.id, id), eq(schema.toggle.projectId, projectId)))
+    .get();
+  if (!toggle) return c.json({ error: "Not found" }, 404);
+
   const now = new Date();
-  await db
-    .update(schema.toggle)
-    .set({
-      ...(typeof body.enabled === "boolean" ? { enabled: body.enabled } : {}),
-      ...("meta" in body ? { meta: body.meta } : {}),
-      updatedAt: now,
-    })
-    .where(and(eq(schema.toggle.id, id), eq(schema.toggle.projectId, projectId)));
+
+  if (typeof body.enabled === "boolean") {
+    await upsertToggleState(db, id, ctx.env.id, { enabled: body.enabled });
+  }
+
+  if ("meta" in body) {
+    await upsertToggleState(db, id, ctx.env.id, { meta: body.meta });
+  }
+
+  await db.update(schema.toggle).set({ updatedAt: now }).where(eq(schema.toggle.id, id));
 
   const row = await db.select().from(schema.toggle).where(eq(schema.toggle.id, id)).get();
-
   if (!row) return c.json({ error: "Not found" }, 404);
-  return c.json(row);
+
+  const formatted = await formatToggleForEnv(db, row, ctx.env);
+  return c.json(formatted);
 });
 
 // GET /:projectId/toggles/one - get a single toggle
@@ -443,33 +520,58 @@ projects.get("/:projectId/toggles/one", async (c) => {
   const userId = c.get("user")?.id;
   if (!userId) return c.json({ error: "Unauthorized" }, 401);
 
-  const { pattern, flag } = c.req.query();
+  const { pattern, flag, env: envSlug } = c.req.query();
 
   if (!pattern && !flag) {
     return c.json({ error: "Need pattern / key query to get a toggle" }, 400);
   }
 
   const projectId = c.req.param("projectId");
-  const keyData2 = c.get("apiKeyData");
-  if (keyData2 && isScopeViolation(keyData2.permissions, projectId))
+  const keyData = c.get("apiKeyData");
+  if (keyData && isScopeViolation(keyData.permissions, projectId))
     return c.json({ error: "Forbidden" }, 403);
 
   const db = c.get("db");
 
-  const project = await getAccessibleProject(db, projectId, userId);
+  const project = keyData
+    ? await db.select().from(schema.project).where(eq(schema.project.id, projectId)).get()
+    : await getAccessibleProject(db, projectId, userId);
   if (!project) return c.json({ error: "Not found" }, 404);
 
-  const query = db.select().from(schema.toggle);
+  const ctx = await resolveToggleContext(db, projectId, envSlug, keyData?.permissions ?? null);
+  if ("error" in ctx) return c.json({ error: ctx.error }, ctx.status);
 
-  if (pattern) {
-    const normalizedPattern = `%${String(pattern).replace(/[-_ ]/g, "%")}%`;
-    const rows = await query.where(like(schema.toggle.key, normalizedPattern)).limit(1).all();
-
-    return c.json(rows.at(-1) ?? {});
+  if (keyData) {
+    const allowed = await consumeApiRead(db, project.userId);
+    if (!allowed) return c.json({ error: "API read limit reached for your plan" }, 429);
   }
 
-  const rows = await query.where(eq(schema.toggle.key, pattern)).limit(1).all();
-  return c.json(rows.at(-1) ?? {});
+  let toggle;
+  if (pattern) {
+    const normalizedPattern = `%${String(pattern).replace(/[-_ ]/g, "%")}%`;
+    const rows = await db
+      .select()
+      .from(schema.toggle)
+      .where(
+        and(eq(schema.toggle.projectId, projectId), like(schema.toggle.key, normalizedPattern)),
+      )
+      .limit(1)
+      .all();
+    toggle = rows.at(-1);
+  } else {
+    const rows = await db
+      .select()
+      .from(schema.toggle)
+      .where(and(eq(schema.toggle.projectId, projectId), eq(schema.toggle.key, flag!)))
+      .limit(1)
+      .all();
+    toggle = rows.at(-1);
+  }
+
+  if (!toggle) return c.json({});
+
+  const formatted = await formatToggleForEnv(db, toggle, ctx.env);
+  return c.json(formatted);
 });
 
 // DELETE /:projectId/toggles/:id - delete a toggle

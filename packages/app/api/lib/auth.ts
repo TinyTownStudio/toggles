@@ -6,7 +6,8 @@ import { polar, checkout, portal, webhooks } from "@polar-sh/better-auth";
 import * as schema from "../db/schema";
 import { isProduction } from "../utils/isProduction";
 import { apiKey, organization } from "better-auth/plugins";
-import { sendInvitationEmail } from "./email";
+import { sendInvitationEmailIfEnabled, type TogglesEmailEnv } from "./email";
+import { buildInviteAcceptUrl } from "./inviteLinks";
 import type { AgnosticDatabaseInstance } from "../types";
 
 type Env = Cloudflare.Env;
@@ -18,7 +19,6 @@ export function createAuth(env: Env, db: AgnosticDatabaseInstance<typeof schema>
   });
 
   return betterAuth({
-    // We can improve this with CloudFlare KV based rate limits in the future if needed
     database: drizzleAdapter(db, {
       provider: "sqlite",
       schema: {
@@ -44,20 +44,22 @@ export function createAuth(env: Env, db: AgnosticDatabaseInstance<typeof schema>
     plugins: [
       apiKey({
         enableMetadata: true,
+        // Better Auth defaults to 10 requests per 24h per key; we enforce plan limits ourselves.
+        rateLimit: {
+          enabled: false,
+        },
       }),
       organization({
         teams: {
           enabled: true,
         },
         async sendInvitationEmail(data) {
-          const baseUrl = env.BETTER_AUTH_URL.replace("/api/auth", "");
-          const inviteUrl = `${baseUrl}/invite/accept?token=${data.id}`;
-          await sendInvitationEmail({
+          const inviteUrl = buildInviteAcceptUrl(env.BETTER_AUTH_URL, data.id);
+          await sendInvitationEmailIfEnabled(env as TogglesEmailEnv, {
             to: data.email,
             inviterName: data.inviter.user.name,
             workspaceName: data.organization.name,
             inviteUrl,
-            serverToken: env.POSTMARK_SERVER_TOKEN,
           });
         },
       }),

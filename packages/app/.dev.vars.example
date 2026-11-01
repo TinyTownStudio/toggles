@@ -3,6 +3,11 @@ BETTER_AUTH_URL=http://localhost:5173/api/auth
 POLAR_ACCESS_TOKEN=your-polar-access-token
 POLAR_WEBHOOK_SECRET=your-polar-webhook-secret
 POLAR_PRO_PRODUCT_ID=your-polar-pro-product-id
-POSTMARK_SERVER_TOKEN=your-postmark-server-token
+# Email (optional). Default: disabled — invitations return a copyable invite link instead.
+# TOGGLES_EMAIL_PROVIDER=none
+# TOGGLES_EMAIL_PROVIDER=postmark
+# POSTMARK_SERVER_TOKEN=your-postmark-server-token
+# TOGGLES_EMAIL_FROM=invites@example.com
+# TOGGLES_EMAIL_FROM_NAME=Toggles
 LOCAL=true
 PRODUCT_BETA=false

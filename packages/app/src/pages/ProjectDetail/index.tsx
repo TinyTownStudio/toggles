@@ -1,16 +1,19 @@
 import { useLocation } from "preact-iso";
 import { useModel } from "@preact/signals";
 import { useEffect, useRef, useState } from "preact/hooks";
+import { toast } from "@preachjs/toast";
 import { IconChevronRight, IconTrash } from "@tabler/icons-react";
 import { AuthModel } from "../../models/auth";
 import { ProjectsModel } from "../../models/projects";
 import { TogglesModel } from "../../models/toggles";
+import { EnvironmentsModel } from "../../models/environments";
 import { OrganizationsModel } from "../../models/organizations";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { Modal } from "../../components/ui/Modal";
+import { Select } from "../../components/ui/Select";
 import { Alert } from "../../components/ui/Alert";
-import type { Toggle } from "../../lib/api";
+import type { Environment, Toggle } from "../../lib/api";
 
 type MetaRow = { key: string; value: string };
 
@@ -27,16 +30,18 @@ export function ProjectDetail({ id }: { id: string }) {
   const auth = useModel(AuthModel);
   const projectsModel = useModel(ProjectsModel);
   const togglesModel = useModel(TogglesModel);
+  const environmentsModel = useModel(EnvironmentsModel);
   const orgsModel = useModel(OrganizationsModel);
   const { route } = useLocation();
   const [newKey, setNewKey] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const [showEnvModal, setShowEnvModal] = useState(false);
+  const [newEnvName, setNewEnvName] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [editingMetaId, setEditingMetaId] = useState<string | null>(null);
   const [metaRows, setMetaRows] = useState<MetaRow[]>([]);
   const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Workspace association state
   const [selectedOrgId, setSelectedOrgId] = useState<string>("");
   const [selectedTeamId, setSelectedTeamId] = useState<string>("");
   const [savingWorkspace, setSavingWorkspace] = useState(false);
@@ -51,13 +56,21 @@ export function ProjectDetail({ id }: { id: string }) {
       }
       await Promise.all([
         projectsModel.projects.value.length === 0 ? projectsModel.fetch() : Promise.resolve(),
-        togglesModel.fetch(id),
+        environmentsModel.fetch(id),
         orgsModel.orgs.value.length === 0 ? orgsModel.fetchOrgs() : Promise.resolve(),
       ]);
+      const defaultEnv =
+        environmentsModel.environments.value.find((e) => e.isDefault) ??
+        environmentsModel.environments.value[0];
+      if (defaultEnv) {
+        togglesModel.setActiveEnvironment(defaultEnv.slug);
+        await togglesModel.fetch(id, undefined, defaultEnv.slug);
+      } else {
+        await togglesModel.fetch(id);
+      }
     });
   }, [id]);
 
-  // When project loads, initialise workspace dropdowns to current values
   useEffect(() => {
     const project = projectsModel.projects.value.find((p) => p.id === id);
     if (project) {
@@ -66,14 +79,13 @@ export function ProjectDetail({ id }: { id: string }) {
     }
   }, [projectsModel.projects.value, id]);
 
-  // When org selection changes, load teams for that org
   useEffect(() => {
     if (selectedOrgId) {
       orgsModel.fetchTeams(selectedOrgId);
     }
   }, [selectedOrgId]);
 
-  if (auth.loading.value || togglesModel.loading.value) {
+  if (auth.loading.value || togglesModel.loading.value || environmentsModel.loading.value) {
     return (
       <div class="min-h-screen bg-page pt-16 flex items-center justify-center">
         <p class="text-content-tertiary text-sm">Loading...</p>
@@ -82,6 +94,8 @@ export function ProjectDetail({ id }: { id: string }) {
   }
 
   const project = projectsModel.projects.value.find((p: { id: string }) => p.id === id);
+  const envs = environmentsModel.environments.value;
+  const activeSlug = togglesModel.activeEnvironment.value;
 
   const handleCreate = async (e: Event) => {
     e.preventDefault();
@@ -90,6 +104,31 @@ export function ProjectDetail({ id }: { id: string }) {
     await togglesModel.create(id, key);
     setNewKey("");
     setShowModal(false);
+  };
+
+  const handleCreateEnv = async (e: Event) => {
+    e.preventDefault();
+    const name = newEnvName.trim();
+    if (!name) return;
+    const created = await environmentsModel.create(id, name);
+    setNewEnvName("");
+    if (created) await environmentsModel.fetch(id);
+  };
+
+  const syncMetaEditor = (toggleId: string) => {
+    const t = togglesModel.toggles.value.find((item) => item.id === toggleId);
+    if (!t) {
+      closeMeta();
+      return;
+    }
+    const rows = metaToRows(t.meta);
+    setMetaRows(rows.length > 0 ? rows : [{ key: "", value: "" }]);
+  };
+
+  const handleEnvChange = async (env: Environment) => {
+    togglesModel.setActiveEnvironment(env.slug);
+    await togglesModel.fetch(id, searchQuery || undefined, env.slug);
+    if (editingMetaId) syncMetaEditor(editingMetaId);
   };
 
   const handleSearch = (query: string) => {
@@ -112,7 +151,8 @@ export function ProjectDetail({ id }: { id: string }) {
   };
 
   const handleSaveMeta = async (toggleId: string) => {
-    await togglesModel.saveMeta(id, toggleId, rowsToMeta(metaRows));
+    const ok = await togglesModel.saveMeta(id, toggleId, rowsToMeta(metaRows));
+    if (ok) toast.success("Metadata saved");
   };
 
   const handleSaveWorkspace = async (e: Event) => {
@@ -131,12 +171,10 @@ export function ProjectDetail({ id }: { id: string }) {
     }
   };
 
-  // Teams filtered to the currently selected org
   const availableTeams = selectedOrgId
     ? orgsModel.teams.value.filter((t) => t.organizationId === selectedOrgId)
     : [];
 
-  // Is the current user the project owner?
   const isOwner = project?.userId === auth.user?.value?.id;
 
   return (
@@ -149,24 +187,59 @@ export function ProjectDetail({ id }: { id: string }) {
           >
             ← Projects
           </a>
-          <div class="flex items-center justify-between gap-4">
-            <h1 class="text-2xl font-bold tracking-tight text-content">
-              {project?.name ?? "Project"}
-            </h1>
-            <div class="flex items-center gap-2">
-              <Input
-                type="search"
-                value={searchQuery}
-                onInput={(e) => handleSearch((e.target as HTMLInputElement).value)}
-                placeholder="Search…"
-                class="w-48"
-              />
-              <Button onClick={() => setShowModal(true)}>New Flag</Button>
+          <h1 class="text-2xl font-bold tracking-tight text-content">
+            {project?.name ?? "Project"}
+          </h1>
+          <div class="mt-4 flex gap-4">
+            <div class="flex justify-between w-full gap-3 shrink-0">
+              <div class="flex flex-col w-1/4 gap-1.5">
+                {envs.length > 0 && (
+                  <div class="flex w-full flex-col gap-1.5">
+                    <div class="flex items-stretch gap-2">
+                      <Select
+                        value={activeSlug ?? ""}
+                        options={envs
+                          .map((env) => ({
+                            value: env.slug,
+                            label: env.name,
+                            sublabel: env.slug,
+                            ...(env.isDefault ? { badge: "default" } : {}),
+                          }))
+                          .concat([
+                            {
+                              value: "manage",
+                              label: "Manage",
+                              sublabel: "Manage environments",
+                            },
+                          ])}
+                        onChange={(slug) => {
+                          if (slug === "manage") {
+                            setShowEnvModal(true);
+                            return;
+                          }
+                          const env = envs.find((item) => item.slug === slug);
+                          if (env) handleEnvChange(env);
+                        }}
+                        class="min-w-0 w-full flex-1"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div class="flex items-start gap-2">
+                <Input
+                  type="search"
+                  value={searchQuery}
+                  onInput={(e) => handleSearch((e.target as HTMLInputElement).value)}
+                  placeholder="Search…"
+                  class="w-48"
+                />
+                <Button onClick={() => setShowModal(true)}>New Flag</Button>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Workspace association */}
         {isOwner && (
           <div class="bg-surface border border-edge rounded-xl p-5 mb-8">
             <h2 class="text-sm font-semibold text-content mb-4">Workspace</h2>
@@ -220,7 +293,7 @@ export function ProjectDetail({ id }: { id: string }) {
                   </select>
                 </div>
               )}
-              <Button type="submit" size="sm" disabled={savingWorkspace}>
+              <Button type="submit" disabled={savingWorkspace}>
                 {savingWorkspace ? "Saving…" : "Save"}
               </Button>
             </form>
@@ -375,12 +448,7 @@ export function ProjectDetail({ id }: { id: string }) {
                           + Add field
                         </Button>
                         <div class="flex-1" />
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          size="sm"
-                          onClick={closeMeta}
-                        >
+                        <Button type="button" variant="secondary" size="sm" onClick={closeMeta}>
                           Cancel
                         </Button>
                         <Button
@@ -421,6 +489,74 @@ export function ProjectDetail({ id }: { id: string }) {
               </Button>
             </div>
           </form>
+        </Modal>
+      )}
+
+      {showEnvModal && (
+        <Modal title="Manage Environments" onClose={() => setShowEnvModal(false)}>
+          <div class="flex flex-col gap-4">
+            <p class="text-xs text-content-tertiary">
+              {envs.length} of 3 environments used on the free plan.
+            </p>
+
+            {environmentsModel.error.value && (
+              <p class="text-sm text-error-text">{environmentsModel.error.value}</p>
+            )}
+
+            <ul class="space-y-2">
+              {envs.map((env) => (
+                <li
+                  key={env.id}
+                  class="flex items-center justify-between gap-2 rounded-lg border border-edge px-3 py-2"
+                >
+                  <div>
+                    <p class="text-sm font-medium text-content">{env.name}</p>
+                    <p class="text-xs font-mono text-content-faint">{env.slug}</p>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    {env.isDefault ? (
+                      <span class="text-xs text-content-faint">Default</span>
+                    ) : (
+                      <>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => environmentsModel.setDefault(id, env.id)}
+                        >
+                          Set default
+                        </Button>
+                        <Button
+                          variant="danger-icon"
+                          size="sm"
+                          aria-label={`Delete ${env.name}`}
+                          onClick={() => environmentsModel.remove(id, env.id)}
+                        >
+                          <IconTrash size={14} stroke={2} />
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+
+            <form onSubmit={handleCreateEnv} class="flex gap-2">
+              <Input
+                type="text"
+                value={newEnvName}
+                onInput={(e) => setNewEnvName((e.target as HTMLInputElement).value)}
+                placeholder="New environment name"
+                disabled={environmentsModel.creating.value}
+                class="flex-1"
+              />
+              <Button
+                type="submit"
+                disabled={environmentsModel.creating.value || !newEnvName.trim()}
+              >
+                Add
+              </Button>
+            </form>
+          </div>
         </Modal>
       )}
     </div>

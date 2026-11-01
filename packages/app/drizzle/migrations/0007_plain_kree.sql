@@ -54,4 +54,7 @@ CREATE TABLE `teamMember` (
 );
 --> statement-breakpoint
 CREATE INDEX `team_member_team_idx` ON `teamMember` (`team_id`);--> statement-breakpoint
+ALTER TABLE `project` ADD `organization_id` text REFERENCES organization(id);--> statement-breakpoint
+ALTER TABLE `project` ADD `team_id` text REFERENCES team(id);--> statement-breakpoint
+CREATE INDEX `project_org_idx` ON `project` (`organization_id`);--> statement-breakpoint
 ALTER TABLE `session` ADD `active_organization_id` text;

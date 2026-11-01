@@ -1,0 +1,28 @@
+/* Map Basecoat / Nova shadcn tokens onto app design tokens */
+
+:root,
+.dark {
+  --radius: 0.5rem;
+
+  --background: var(--t-page);
+  --foreground: var(--t-content);
+  --card: var(--t-surface);
+  --card-foreground: var(--t-content);
+  --popover: var(--t-surface);
+  --popover-foreground: var(--t-content);
+  --primary: var(--t-cta);
+  --primary-foreground: var(--t-cta-text);
+  --secondary: var(--t-raised);
+  --secondary-foreground: var(--t-content-secondary);
+  --muted: var(--t-raised);
+  --muted-foreground: var(--t-content-tertiary);
+  --accent: var(--t-raised-hover);
+  --accent-foreground: var(--t-content);
+  --destructive: var(--t-error-text);
+  --border: var(--t-edge);
+  --input: var(--t-edge);
+  --ring: var(--t-accent);
+
+  --font-sans: "DM Sans", system-ui, -apple-system, sans-serif;
+  --font-mono: "DM Mono", ui-monospace, monospace;
+}

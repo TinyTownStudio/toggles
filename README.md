@@ -8,10 +8,14 @@
   - [x] To get a single flag (`/:projectId/toggles/one?flag='dark-mode'`)
   - [x] toggle flag (`PATCH /:projectId/toggles/:id`)
 - [ ] App 
-    - [ ] Environments 
-    - [ ] Segmentation by Meta props 
+    - [x] Environments 
+    - [ ] ~~Segmentation by Meta props~~ can be done on the client for now
 - [ ] Admin Interface 
 - [ ] Self Hosted 
   - [ ] Docs
   - [x] Server and Vite Plugin implementation 
-  - [ ] Docker wrapper
+  - [x] Docker wrapper
+
+## License
+
+This project is licensed under the [MIT License](LICENSE). Copyright (c) 2026 TinyTown Studio.

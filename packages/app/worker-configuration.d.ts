@@ -13,6 +13,9 @@ declare namespace Cloudflare {
     POLAR_WEBHOOK_SECRET: string;
     POLAR_PRO_PRODUCT_ID: string;
     POSTMARK_SERVER_TOKEN: string;
+    TOGGLES_EMAIL_PROVIDER?: string;
+    TOGGLES_EMAIL_FROM?: string;
+    TOGGLES_EMAIL_FROM_NAME?: string;
     LOCAL: string;
     PRODUCT_BETA: string;
   }
