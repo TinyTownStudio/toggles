@@ -1,5 +1,6 @@
 import { CodeBlock } from "../primitives";
 import { SectionHeading } from "../headings";
+import { API_V1_BASE_URL } from "../../../lib/constants";
 
 export function Introduction() {
   return (
@@ -9,7 +10,7 @@ export function Introduction() {
         The Toggles REST API lets you read and manage feature flags programmatically. All endpoints
         are served from{" "}
         <code class="font-mono text-xs bg-surface border border-edge px-1.5 py-0.5 rounded">
-          https://toggles.tinytown.studio/api/v1
+          {API_V1_BASE_URL}
         </code>
         .
       </p>

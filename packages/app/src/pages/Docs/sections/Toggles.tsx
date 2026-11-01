@@ -1,4 +1,5 @@
 import { SectionHeading, SubHeading } from "../headings";
+import { API_BASE_URL } from "../../../lib/constants";
 import { Endpoint } from "../Endpoint";
 
 export function Toggles() {
@@ -37,10 +38,10 @@ export function Toggles() {
     "updatedAt": "2024-01-16T08:00:00.000Z"
   }
 ]`}
-        curlExample={`curl https://toggles.tinytown.studio/api/v1/projects/proj_01hz.../toggles \\
+        curlExample={`curl ${API_BASE_URL}/api/v1/projects/proj_01hz.../toggles \\
   -H "Authorization: Bearer tgs_xxxxxxxxxxxxxxxxxxxxxxxx"`}
         jsExample={`const res = await fetch(
-  "https://toggles.tinytown.studio/api/v1/projects/proj_01hz.../toggles",
+  "${API_BASE_URL}/api/v1/projects/proj_01hz.../toggles",
   {
     headers: {
       Authorization: "Bearer tgs_xxxxxxxxxxxxxxxxxxxxxxxx",
@@ -88,15 +89,15 @@ const toggles = await res.json();`}
   "updatedAt": "2024-01-16T08:00:00.000Z"
 }`}
         curlExample={`# Exact key lookup
-curl "https://toggles.tinytown.studio/api/v1/projects/proj_01hz.../toggles/one?flag=new-checkout" \\
+curl "${API_BASE_URL}/api/v1/projects/proj_01hz.../toggles/one?flag=new-checkout" \\
   -H "Authorization: Bearer tgs_xxxxxxxxxxxxxxxxxxxxxxxx"
 
 # Glob pattern
-curl "https://toggles.tinytown.studio/api/v1/projects/proj_01hz.../toggles/one?pattern=checkout-*" \\
+curl "${API_BASE_URL}/api/v1/projects/proj_01hz.../toggles/one?pattern=checkout-*" \\
   -H "Authorization: Bearer tgs_xxxxxxxxxxxxxxxxxxxxxxxx"`}
         jsExample={`// Exact key lookup
 const res = await fetch(
-  "https://toggles.tinytown.studio/api/v1/projects/proj_01hz.../toggles/one?flag=new-checkout",
+  "${API_BASE_URL}/api/v1/projects/proj_01hz.../toggles/one?flag=new-checkout",
   {
     headers: {
       Authorization: "Bearer tgs_xxxxxxxxxxxxxxxxxxxxxxxx",
@@ -139,12 +140,12 @@ if (toggle.enabled) {
   "createdAt": "2024-01-16T08:00:00.000Z",
   "updatedAt": "2024-01-16T08:00:00.000Z"
 }`}
-        curlExample={`curl -X POST https://toggles.tinytown.studio/api/v1/projects/proj_01hz.../toggles \\
+        curlExample={`curl -X POST ${API_BASE_URL}/api/v1/projects/proj_01hz.../toggles \\
   -H "Authorization: Bearer tgs_xxxxxxxxxxxxxxxxxxxxxxxx" \\
   -H "Content-Type: application/json" \\
   -d '{"key": "new-checkout", "enabled": false}'`}
         jsExample={`const res = await fetch(
-  "https://toggles.tinytown.studio/api/v1/projects/proj_01hz.../toggles",
+  "${API_BASE_URL}/api/v1/projects/proj_01hz.../toggles",
   {
     method: "POST",
     headers: {
@@ -188,20 +189,20 @@ const toggle = await res.json();`}
 }`}
         curlExample={`# Flip a toggle on
 curl -X PATCH \\
-  https://toggles.tinytown.studio/api/v1/projects/proj_01hz.../toggles/tgl_01hz... \\
+  ${API_BASE_URL}/api/v1/projects/proj_01hz.../toggles/tgl_01hz... \\
   -H "Authorization: Bearer tgs_xxxxxxxxxxxxxxxxxxxxxxxx" \\
   -H "Content-Type: application/json" \\
   -d '{"enabled": true}'
 
 # Update metadata
 curl -X PATCH \\
-  https://toggles.tinytown.studio/api/v1/projects/proj_01hz.../toggles/tgl_01hz... \\
+  ${API_BASE_URL}/api/v1/projects/proj_01hz.../toggles/tgl_01hz... \\
   -H "Authorization: Bearer tgs_xxxxxxxxxxxxxxxxxxxxxxxx" \\
   -H "Content-Type: application/json" \\
   -d '{"meta": {"description": "Enabled for all users"}}'`}
         jsExample={`// Flip a toggle on
 await fetch(
-  "https://toggles.tinytown.studio/api/v1/projects/proj_01hz.../toggles/tgl_01hz...",
+  "${API_BASE_URL}/api/v1/projects/proj_01hz.../toggles/tgl_01hz...",
   {
     method: "PATCH",
     headers: {
@@ -214,7 +215,7 @@ await fetch(
 
 // Update metadata
 await fetch(
-  "https://toggles.tinytown.studio/api/v1/projects/proj_01hz.../toggles/tgl_01hz...",
+  "${API_BASE_URL}/api/v1/projects/proj_01hz.../toggles/tgl_01hz...",
   {
     method: "PATCH",
     headers: {
@@ -234,10 +235,10 @@ await fetch(
         authNote="Requires an admin API key or session auth."
         responseExample={`{ "success": true }`}
         curlExample={`curl -X DELETE \\
-  https://toggles.tinytown.studio/api/v1/projects/proj_01hz.../toggles/tgl_01hz... \\
+  ${API_BASE_URL}/api/v1/projects/proj_01hz.../toggles/tgl_01hz... \\
   -H "Authorization: Bearer tgs_xxxxxxxxxxxxxxxxxxxxxxxx"`}
         jsExample={`await fetch(
-  "https://toggles.tinytown.studio/api/v1/projects/proj_01hz.../toggles/tgl_01hz...",
+  "${API_BASE_URL}/api/v1/projects/proj_01hz.../toggles/tgl_01hz...",
   {
     method: "DELETE",
     headers: {

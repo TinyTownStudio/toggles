@@ -1,13 +1,20 @@
+# Worker / API (Wrangler dev and self-hosted Node). Must match the URL users open in the browser.
+APP_ORIGIN=http://localhost:5173
 BETTER_AUTH_SECRET=secret-phrase
-BETTER_AUTH_URL=http://localhost:5173/api/auth
+BETTER_AUTH_URL=http://localhost:5173
 POLAR_ACCESS_TOKEN=your-polar-access-token
 POLAR_WEBHOOK_SECRET=your-polar-webhook-secret
 POLAR_PRO_PRODUCT_ID=your-polar-pro-product-id
 # Email (optional). Default: disabled — invitations return a copyable invite link instead.
 # TOGGLES_EMAIL_PROVIDER=none
-# TOGGLES_EMAIL_PROVIDER=postmark
-# POSTMARK_SERVER_TOKEN=your-postmark-server-token
+# Self-hosted SMTP (Node/Docker only):
+# TOGGLES_EMAIL_PROVIDER=smtp
+# TOGGLES_SMTP_HOST=smtp.example.com
+# TOGGLES_SMTP_PORT=587
+# TOGGLES_SMTP_USER=user
+# TOGGLES_SMTP_PASSWORD=secret
 # TOGGLES_EMAIL_FROM=invites@example.com
 # TOGGLES_EMAIL_FROM_NAME=Toggles
+# Hosted Workers: bind EMAIL in wrangler.jsonc; optional TOGGLES_EMAIL_PROVIDER=cloudflare
 LOCAL=true
 PRODUCT_BETA=false

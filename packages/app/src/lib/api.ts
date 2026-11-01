@@ -245,6 +245,7 @@ export interface Workspace {
   name: string;
   slug: string;
   createdAt: number;
+  role: "owner" | "member";
 }
 
 export interface WorkspaceMember {

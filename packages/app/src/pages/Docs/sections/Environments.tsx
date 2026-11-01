@@ -1,7 +1,8 @@
 import { SectionHeading, SubHeading } from "../headings";
 import { Endpoint } from "../Endpoint";
+import { API_BASE_URL } from "../../../lib/constants";
 
-const BASE = "https://toggles.tinytown.studio";
+const BASE = API_BASE_URL;
 
 export function Environments() {
   return (

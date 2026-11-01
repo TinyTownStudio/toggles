@@ -16,6 +16,7 @@ RUN mkdir -p ./packages/app
 
 COPY ./packages/app ./packages/app/
 
+ENV TOGGLES_SELF_HOST_BUILD=true
 RUN cd packages/app && pnpm i --frozen-lockfile && pnpm vite build
 
 CMD ["node","packages/app/dist/node-server/index.js"]

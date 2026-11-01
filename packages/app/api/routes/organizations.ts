@@ -1,11 +1,32 @@
 import { Hono } from "hono";
-import { eq, and, inArray } from "drizzle-orm";
+import { eq, and, inArray, sql } from "drizzle-orm";
 import * as schema from "../db/schema";
 import { getUserPlan, PLAN_LIMITS } from "../lib/plans";
-import { sendInvitationEmailIfEnabled, type TogglesEmailEnv } from "../lib/email";
+import type { TogglesEmailEnv } from "../lib/email";
+import { getEmailRuntime } from "../lib/emailRuntime";
+import { createInvitationToken, sendWorkspaceInvitationEmail } from "../lib/invitationEmail";
 import { buildInviteAcceptUrl } from "../lib/inviteLinks";
 import { env } from "hono/adapter";
 import type { Bindings, Variables, AgnosticDatabaseInstance } from "../types";
+
+const EMAIL_MAX_LENGTH = 254;
+
+function isValidInviteEmail(email: string): boolean {
+  if (email.length > EMAIL_MAX_LENGTH) return false;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+async function countOrgOwners(
+  db: AgnosticDatabaseInstance<typeof schema>,
+  orgId: string,
+): Promise<number> {
+  const row = await db
+    .select({ total: sql<number>`count(*)` })
+    .from(schema.member)
+    .where(and(eq(schema.member.organizationId, orgId), eq(schema.member.role, "owner")))
+    .get();
+  return row?.total ?? 0;
+}
 
 export const organizations = new Hono<{
   Bindings: Bindings;
@@ -58,6 +79,7 @@ organizations.post("/", async (c) => {
 
   const body = await c.req.json<{ name?: string; slug?: string }>();
   if (!body.name?.trim()) return c.json({ error: "name is required" }, 400);
+  if (body.name.trim().length > 120) return c.json({ error: "name is too long" }, 400);
   if (!body.slug?.trim()) return c.json({ error: "slug is required" }, 400);
 
   const slug = body.slug
@@ -160,6 +182,7 @@ organizations.post("/:orgId/invite", async (c) => {
   if (!body.email?.trim()) return c.json({ error: "email is required" }, 400);
 
   const email = body.email.trim().toLowerCase();
+  if (!isValidInviteEmail(email)) return c.json({ error: "Invalid email address" }, 400);
   const role = body.role === "owner" ? "owner" : "member";
 
   const org = await db
@@ -202,8 +225,21 @@ organizations.post("/:orgId/invite", async (c) => {
   const inviterUser = await db.select().from(schema.user).where(eq(schema.user.id, userId)).get();
   if (!inviterUser) return c.json({ error: "Inviter not found" }, 500);
 
+  const pendingInvite = await db
+    .select()
+    .from(schema.invitation)
+    .where(
+      and(
+        eq(schema.invitation.organizationId, orgId),
+        eq(schema.invitation.email, email),
+        eq(schema.invitation.status, "pending"),
+      ),
+    )
+    .get();
+  if (pendingInvite) return c.json({ error: "Invitation already pending for this email" }, 409);
+
   const now = new Date();
-  const invitationId = crypto.randomUUID();
+  const invitationId = createInvitationToken();
   const expiresAt = new Date(now.getTime() + 48 * 60 * 60 * 1000);
 
   await db.insert(schema.invitation).values({
@@ -221,7 +257,7 @@ organizations.post("/:orgId/invite", async (c) => {
   const inviteUrl = buildInviteAcceptUrl(bindings.BETTER_AUTH_URL, invitationId);
 
   try {
-    await sendInvitationEmailIfEnabled(bindings as TogglesEmailEnv, {
+    await sendWorkspaceInvitationEmail(bindings as TogglesEmailEnv, getEmailRuntime(bindings), {
       to: email,
       inviterName: inviterUser.name,
       workspaceName: org.name,
@@ -256,6 +292,13 @@ organizations.delete("/:orgId/members/:memberId", async (c) => {
 
   if (!target) return c.json({ error: "Member not found" }, 404);
   if (target.userId === userId) return c.json({ error: "Cannot remove yourself" }, 400);
+
+  if (target.role === "owner") {
+    const ownerCount = await countOrgOwners(db, orgId);
+    if (ownerCount <= 1) {
+      return c.json({ error: "Cannot remove the last workspace owner" }, 400);
+    }
+  }
 
   await db.delete(schema.member).where(eq(schema.member.id, memberId));
 
@@ -315,6 +358,7 @@ organizations.post("/:orgId/teams", async (c) => {
 
   const body = await c.req.json<{ name?: string }>();
   if (!body.name?.trim()) return c.json({ error: "name is required" }, 400);
+  if (body.name.trim().length > 120) return c.json({ error: "name is too long" }, 400);
 
   const now = new Date();
   const teamId = crypto.randomUUID();
@@ -384,6 +428,13 @@ organizations.delete("/:orgId/teams/:teamId/members/:targetUserId", async (c) =>
 
   const membership = await getOrgMembership(db, userId, orgId);
   if (!membership || membership.role !== "owner") return c.json({ error: "Forbidden" }, 403);
+
+  const team = await db
+    .select()
+    .from(schema.team)
+    .where(and(eq(schema.team.id, teamId), eq(schema.team.organizationId, orgId)))
+    .get();
+  if (!team) return c.json({ error: "Team not found" }, 404);
 
   await db
     .delete(schema.teamMember)

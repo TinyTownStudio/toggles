@@ -53,7 +53,7 @@ describe("workspaces and teams", () => {
     expect(res.status).toBe(403);
   });
 
-  it("invites a new user without calling Postmark when email is disabled", async () => {
+  it("invites a new user without sending email when email is disabled", async () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch");
 
     const res = await apiPost(`/api/v1/organizations/${orgId}/invite`, {
@@ -62,14 +62,35 @@ describe("workspaces and teams", () => {
     });
     expect(res.status).toBe(201);
     const body = (await res.json()) as { invitationId: string; inviteUrl: string };
-    expect(body.invitationId).toBeTruthy();
+    expect(body.invitationId).toMatch(/^[a-f0-9]{64}$/);
     expect(body.inviteUrl).toContain(body.invitationId);
 
-    const postmarkCalls = fetchSpy.mock.calls.filter(([url]) =>
-      String(url).includes("postmarkapp.com"),
-    );
-    expect(postmarkCalls).toHaveLength(0);
+    const outboundCalls = fetchSpy.mock.calls.filter(([url]) => {
+      const href = String(url);
+      return href.includes("smtp") || href.includes("postmarkapp.com");
+    });
+    expect(outboundCalls).toHaveLength(0);
     fetchSpy.mockRestore();
+  });
+
+  it("rejects invalid invite emails and duplicate pending invitations", async () => {
+    const bad = await apiPost(`/api/v1/organizations/${orgId}/invite`, {
+      cookie: ownerCookie,
+      body: { email: "not-an-email", role: "member" },
+    });
+    expect(bad.status).toBe(400);
+
+    const first = await apiPost(`/api/v1/organizations/${orgId}/invite`, {
+      cookie: ownerCookie,
+      body: { email: "dup@teams.test", role: "member" },
+    });
+    expect(first.status).toBe(201);
+
+    const dup = await apiPost(`/api/v1/organizations/${orgId}/invite`, {
+      cookie: ownerCookie,
+      body: { email: "dup@teams.test", role: "member" },
+    });
+    expect(dup.status).toBe(409);
   });
 
   it("accepts an invitation and grants team-scoped project access", async () => {
@@ -196,5 +217,107 @@ describe("workspaces and teams", () => {
     expect(res.status).toBe(200);
     const projects = (await res.json()) as { id: string }[];
     expect(projects.some((p) => p.id === sharedProjectId)).toBe(false);
+  });
+
+  it("forbids non-members from reading workspace members", async () => {
+    const res = await apiGet(`/api/v1/organizations/${orgId}/members`, {
+      cookie: outsiderCookie,
+    });
+    expect(res.status).toBe(403);
+  });
+
+  it("forbids workspace members from inviting or managing teams", async () => {
+    const inviteRes = await apiPost(`/api/v1/organizations/${orgId}/invite`, {
+      cookie: ownerCookie,
+      body: { email: "regular@teams.test", role: "member" },
+    });
+    expect(inviteRes.status).toBe(201);
+    const { invitationId } = (await inviteRes.json()) as { invitationId: string };
+
+    const memberCookie = await signUp("regular@teams.test", "password1234", "Regular");
+    await grantProPlan("regular@teams.test");
+    const acceptRes = await apiPost("/api/auth/organization/accept-invitation", {
+      cookie: memberCookie,
+      body: { invitationId },
+    });
+    expect(acceptRes.status).toBe(200);
+
+    const inviteAttempt = await apiPost(`/api/v1/organizations/${orgId}/invite`, {
+      cookie: memberCookie,
+      body: { email: "blocked@teams.test", role: "member" },
+    });
+    expect(inviteAttempt.status).toBe(403);
+
+    const teamAttempt = await apiPost(`/api/v1/organizations/${orgId}/teams`, {
+      cookie: memberCookie,
+      body: { name: "Sneaky" },
+    });
+    expect(teamAttempt.status).toBe(403);
+  });
+
+  it("protects the sole workspace owner from removal", async () => {
+    const loneCookie = await signUp("loneowner@teams.test", "password1234", "Lone Owner");
+    await grantProPlan("loneowner@teams.test");
+    const orgRes = await apiPost("/api/v1/organizations", {
+      cookie: loneCookie,
+      body: { name: "Solo Org", slug: "solo-org" },
+    });
+    expect(orgRes.status).toBe(201);
+    const soloOrgId = ((await orgRes.json()) as { id: string }).id;
+
+    const membersRes = await apiGet(`/api/v1/organizations/${soloOrgId}/members`, {
+      cookie: loneCookie,
+    });
+    const { members } = (await membersRes.json()) as { members: { id: string }[] };
+    expect(members).toHaveLength(1);
+
+    const selfRemove = await apiDelete(
+      `/api/v1/organizations/${soloOrgId}/members/${members[0]!.id}`,
+      {
+        cookie: loneCookie,
+      },
+    );
+    expect(selfRemove.status).toBe(400);
+  });
+
+  it("rejects team member changes when the team is outside the workspace", async () => {
+    const otherOrg = await apiPost("/api/v1/organizations", {
+      cookie: outsiderCookie,
+      body: { name: "Other", slug: "other-org" },
+    });
+    expect(otherOrg.status).toBe(201);
+    const otherOrgId = ((await otherOrg.json()) as { id: string }).id;
+
+    const otherTeam = await apiPost(`/api/v1/organizations/${otherOrgId}/teams`, {
+      cookie: outsiderCookie,
+      body: { name: "Other Team" },
+    });
+    expect(otherTeam.status).toBe(201);
+    const otherTeamId = ((await otherTeam.json()) as { id: string }).id;
+
+    const ownerUserId = await getUserIdByEmail("owner@teams.test");
+    const badAdd = await apiPost(`/api/v1/organizations/${orgId}/teams/${otherTeamId}/members`, {
+      cookie: ownerCookie,
+      body: { userId: ownerUserId },
+    });
+    expect(badAdd.status).toBe(404);
+  });
+
+  it("keeps personal projects working without a workspace", async () => {
+    const soloCookie = await signUp("solo@teams.test", "password1234", "Solo");
+    const projectRes = await apiPost("/api/v1/projects", {
+      cookie: soloCookie,
+      body: { name: "Personal" },
+    });
+    expect(projectRes.status).toBe(201);
+    const projectId = ((await projectRes.json()) as { id: string }).id;
+
+    const list = await apiGet("/api/v1/projects", { cookie: soloCookie });
+    expect(list.status).toBe(200);
+    const projects = (await list.json()) as { id: string }[];
+    expect(projects.some((p) => p.id === projectId)).toBe(true);
+
+    const toggles = await apiGet(`/api/v1/projects/${projectId}/toggles`, { cookie: soloCookie });
+    expect(toggles.status).toBe(200);
   });
 });

@@ -131,7 +131,19 @@ export function Teams() {
   }
 
   const org = orgsModel.currentOrg.value;
-  if (!org) return null;
+  if (!org) {
+    if (orgsModel.loading.value) {
+      return (
+        <div class="min-h-screen bg-page pt-16 flex items-center justify-center">
+          <p class="text-content-tertiary text-sm">Loading workspace…</p>
+        </div>
+      );
+    }
+    return null;
+  }
+
+  const isOwner = org.role === "owner";
+  const currentUserId = auth.user.value?.id;
 
   const handleInvite = async (e: Event) => {
     e.preventDefault();
@@ -199,70 +211,78 @@ export function Teams() {
 
         {tab === "members" && (
           <div>
-            {/* Invite form */}
-            <div class="bg-surface border border-edge rounded-xl p-6 mb-8">
-              <h2 class="text-sm font-semibold text-content mb-4">Invite a member</h2>
-              {inviteSuccess && (
-                <Alert variant="success" class="mb-4">
-                  {orgsModel.lastInviteUrl.value
-                    ? "Invitation created. Copy the link below and share it with your teammate."
-                    : "Invitation sent successfully."}
-                </Alert>
-              )}
-              {orgsModel.lastInviteUrl.value && (
-                <div class="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center">
-                  <Input readOnly value={orgsModel.lastInviteUrl.value} class="font-mono text-xs" />
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={async () => {
-                      await navigator.clipboard.writeText(orgsModel.lastInviteUrl.value!);
-                      setCopiedInviteLink(true);
-                      setTimeout(() => setCopiedInviteLink(false), 2000);
-                    }}
-                  >
-                    {copiedInviteLink ? "Copied" : "Copy link"}
-                  </Button>
-                </div>
-              )}
-              <form onSubmit={handleInvite} class="flex gap-2 items-end flex-wrap">
-                <div class="flex-1 min-w-48">
-                  <Label>
-                    <LabelText>Email</LabelText>
+            {isOwner && (
+              <div class="bg-surface border border-edge rounded-xl p-6 mb-8">
+                <h2 class="text-sm font-semibold text-content mb-4">Invite a member</h2>
+                {inviteSuccess && (
+                  <Alert variant="success" class="mb-4">
+                    {orgsModel.lastInviteUrl.value
+                      ? "Invitation created. Copy the link below and share it with your teammate."
+                      : "Invitation sent successfully."}
+                  </Alert>
+                )}
+                {orgsModel.lastInviteUrl.value && (
+                  <div class="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center">
                     <Input
-                      type="email"
-                      required
-                      value={inviteEmail}
-                      onInput={(e) => setInviteEmail((e.target as HTMLInputElement).value)}
-                      placeholder="colleague@example.com"
-                      disabled={inviting}
+                      readOnly
+                      value={orgsModel.lastInviteUrl.value}
+                      class="font-mono text-xs"
                     />
-                  </Label>
-                </div>
-                <div>
-                  <Label>
-                    <LabelText>Role</LabelText>
-                    <select
-                      class="h-9 rounded-lg border border-edge bg-page text-content text-sm px-2 focus:outline-none focus:ring-2 focus:ring-accent"
-                      value={inviteRole}
-                      onChange={(e) =>
-                        setInviteRole((e.target as HTMLSelectElement).value as "owner" | "member")
-                      }
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={async () => {
+                        await navigator.clipboard.writeText(orgsModel.lastInviteUrl.value!);
+                        setCopiedInviteLink(true);
+                        setTimeout(() => setCopiedInviteLink(false), 2000);
+                      }}
                     >
-                      <option value="member">Member</option>
-                      <option value="owner">Owner</option>
-                    </select>
-                  </Label>
-                </div>
-                <Button type="submit" disabled={inviting || !inviteEmail.trim()}>
-                  {inviting ? "Sending…" : "Invite"}
-                </Button>
-              </form>
-            </div>
+                      {copiedInviteLink ? "Copied" : "Copy link"}
+                    </Button>
+                  </div>
+                )}
+                <form onSubmit={handleInvite} class="flex gap-2 items-end flex-wrap">
+                  <div class="flex-1 min-w-48">
+                    <Label>
+                      <LabelText>Email</LabelText>
+                      <Input
+                        type="email"
+                        required
+                        value={inviteEmail}
+                        onInput={(e) => setInviteEmail((e.target as HTMLInputElement).value)}
+                        placeholder="colleague@example.com"
+                        disabled={inviting}
+                      />
+                    </Label>
+                  </div>
+                  <div>
+                    <Label>
+                      <LabelText>Role</LabelText>
+                      <select
+                        class="h-9 rounded-lg border border-edge bg-page text-content text-sm px-2 focus:outline-none focus:ring-2 focus:ring-accent"
+                        value={inviteRole}
+                        onChange={(e) =>
+                          setInviteRole((e.target as HTMLSelectElement).value as "owner" | "member")
+                        }
+                      >
+                        <option value="member">Member</option>
+                        <option value="owner">Owner</option>
+                      </select>
+                    </Label>
+                  </div>
+                  <Button type="submit" disabled={inviting || !inviteEmail.trim()}>
+                    {inviting ? "Sending…" : "Invite"}
+                  </Button>
+                </form>
+              </div>
+            )}
 
             {/* Member list */}
             {orgsModel.loading.value ? (
               <p class="text-content-tertiary text-sm">Loading members…</p>
+            ) : orgsModel.members.value.length === 0 &&
+              orgsModel.invitations.value.filter((inv) => inv.status === "pending").length === 0 ? (
+              <p class="text-content-tertiary text-sm">No members yet.</p>
             ) : (
               <ul class="space-y-2">
                 {orgsModel.members.value.map((m) => (
@@ -276,13 +296,15 @@ export function Teams() {
                     </div>
                     <div class="flex items-center gap-3">
                       <span class="text-xs text-content-tertiary capitalize">{m.role}</span>
-                      <button
-                        type="button"
-                        class="text-xs text-content-faint hover:text-error-text transition-colors"
-                        onClick={() => orgsModel.removeMemberById(org.id, m.id)}
-                      >
-                        Remove
-                      </button>
+                      {isOwner && m.userId !== currentUserId && (
+                        <button
+                          type="button"
+                          class="text-xs text-content-faint hover:text-error-text transition-colors"
+                          onClick={() => orgsModel.removeMemberById(org.id, m.id)}
+                        >
+                          Remove
+                        </button>
+                      )}
                     </div>
                   </li>
                 ))}
@@ -307,20 +329,21 @@ export function Teams() {
 
         {tab === "teams" && (
           <div>
-            {/* Create team form */}
-            <form onSubmit={handleCreateTeam} class="flex gap-2 mb-8">
-              <Input
-                type="text"
-                value={newTeamName}
-                onInput={(e) => setNewTeamName((e.target as HTMLInputElement).value)}
-                placeholder="New team name"
-                disabled={creatingTeam}
-                class="flex-1"
-              />
-              <Button type="submit" disabled={creatingTeam || !newTeamName.trim()}>
-                {creatingTeam ? "Creating…" : "Create Team"}
-              </Button>
-            </form>
+            {isOwner && (
+              <form onSubmit={handleCreateTeam} class="flex gap-2 mb-8">
+                <Input
+                  type="text"
+                  value={newTeamName}
+                  onInput={(e) => setNewTeamName((e.target as HTMLInputElement).value)}
+                  placeholder="New team name"
+                  disabled={creatingTeam}
+                  class="flex-1"
+                />
+                <Button type="submit" disabled={creatingTeam || !newTeamName.trim()}>
+                  {creatingTeam ? "Creating…" : "Create Team"}
+                </Button>
+              </form>
+            )}
 
             {orgsModel.loading.value ? (
               <p class="text-content-tertiary text-sm">Loading teams…</p>
@@ -333,6 +356,7 @@ export function Teams() {
                     key={team.id}
                     team={team}
                     orgMembers={orgsModel.members.value}
+                    canManage={isOwner}
                     onAddMember={(userId) => orgsModel.addMemberToTeam(org.id, team.id, userId)}
                     onRemoveMember={(userId) =>
                       orgsModel.removeMemberFromTeam(org.id, team.id, userId)
@@ -351,11 +375,12 @@ export function Teams() {
 interface TeamCardProps {
   team: WorkspaceTeam;
   orgMembers: import("../../lib/api").WorkspaceMember[];
+  canManage: boolean;
   onAddMember: (userId: string) => Promise<void>;
   onRemoveMember: (userId: string) => Promise<void>;
 }
 
-function TeamCard({ team, orgMembers, onAddMember, onRemoveMember }: TeamCardProps) {
+function TeamCard({ team, orgMembers, canManage, onAddMember, onRemoveMember }: TeamCardProps) {
   const [selectedUserId, setSelectedUserId] = useState("");
   const teamMemberIds = new Set(team.members.map((m) => m.userId));
   const addable = orgMembers.filter((m) => !teamMemberIds.has(m.userId));
@@ -374,20 +399,22 @@ function TeamCard({ team, orgMembers, onAddMember, onRemoveMember }: TeamCardPro
         {team.members.map((m) => (
           <li key={m.userId} class="flex items-center justify-between text-sm">
             <span class="text-content">{m.name || m.email}</span>
-            <button
-              type="button"
-              class="text-xs text-content-faint hover:text-error-text transition-colors"
-              onClick={() => onRemoveMember(m.userId)}
-            >
-              Remove
-            </button>
+            {canManage && (
+              <button
+                type="button"
+                class="text-xs text-content-faint hover:text-error-text transition-colors"
+                onClick={() => onRemoveMember(m.userId)}
+              >
+                Remove
+              </button>
+            )}
           </li>
         ))}
         {team.members.length === 0 && (
           <li class="text-xs text-content-tertiary">No members yet.</li>
         )}
       </ul>
-      {addable.length > 0 && (
+      {canManage && addable.length > 0 && (
         <form onSubmit={handleAdd} class="flex gap-2">
           <select
             class="flex-1 h-9 rounded-lg border border-edge bg-page text-content text-sm px-2 focus:outline-none focus:ring-2 focus:ring-accent"

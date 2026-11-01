@@ -1,2 +1,1 @@
-export const API_BASE_URL =
-  typeof window !== "undefined" ? window.location.origin : "http://localhost";
+export { API_BASE_URL, API_V1_BASE_URL, getPublicAppOrigin, LOCAL_DEV_ORIGIN } from "./site";
