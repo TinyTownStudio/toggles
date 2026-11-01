@@ -2,6 +2,7 @@
   "name": "toggles-root",
   "version": "0.0.0",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "deploy:app": "pnpm run --filter=toggles build && pnpm run --filter=toggles deploy",
