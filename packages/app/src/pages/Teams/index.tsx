@@ -215,6 +215,11 @@ export function Teams() {
             {canManage && (
               <div class="bg-surface border border-edge rounded-xl p-6 mb-8">
                 <h2 class="text-sm font-semibold text-content mb-4">Invite a member</h2>
+                {billing.billingEnforced.value && (
+                  <p class="text-xs text-content-tertiary mb-4">
+                    On hosted Toggles, each invitee needs their own Pro plan to join.
+                  </p>
+                )}
                 {inviteSuccess && (
                   <Alert variant="success" class="mb-4">
                     {orgsModel.lastInviteUrl.value

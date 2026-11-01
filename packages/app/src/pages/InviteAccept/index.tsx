@@ -55,11 +55,18 @@ export function InviteAccept() {
   }, [token]);
 
   if (status === "loading" || status === "accepting") {
+    const showHostedMemberNote =
+      !billing.loading.value && billing.billingEnforced.value && auth.authenticated.value;
     return (
-      <div class="min-h-screen bg-page flex items-center justify-center">
+      <div class="min-h-screen bg-page flex flex-col items-center justify-center gap-2 px-4">
         <p class="text-content-tertiary text-sm">
           {status === "accepting" ? "Accepting invitation…" : "Loading…"}
         </p>
+        {showHostedMemberNote && (
+          <p class="text-xs text-content-tertiary text-center max-w-sm">
+            Each member needs their own Pro plan to join a workspace on hosted Toggles.
+          </p>
+        )}
       </div>
     );
   }
@@ -80,6 +87,11 @@ export function InviteAccept() {
   return (
     <div class="min-h-screen bg-page flex items-center justify-center px-4">
       <div class="max-w-md w-full text-center">
+        {!billing.loading.value && billing.billingEnforced.value && errorMsg?.includes("Pro") && (
+          <p class="text-xs text-content-tertiary mb-4">
+            Each member needs their own Pro plan to join a workspace on hosted Toggles.
+          </p>
+        )}
         <Alert class="mb-6">{errorMsg}</Alert>
         {errorMsg?.includes("Pro") ? (
           <Button onClick={() => route("/app/billing")}>Upgrade to Pro</Button>
