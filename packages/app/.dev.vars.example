@@ -7,3 +7,17 @@ POLAR_WEBHOOK_SECRET=your-polar-webhook-secret
 POLAR_PRO_PRODUCT_ID=your-polar-pro-product-id
 LOCAL=true
 PRODUCT_BETA=false
+
+# Email (optional). Default: disabled — callers should degrade gracefully (e.g. copyable links).
+# Hosted (Wrangler / Workers): defaults to Cloudflare Email when the EMAIL send binding is present.
+# TOGGLES_EMAIL_PROVIDER=cloudflare
+# Self-hosted (Node / Docker): defaults to none until SMTP is fully configured below.
+# TOGGLES_EMAIL_PROVIDER=smtp
+# TOGGLES_EMAIL_PROVIDER=none
+# TOGGLES_EMAIL_FROM=noreply@example.com
+# TOGGLES_EMAIL_FROM_NAME=Toggles
+# TOGGLES_SMTP_HOST=smtp.example.com
+# TOGGLES_SMTP_PORT=587
+# TOGGLES_SMTP_SECURE=false
+# TOGGLES_SMTP_USER=your-smtp-user
+# TOGGLES_SMTP_PASSWORD=your-smtp-password
