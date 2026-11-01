@@ -12,7 +12,12 @@
     "BETTER_AUTH_URL": "https://toggles.tinytown.studio",
     "LOCAL": "false",
     "PRODUCT_BETA": "true",
+    // Optional sender for Cloudflare Email (hosted). Override in dashboard secrets if needed.
+    // "TOGGLES_EMAIL_FROM": "noreply@your-verified-domain.example",
+    // "TOGGLES_EMAIL_FROM_NAME": "Toggles",
   },
+  // Cloudflare Email binding for hosted outbound mail. Requires Email Service on your zone.
+  // See packages/app/README.md and https://developers.cloudflare.com/email-service/
   "send_email": [{ "name": "EMAIL" }],
   "d1_databases": [
     {

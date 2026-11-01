@@ -19,6 +19,9 @@ declare namespace Cloudflare {
     TOGGLES_EMAIL_FROM_NAME?: string;
     LOCAL: string;
     PRODUCT_BETA: string;
+    TOGGLES_EMAIL_PROVIDER?: string;
+    TOGGLES_EMAIL_FROM?: string;
+    TOGGLES_EMAIL_FROM_NAME?: string;
   }
 }
 interface CloudflareBindings extends Cloudflare.Env {}
@@ -38,6 +41,14 @@ declare namespace NodeJS {
       | "POLAR_PRO_PRODUCT_ID"
       | "LOCAL"
       | "PRODUCT_BETA"
+      | "TOGGLES_EMAIL_PROVIDER"
+      | "TOGGLES_EMAIL_FROM"
+      | "TOGGLES_EMAIL_FROM_NAME"
+      | "TOGGLES_SMTP_HOST"
+      | "TOGGLES_SMTP_PORT"
+      | "TOGGLES_SMTP_SECURE"
+      | "TOGGLES_SMTP_USER"
+      | "TOGGLES_SMTP_PASSWORD"
     >
   > {}
 }
