@@ -142,13 +142,12 @@ describe("DELETE /api/v1/projects/:id", () => {
 
 describe("user isolation", () => {
   it("users cannot see each other's projects", async () => {
-    const cookieA = await signUp("isola@example.com", "password1234", "Iso A");
-    const cookieB = await signUp("isolb@example.com", "password1234", "Iso B");
-    await apiPost("/api/v1/projects", { cookie: cookieA, body: { name: "User A Project" } });
-    await apiPost("/api/v1/projects", { cookie: cookieB, body: { name: "User B Project" } });
+    // Reuse users from file beforeAll; extra signUps here often exceed the 5s default on CI.
+    await apiPost("/api/v1/projects", { cookie, body: { name: "User A Project" } });
+    await apiPost("/api/v1/projects", { cookie: otherCookie, body: { name: "User B Project" } });
 
-    const resA = await apiGet("/api/v1/projects", { cookie: cookieA });
-    const resB = await apiGet("/api/v1/projects", { cookie: cookieB });
+    const resA = await apiGet("/api/v1/projects", { cookie });
+    const resB = await apiGet("/api/v1/projects", { cookie: otherCookie });
 
     const projectsA = (await resA.json()) as { name: string }[];
     const projectsB = (await resB.json()) as { name: string }[];
