@@ -12,7 +12,6 @@
     "BETTER_AUTH_URL": "https://toggles.tinytown.studio",
     "LOCAL": "false",
     "PRODUCT_BETA": "true",
-    "TOGGLES_MAIL_FROM": "noreply@tinytown.studio",
   },
   "d1_databases": [
     {

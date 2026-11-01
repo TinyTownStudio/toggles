@@ -7,6 +7,3 @@ POLAR_WEBHOOK_SECRET=your-polar-webhook-secret
 POLAR_PRO_PRODUCT_ID=your-polar-pro-product-id
 LOCAL=true
 PRODUCT_BETA=false
-
-# Optional: From address when outbound email is implemented (issue #17).
-# TOGGLES_MAIL_FROM=noreply@your-domain.example

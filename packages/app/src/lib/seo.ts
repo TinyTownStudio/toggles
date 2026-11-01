@@ -18,8 +18,31 @@ const DOCS_DESCRIPTION =
 
 const OG_IMAGE_PATH = "/og.png";
 
+function buildTimePublicOrigin(): string | undefined {
+  return import.meta.env.VITE_PUBLIC_APP_ORIGIN?.replace(/\/$/, "");
+}
+
 function ogImageUrl(): string {
-  return `${getPublicAppOrigin()}${OG_IMAGE_PATH}`;
+  const configured = buildTimePublicOrigin();
+  if (configured) {
+    return `${configured}${OG_IMAGE_PATH}`;
+  }
+  if (typeof window !== "undefined") {
+    return `${window.location.origin}${OG_IMAGE_PATH}`;
+  }
+  return OG_IMAGE_PATH;
+}
+
+function ogPageUrl(path: string): string {
+  const configured = buildTimePublicOrigin();
+  const suffix = path === "/" ? "/" : path;
+  if (configured) {
+    return `${configured}${suffix}`;
+  }
+  if (typeof window !== "undefined") {
+    return `${getPublicAppOrigin()}${suffix}`;
+  }
+  return suffix;
 }
 
 const FAQ_ITEMS = [
@@ -88,6 +111,7 @@ export function getHeadMeta(url: string): HeadMeta {
         og("og:title", title),
         og("og:description", DOCS_DESCRIPTION),
         og("og:type", "website"),
+        og("og:url", ogPageUrl("/docs")),
         og("og:image", ogImageUrl()),
       ]),
     };
@@ -101,6 +125,7 @@ export function getHeadMeta(url: string): HeadMeta {
       og("og:title", title),
       og("og:description", HOME_DESCRIPTION),
       og("og:type", "website"),
+      og("og:url", ogPageUrl("/")),
       og("og:image", ogImageUrl()),
       faqJsonLd(),
     ]),

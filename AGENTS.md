@@ -274,8 +274,7 @@ POLAR_PRO_PRODUCT_ID=
 
 Optional:
 
-- `VITE_PUBLIC_APP_ORIGIN` — build-time origin for prerendered meta/docs (hosted `pnpm deploy` sets `https://toggles.tinytown.studio`).
-- `TOGGLES_MAIL_FROM` — future outbound mail From address (issue #17); hosted default is set in `wrangler.jsonc`.
+- `VITE_PUBLIC_APP_ORIGIN` — override build-time origin for prerendered meta/docs (defaults from `wrangler.jsonc` `APP_ORIGIN` on production builds unless `TOGGLES_SELF_HOST_BUILD=true`).
 
 Self-hosted installs must set `APP_ORIGIN` and `BETTER_AUTH_URL` to their own
 origin. Runtime code does not hardcode `tinytown.studio`; hosted defaults live

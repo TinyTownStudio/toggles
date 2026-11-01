@@ -15,7 +15,6 @@ declare namespace Cloudflare {
     POLAR_PRO_PRODUCT_ID: string;
     LOCAL: string;
     PRODUCT_BETA: string;
-    TOGGLES_MAIL_FROM?: string;
   }
 }
 interface CloudflareBindings extends Cloudflare.Env {}
