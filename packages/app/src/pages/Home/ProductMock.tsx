@@ -102,7 +102,9 @@ export function ProductMock() {
                         stroke-linejoin="round"
                       />
                     </svg>
-                    <span class="truncate font-mono text-xs text-content sm:text-sm">{flag.key}</span>
+                    <span class="truncate font-mono text-xs text-content sm:text-sm">
+                      {flag.key}
+                    </span>
                   </div>
                   <div class="mt-1 ml-[18px] flex flex-wrap items-center gap-1">
                     {flag.meta.length > 0 ? (
