@@ -395,4 +395,97 @@ describe("workspaces and teams", () => {
     });
     expect(blocked.status).toBe(429);
   });
+
+  it("grants admins workspace management without owner-only powers", async () => {
+    const inviteRes = await apiPost(`/api/v1/organizations/${orgId}/invite`, {
+      cookie: ownerCookie,
+      body: { email: "workspace-admin@teams.test", role: "member" },
+    });
+    expect(inviteRes.status).toBe(201);
+    const { invitationId } = (await inviteRes.json()) as { invitationId: string };
+
+    const adminCookie = await signUp("workspace-admin@teams.test", "password1234", "Admin User");
+    await grantProPlan("workspace-admin@teams.test");
+    await apiPost("/api/auth/organization/accept-invitation", {
+      cookie: adminCookie,
+      body: { invitationId },
+    });
+
+    let membersRes = await apiGet(`/api/v1/organizations/${orgId}/members`, {
+      cookie: ownerCookie,
+    });
+    let { members } = (await membersRes.json()) as {
+      members: { id: string; email: string }[];
+    };
+    const adminMember = members.find((m) => m.email === "workspace-admin@teams.test");
+    expect(adminMember).toBeDefined();
+
+    const promote = await apiPatch(`/api/v1/organizations/${orgId}/members/${adminMember!.id}`, {
+      cookie: ownerCookie,
+      body: { role: "admin" },
+    });
+    expect(promote.status).toBe(200);
+
+    const adminTeam = await apiPost(`/api/v1/organizations/${orgId}/teams`, {
+      cookie: adminCookie,
+      body: { name: "Admin Team" },
+    });
+    expect(adminTeam.status).toBe(201);
+
+    const pendingInvite = await apiPost(`/api/v1/organizations/${orgId}/invite`, {
+      cookie: adminCookie,
+      body: { email: "admin-invite@teams.test", role: "member" },
+    });
+    expect(pendingInvite.status).toBe(201);
+    const pendingId = ((await pendingInvite.json()) as { invitationId: string }).invitationId;
+
+    const revoke = await apiDelete(`/api/v1/organizations/${orgId}/invitations/${pendingId}`, {
+      cookie: adminCookie,
+    });
+    expect(revoke.status).toBe(200);
+
+    const ownerInviteBlocked = await apiPost(`/api/v1/organizations/${orgId}/invite`, {
+      cookie: adminCookie,
+      body: { email: "no-owner@teams.test", role: "owner" },
+    });
+    expect(ownerInviteBlocked.status).toBe(403);
+
+    const roleChange = await apiPatch(`/api/v1/organizations/${orgId}/members/${adminMember!.id}`, {
+      cookie: adminCookie,
+      body: { role: "member" },
+    });
+    expect(roleChange.status).toBe(403);
+
+    const removeOwner = await apiDelete(
+      `/api/v1/organizations/${orgId}/members/${
+        members.find((m) => m.email === "owner@teams.test")!.id
+      }`,
+      { cookie: adminCookie },
+    );
+    expect(removeOwner.status).toBe(403);
+
+    const memberInvite = await apiPost(`/api/v1/organizations/${orgId}/invite`, {
+      cookie: ownerCookie,
+      body: { email: "plain-member@teams.test", role: "member" },
+    });
+    expect(memberInvite.status).toBe(201);
+    const memberInvitationId = (await memberInvite.json()) as { invitationId: string };
+    const memberCookie = await signUp("plain-member@teams.test", "password1234", "Plain");
+    await grantProPlan("plain-member@teams.test");
+    await apiPost("/api/auth/organization/accept-invitation", {
+      cookie: memberCookie,
+      body: { invitationId: memberInvitationId.invitationId },
+    });
+
+    membersRes = await apiGet(`/api/v1/organizations/${orgId}/members`, { cookie: ownerCookie });
+    members = (await membersRes.json()).members;
+    const plainMember = members.find((m) => m.email === "plain-member@teams.test");
+    expect(plainMember).toBeDefined();
+
+    const adminRemoveMember = await apiDelete(
+      `/api/v1/organizations/${orgId}/members/${plainMember!.id}`,
+      { cookie: adminCookie },
+    );
+    expect(adminRemoveMember.status).toBe(200);
+  });
 });

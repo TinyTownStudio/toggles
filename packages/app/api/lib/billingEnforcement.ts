@@ -22,9 +22,7 @@ export function isBillingEnforced(env: BillingEnv): boolean {
   // Node/Docker self-host: SQLite via DATABASE_URL, no Workers DB binding.
   if (env.DB === undefined && env.DATABASE_URL?.trim()) return false;
 
-  const token = env.POLAR_ACCESS_TOKEN?.trim() ?? "";
-  if (!token || token === "your-polar-access-token") return false;
-
+  // Hosted Workers default: enforce billing even if Polar secrets are missing (misconfig must not drop the gate).
   return true;
 }
 

@@ -333,6 +333,12 @@ export async function updateMemberRole(
   );
 }
 
+export async function revokeInvitation(orgId: string, invitationId: string): Promise<void> {
+  await fetchApi<void>(`/api/v1/organizations/${orgId}/invitations/${invitationId}`, {
+    method: "DELETE",
+  });
+}
+
 export async function getTeams(orgId: string): Promise<WorkspaceTeam[]> {
   return fetchApi<WorkspaceTeam[]>(`/api/v1/organizations/${orgId}/teams`);
 }

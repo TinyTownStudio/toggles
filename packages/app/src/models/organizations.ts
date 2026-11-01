@@ -6,6 +6,7 @@ import {
   inviteMember,
   removeMember,
   updateMemberRole,
+  revokeInvitation,
   getTeams,
   createTeam,
   addTeamMember,
@@ -175,6 +176,18 @@ export const OrganizationsModel = createModel(() => {
     }
   };
 
+  const revokeInvitationById = async (orgId: string, invitationId: string) => {
+    const prev = invitations.value;
+    invitations.value = prev.filter((inv) => inv.id !== invitationId);
+    try {
+      await revokeInvitation(orgId, invitationId);
+    } catch (err) {
+      invitations.value = prev;
+      error.value = err instanceof Error ? err.message : "Failed to revoke invitation";
+      throw err;
+    }
+  };
+
   return {
     loading,
     error,
@@ -190,6 +203,7 @@ export const OrganizationsModel = createModel(() => {
     invite,
     removeMemberById,
     updateMemberRoleById,
+    revokeInvitationById,
     fetchTeams,
     createOrgTeam,
     addMemberToTeam,

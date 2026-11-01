@@ -143,6 +143,7 @@ export function Teams() {
   }
 
   const isOwner = org.role === "owner";
+  const canManage = org.role === "owner" || org.role === "admin";
   const currentUserId = auth.user.value?.id;
 
   const handleInvite = async (e: Event) => {
@@ -211,7 +212,7 @@ export function Teams() {
 
         {tab === "members" && (
           <div>
-            {isOwner && (
+            {canManage && (
               <div class="bg-surface border border-edge rounded-xl p-6 mb-8">
                 <h2 class="text-sm font-semibold text-content mb-4">Invite a member</h2>
                 {inviteSuccess && (
@@ -269,7 +270,7 @@ export function Teams() {
                       >
                         <option value="member">Member</option>
                         <option value="admin">Admin</option>
-                        <option value="owner">Owner</option>
+                        {isOwner && <option value="owner">Owner</option>}
                       </select>
                     </Label>
                   </div>
@@ -341,6 +342,15 @@ export function Teams() {
                         <p class="text-xs text-content-tertiary">Pending invitation</p>
                       </div>
                       <span class="text-xs text-content-tertiary capitalize">{inv.role}</span>
+                      {canManage && (
+                        <button
+                          type="button"
+                          class="text-xs text-content-faint hover:text-error-text transition-colors"
+                          onClick={() => orgsModel.revokeInvitationById(org.id, inv.id)}
+                        >
+                          Revoke
+                        </button>
+                      )}
                     </li>
                   ))}
               </ul>
@@ -350,7 +360,7 @@ export function Teams() {
 
         {tab === "teams" && (
           <div>
-            {isOwner && (
+            {canManage && (
               <form onSubmit={handleCreateTeam} class="flex gap-2 mb-8">
                 <Input
                   type="text"
@@ -377,7 +387,7 @@ export function Teams() {
                     key={team.id}
                     team={team}
                     orgMembers={orgsModel.members.value}
-                    canManage={isOwner}
+                    canManage={canManage}
                     onAddMember={(userId) => orgsModel.addMemberToTeam(org.id, team.id, userId)}
                     onRemoveMember={(userId) =>
                       orgsModel.removeMemberFromTeam(org.id, team.id, userId)

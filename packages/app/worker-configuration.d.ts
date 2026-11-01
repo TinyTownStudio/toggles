@@ -17,6 +17,9 @@ declare namespace Cloudflare {
     TOGGLES_EMAIL_PROVIDER?: string;
     TOGGLES_EMAIL_FROM?: string;
     TOGGLES_EMAIL_FROM_NAME?: string;
+    TOGGLES_BILLING_ENABLED?: string;
+    TOGGLES_ORG_INVITES_PER_HOUR?: string;
+    DATABASE_URL?: string;
     LOCAL: string;
     PRODUCT_BETA: string;
     TOGGLES_EMAIL_PROVIDER?: string;

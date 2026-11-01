@@ -4,6 +4,9 @@ import * as schema from "../db/schema";
 import { canUseTeams } from "../lib/billingEnforcement";
 import { countRecentInvites, resolveInviteRateLimitPerHour } from "../lib/inviteRateLimit";
 import {
+  canAssignInviteRole,
+  canManageWorkspace,
+  canRemoveWorkspaceMember,
   isWorkspaceOwnerRole,
   parseWorkspaceMemberRole,
   type WorkspaceMemberRole,
@@ -178,7 +181,7 @@ organizations.post("/:orgId/invite", async (c) => {
   const bindings = env(c);
 
   const membership = await getOrgMembership(db, userId, orgId);
-  if (!membership || !isWorkspaceOwnerRole(membership.role)) {
+  if (!membership || !canManageWorkspace(membership.role)) {
     return c.json({ error: "Forbidden" }, 403);
   }
 
@@ -192,6 +195,9 @@ organizations.post("/:orgId/invite", async (c) => {
   const email = body.email.trim().toLowerCase();
   if (!isValidInviteEmail(email)) return c.json({ error: "Invalid email address" }, 400);
   const role = parseWorkspaceMemberRole(body.role) ?? "member";
+  if (!canAssignInviteRole(membership.role, role)) {
+    return c.json({ error: "Forbidden" }, 403);
+  }
 
   const org = await db
     .select()
@@ -286,6 +292,42 @@ organizations.post("/:orgId/invite", async (c) => {
   return c.json({ added: false, existing: false, invitationId, inviteUrl }, 201);
 });
 
+// ── DELETE /:orgId/invitations/:invitationId — revoke a pending invite ──
+
+organizations.delete("/:orgId/invitations/:invitationId", async (c) => {
+  const userId = c.get("user")?.id;
+  if (!userId) return c.json({ error: "Unauthorized" }, 401);
+
+  const { orgId, invitationId } = c.req.param();
+  const db = c.get("db");
+
+  const membership = await getOrgMembership(db, userId, orgId);
+  if (!membership || !canManageWorkspace(membership.role)) {
+    return c.json({ error: "Forbidden" }, 403);
+  }
+
+  const invite = await db
+    .select()
+    .from(schema.invitation)
+    .where(
+      and(
+        eq(schema.invitation.id, invitationId),
+        eq(schema.invitation.organizationId, orgId),
+        eq(schema.invitation.status, "pending"),
+      ),
+    )
+    .get();
+
+  if (!invite) return c.json({ error: "Invitation not found" }, 404);
+
+  await db
+    .update(schema.invitation)
+    .set({ status: "canceled" })
+    .where(eq(schema.invitation.id, invitationId));
+
+  return c.json({ success: true });
+});
+
 // ── DELETE /:orgId/members/:memberId ─────────────────────────
 
 organizations.delete("/:orgId/members/:memberId", async (c) => {
@@ -296,7 +338,7 @@ organizations.delete("/:orgId/members/:memberId", async (c) => {
   const db = c.get("db");
 
   const callerMembership = await getOrgMembership(db, userId, orgId);
-  if (!callerMembership || !isWorkspaceOwnerRole(callerMembership.role)) {
+  if (!callerMembership || !canManageWorkspace(callerMembership.role)) {
     return c.json({ error: "Forbidden" }, 403);
   }
 
@@ -308,6 +350,12 @@ organizations.delete("/:orgId/members/:memberId", async (c) => {
 
   if (!target) return c.json({ error: "Member not found" }, 404);
   if (target.userId === userId) return c.json({ error: "Cannot remove yourself" }, 400);
+
+  const removal = canRemoveWorkspaceMember(callerMembership.role, target.role);
+  if (!removal.allowed) {
+    const status = removal.reason === "Forbidden" ? 403 : 400;
+    return c.json({ error: removal.reason ?? "Forbidden" }, status);
+  }
 
   if (target.role === "owner") {
     const ownerCount = await countOrgOwners(db, orgId);
@@ -413,7 +461,7 @@ organizations.post("/:orgId/teams", async (c) => {
   const db = c.get("db");
 
   const membership = await getOrgMembership(db, userId, orgId);
-  if (!membership || !isWorkspaceOwnerRole(membership.role))
+  if (!membership || !canManageWorkspace(membership.role))
     return c.json({ error: "Forbidden" }, 403);
 
   const body = await c.req.json<{ name?: string }>();
@@ -445,7 +493,7 @@ organizations.post("/:orgId/teams/:teamId/members", async (c) => {
   const db = c.get("db");
 
   const membership = await getOrgMembership(db, userId, orgId);
-  if (!membership || !isWorkspaceOwnerRole(membership.role))
+  if (!membership || !canManageWorkspace(membership.role))
     return c.json({ error: "Forbidden" }, 403);
 
   const body = await c.req.json<{ userId?: string }>();
@@ -488,7 +536,7 @@ organizations.delete("/:orgId/teams/:teamId/members/:targetUserId", async (c) =>
   const db = c.get("db");
 
   const membership = await getOrgMembership(db, userId, orgId);
-  if (!membership || !isWorkspaceOwnerRole(membership.role))
+  if (!membership || !canManageWorkspace(membership.role))
     return c.json({ error: "Forbidden" }, 403);
 
   const team = await db

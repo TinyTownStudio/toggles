@@ -8,26 +8,31 @@ describe("isBillingEnforced", () => {
     );
   });
 
+  it("is disabled when TOGGLES_SELF_HOST_BUILD=true", () => {
+    expect(isBillingEnforced({ TOGGLES_SELF_HOST_BUILD: "true", DB: {} as D1Database })).toBe(
+      false,
+    );
+  });
+
   it("is disabled for Node self-host (DATABASE_URL without DB binding)", () => {
     expect(isBillingEnforced({ DATABASE_URL: "file:./data.db" })).toBe(false);
   });
 
-  it("is disabled when Polar token is missing or placeholder", () => {
-    expect(isBillingEnforced({ DB: {} as D1Database })).toBe(false);
+  it("stays enabled on Workers when Polar token is missing or placeholder", () => {
+    expect(isBillingEnforced({ DB: {} as D1Database })).toBe(true);
     expect(
       isBillingEnforced({
         DB: {} as D1Database,
         POLAR_ACCESS_TOKEN: "your-polar-access-token",
       }),
-    ).toBe(false);
+    ).toBe(true);
   });
 
-  it("is enabled when explicitly true with a Polar token on Workers", () => {
+  it("is enabled when explicitly true on Workers", () => {
     expect(
       isBillingEnforced({
         TOGGLES_BILLING_ENABLED: "true",
         DB: {} as D1Database,
-        POLAR_ACCESS_TOKEN: "live-token",
       }),
     ).toBe(true);
   });
