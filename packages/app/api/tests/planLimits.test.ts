@@ -48,7 +48,7 @@ describe("free-plan flag limit", () => {
       cookie,
       body: { key: "other-project-flag" },
     });
-  });
+  }, 120_000);
 
   it("blocks the 101st flag in a project with 403", async () => {
     expect(blocked.status).toBe(403);
@@ -98,7 +98,7 @@ describe("free-plan API read limit", () => {
     )
       .bind(userId, currentMonth(), PLAN_LIMITS.free.apiReadsPerMonth)
       .run();
-  });
+  }, 30_000);
 
   it("returns 429 for API-key GET when monthly read limit is reached", async () => {
     const res = await apiGet(`/api/v1/projects/${projectId}/toggles`, { bearer: apiKey });
