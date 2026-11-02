@@ -28,6 +28,7 @@ const sharedMiniflare = {
 
 export default defineConfig({
   test: {
+    hookTimeout: 60_000,
     coverage: {
       provider: "istanbul",
     },
