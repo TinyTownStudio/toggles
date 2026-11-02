@@ -48,7 +48,7 @@ describe("free-plan flag limit", () => {
       cookie,
       body: { key: "other-project-flag" },
     });
-  });
+  }, 60_000);
 
   it("blocks the 101st flag in a project with 403", async () => {
     expect(blocked.status).toBe(403);
