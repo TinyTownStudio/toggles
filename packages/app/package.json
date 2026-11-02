@@ -51,7 +51,7 @@
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^5.1.1",
+    "@vitejs/plugin-react": "^6.1.2",
     "@vitest/coverage-istanbul": "^4.1.4",
     "drizzle-kit": "^0.31.8",
     "eslint": "^9.39.1",
