@@ -75,7 +75,13 @@ describe("workspaces and teams", () => {
 
     const outboundCalls = fetchSpy.mock.calls.filter(([url]) => {
       const href = String(url);
-      return href.includes("smtp") || href.includes("postmarkapp.com");
+      if (href.includes("smtp")) return true;
+      try {
+        const { hostname } = new URL(href);
+        return hostname === "postmarkapp.com" || hostname.endsWith(".postmarkapp.com");
+      } catch {
+        return false;
+      }
     });
     expect(outboundCalls).toHaveLength(0);
     fetchSpy.mockRestore();
