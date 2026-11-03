@@ -1,4 +1,4 @@
-FROM node:24
+FROM node:26
 
 RUN apt -yy update && apt -yy install sqlite3 libsqlite3-0
 
