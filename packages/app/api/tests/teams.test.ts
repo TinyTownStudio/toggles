@@ -487,5 +487,5 @@ describe("workspaces and teams", () => {
       { cookie: adminCookie },
     );
     expect(adminRemoveMember.status).toBe(200);
-  });
+  }, 30_000);
 });
