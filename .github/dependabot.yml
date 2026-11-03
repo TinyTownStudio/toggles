@@ -27,6 +27,23 @@ updates:
         update-types:
           - minor
           - patch
+    ignore:
+      - dependency-name: "better-auth"
+        update-types:
+          - version-update:semver-minor
+          - version-update:semver-major
+      - dependency-name: "preact"
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "vitest"
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "@vitest/coverage-istanbul"
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "@eslint/js"
+        update-types:
+          - version-update:semver-major
 
   - package-ecosystem: github-actions
     directory: "/"
