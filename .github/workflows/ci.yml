@@ -24,7 +24,7 @@ jobs:
       run:
         working-directory: packages/app
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: pnpm/action-setup@v4
 
@@ -54,7 +54,7 @@ jobs:
     name: Docker build and smoke test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
