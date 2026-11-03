@@ -55,7 +55,7 @@ const toggles = await res.json();`}
       <Endpoint
         method="GET"
         path="/api/v1/projects/:projectId/toggles/one"
-        description="Fetch a single toggle by key name or glob pattern. Use ?flag= for an exact key match or ?pattern= for a glob match (e.g. checkout-*). Returns the first matching toggle."
+        description="Fetch a single toggle by key name or glob pattern. Use ?flag= for an exact key match or ?pattern= for a glob match. In glob patterns, * matches any sequence and ? matches one character; literal % and _ in the pattern match themselves. Patterns without * or ? use substring matching (hyphens, underscores, and spaces in the pattern match any of those characters in the key). Returns the first matching toggle in ascending key order."
         authNote="Readable with any API key scoped to this project (read or admin). This is the primary endpoint for runtime flag checks. API-key reads count toward your monthly quota."
         queryParams={[
           {
@@ -68,7 +68,8 @@ const toggles = await res.json();`}
             field: "pattern",
             type: "string",
             required: false,
-            description: "Glob pattern to match against toggle keys.",
+            description:
+              "Glob pattern (* and ? wildcards) or substring pattern when no wildcards are present. Example: checkout-* matches keys such as checkout-v2.",
           },
           {
             field: "env",

@@ -22,28 +22,29 @@ export async function consumeApiRead(
   const limit = PLAN_LIMITS[plan].apiReadsPerMonth;
   const month = currentMonth();
 
-  const existing = await db
-    .select({ reads: schema.apiUsage.reads })
-    .from(schema.apiUsage)
-    .where(and(eq(schema.apiUsage.userId, userId), eq(schema.apiUsage.month, month)))
-    .get();
-
-  const current = existing?.reads ?? 0;
-  if (limit !== Infinity && current >= limit) {
-    return false;
-  }
-
-  if (existing) {
-    await db
-      .update(schema.apiUsage)
-      .set({ reads: sql`${schema.apiUsage.reads} + 1` })
-      .where(and(eq(schema.apiUsage.userId, userId), eq(schema.apiUsage.month, month)));
-  } else {
-    await db.insert(schema.apiUsage).values({
+  const row = await db
+    .insert(schema.apiUsage)
+    .values({
       userId,
       month,
       reads: 1,
-    });
+    })
+    .onConflictDoUpdate({
+      target: [schema.apiUsage.userId, schema.apiUsage.month],
+      set: {
+        reads: sql`${schema.apiUsage.reads} + 1`,
+      },
+    })
+    .returning({ reads: schema.apiUsage.reads })
+    .get();
+
+  const reads = row?.reads ?? 0;
+  if (limit !== Infinity && reads > limit) {
+    await db
+      .update(schema.apiUsage)
+      .set({ reads: sql`${schema.apiUsage.reads} - 1` })
+      .where(and(eq(schema.apiUsage.userId, userId), eq(schema.apiUsage.month, month)));
+    return false;
   }
 
   return true;

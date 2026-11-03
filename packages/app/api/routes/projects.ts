@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { eq, and, like, sql, inArray } from "drizzle-orm";
+import { eq, and, like, sql, asc, inArray } from "drizzle-orm";
 import * as schema from "../db/schema";
 import {
   getDefaultEnvironment,
@@ -11,6 +11,7 @@ import {
 import { hasWriteAccess, isEnvScopeViolation, isScopeViolation } from "../lib/permissions";
 import { getOwnedProject } from "../lib/projects";
 import { getUserPlan, PLAN_LIMITS } from "../lib/plans";
+import { globPatternToLike } from "../lib/globPattern";
 import { consumeApiRead } from "../lib/usage";
 import type { AgnosticDatabaseInstance, Bindings, Variables } from "../types";
 import { environments } from "./environments";
@@ -548,16 +549,18 @@ projects.get("/:projectId/toggles/one", async (c) => {
 
   let toggle;
   if (pattern) {
-    const normalizedPattern = `%${String(pattern).replace(/[-_ ]/g, "%")}%`;
+    const { like: likePattern, escape } = globPatternToLike(String(pattern));
+    const keyMatch = escape
+      ? sql`${schema.toggle.key} LIKE ${likePattern} ESCAPE '\\'`
+      : like(schema.toggle.key, likePattern);
     const rows = await db
       .select()
       .from(schema.toggle)
-      .where(
-        and(eq(schema.toggle.projectId, projectId), like(schema.toggle.key, normalizedPattern)),
-      )
+      .where(and(eq(schema.toggle.projectId, projectId), keyMatch))
+      .orderBy(asc(schema.toggle.key))
       .limit(1)
       .all();
-    toggle = rows.at(-1);
+    toggle = rows[0];
   } else {
     const rows = await db
       .select()
