@@ -9,6 +9,7 @@ import {
   grantProPlan,
   signUp,
 } from "./helpers";
+import * as emailLib from "../lib/email";
 
 describe("workspaces and teams", () => {
   let ownerCookie = "";
@@ -62,7 +63,7 @@ describe("workspaces and teams", () => {
   });
 
   it("invites a new user without sending email when email is disabled", async () => {
-    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    const sendEmailSpy = vi.spyOn(emailLib, "sendEmail");
 
     const res = await apiPost(`/api/v1/organizations/${orgId}/invite`, {
       cookie: ownerCookie,
@@ -73,18 +74,9 @@ describe("workspaces and teams", () => {
     expect(body.invitationId).toMatch(/^[a-f0-9]{64}$/);
     expect(body.inviteUrl).toContain(body.invitationId);
 
-    const outboundCalls = fetchSpy.mock.calls.filter(([url]) => {
-      const href = String(url);
-      if (href.includes("smtp")) return true;
-      try {
-        const { hostname } = new URL(href);
-        return hostname === "postmarkapp.com" || hostname.endsWith(".postmarkapp.com");
-      } catch {
-        return false;
-      }
-    });
-    expect(outboundCalls).toHaveLength(0);
-    fetchSpy.mockRestore();
+    expect(sendEmailSpy).not.toHaveBeenCalled();
+
+    sendEmailSpy.mockRestore();
   });
 
   it("rejects invalid invite emails and duplicate pending invitations", async () => {

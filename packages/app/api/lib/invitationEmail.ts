@@ -1,4 +1,4 @@
-import { sendEmail, type EmailRuntime, type TogglesEmailEnv } from "./email";
+import { resolveEmailProvider, sendEmail, type EmailRuntime, type TogglesEmailEnv } from "./email";
 
 export function createInvitationToken(): string {
   const bytes = new Uint8Array(32);
@@ -68,6 +68,10 @@ export async function sendWorkspaceInvitationEmail(
   runtime: EmailRuntime,
   options: InvitationEmailContent & { to: string },
 ): Promise<{ emailed: boolean }> {
+  if (resolveEmailProvider(emailEnv, runtime) === "none") {
+    return { emailed: false };
+  }
+
   const result = await sendEmail(
     emailEnv,
     {
