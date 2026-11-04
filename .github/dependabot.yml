@@ -7,21 +7,7 @@ updates:
       day: monday
     open-pull-requests-limit: 5
     groups:
-      root-npm-minor-patch:
-        patterns:
-          - "*"
-        update-types:
-          - minor
-          - patch
-
-  - package-ecosystem: npm
-    directory: "/packages/app"
-    schedule:
-      interval: weekly
-      day: monday
-    open-pull-requests-limit: 5
-    groups:
-      app-npm-minor-patch:
+      npm-minor-patch:
         patterns:
           - "*"
         update-types:
@@ -42,6 +28,18 @@ updates:
         update-types:
           - version-update:semver-major
       - dependency-name: "@eslint/js"
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "eslint"
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "globals"
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "@hono/node-server"
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "@polar-sh/better-auth"
         update-types:
           - version-update:semver-major
 
