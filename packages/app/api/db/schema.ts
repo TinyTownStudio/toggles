@@ -22,6 +22,7 @@ export const session = sqliteTable("session", {
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
   activeOrganizationId: text("active_organization_id"),
+  activeTeamId: text("active_team_id"),
 });
 
 export const account = sqliteTable("account", {
@@ -114,6 +115,7 @@ export const team = sqliteTable(
     organizationId: text("organization_id")
       .notNull()
       .references(() => organization.id, { onDelete: "cascade" }),
+    memberCount: integer("member_count").notNull().default(0),
     createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
     updatedAt: integer("updated_at", { mode: "timestamp" }),
   },
@@ -130,6 +132,7 @@ export const teamMember = sqliteTable(
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
+    membershipKey: text("membership_key").unique(),
     createdAt: integer("created_at", { mode: "timestamp" }),
   },
   (t) => [index("team_member_team_idx").on(t.teamId)],
@@ -258,6 +261,7 @@ export const apikey = sqliteTable(
   "apikey",
   {
     id: text("id").primaryKey(),
+    configId: text("config_id").notNull().default("default"),
     name: text("name"),
     start: text("start"),
     prefix: text("prefix"),

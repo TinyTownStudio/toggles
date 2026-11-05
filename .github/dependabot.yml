@@ -7,21 +7,7 @@ updates:
       day: monday
     open-pull-requests-limit: 5
     groups:
-      root-npm-minor-patch:
-        patterns:
-          - "*"
-        update-types:
-          - minor
-          - patch
-
-  - package-ecosystem: npm
-    directory: "/packages/app"
-    schedule:
-      interval: weekly
-      day: monday
-    open-pull-requests-limit: 5
-    groups:
-      app-npm-minor-patch:
+      npm-minor-patch:
         patterns:
           - "*"
         update-types:

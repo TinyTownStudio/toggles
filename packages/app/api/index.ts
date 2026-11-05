@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { Polar } from "@polar-sh/sdk";
+import { getCheckouts } from "@polar-sh/sdk/2026-10/services/checkouts";
+import { iterListSubscriptions } from "@polar-sh/sdk/2026-10/services/subscriptions";
 import { createAuth } from "./lib/auth";
 import { subscription } from "./routes/subscription";
 import { projects } from "./routes/projects";
@@ -9,8 +10,8 @@ import { dashboard } from "./routes/dashboard";
 import { portal } from "./routes/portal";
 import { organizations } from "./routes/organizations";
 import type { Bindings, Variables } from "./types";
-import { isProduction } from "./utils/isProduction";
 import { billingSuccessRedirect, getAppOrigin } from "./lib/appOrigin";
+import { createPolarClient } from "./lib/polarClient";
 import * as schema from "./db/schema";
 import { env } from "hono/adapter";
 
@@ -73,43 +74,30 @@ app.get("/api/billing-success", async (c) => {
     return c.json({ error: "Missing checkout_id parameter" }, 400);
   }
 
-  // Initialize Polar client
-  const polarClient = new Polar({
-    accessToken: env(c).POLAR_ACCESS_TOKEN,
-    server: isProduction(c.env) ? "production" : "sandbox",
-  });
+  const polarClient = createPolarClient(c.env);
 
-  // Get checkout session to retrieve customer_id
-  const checkout = await polarClient.checkouts.get({ id: checkoutId });
+  const checkout = await getCheckouts(polarClient)(checkoutId);
 
-  if (!checkout || !checkout.customerId) {
+  if (!checkout?.customer_id) {
     return c.json({ error: "Invalid checkout session" }, 400);
   }
 
   // Verify that this checkout belongs to the authenticated user.
-  // externalCustomerId is set by BetterAuth's Polar plugin to the user's ID.
-  if (!checkout.externalCustomerId) {
+  // external_customer_id is set by BetterAuth's Polar plugin to the user's ID.
+  if (!checkout.external_customer_id) {
     return c.json({ error: "Checkout has no associated user" }, 400);
   }
-  if (checkout.externalCustomerId !== session.user.id) {
+  if (checkout.external_customer_id !== session.user.id) {
     return c.json({ error: "Forbidden" }, 403);
   }
 
-  // List subscriptions for this customer
-  const subscriptions = await polarClient.subscriptions.list({
-    customerId: checkout.customerId,
-    active: true,
-  });
-
-  // Find the active subscription (should be the most recent one)
   let activeSubscription = null;
-  for await (const sub of subscriptions) {
-    const page = sub.result;
-    if (page.items && page.items.length > 0) {
-      // Get the first active subscription
-      activeSubscription = page.items[0];
-      break;
-    }
+  for await (const sub of iterListSubscriptions(polarClient)({
+    customer_id: checkout.customer_id,
+    active: true,
+  })) {
+    activeSubscription = sub;
+    break;
   }
 
   if (!activeSubscription) {
@@ -126,11 +114,11 @@ app.get("/api/billing-success", async (c) => {
       plan: "pro",
       status: "active",
       createdAt: now,
-      polarCustomerId: checkout.customerId,
-      userId: checkout.externalCustomerId,
+      polarCustomerId: checkout.customer_id,
+      userId: checkout.external_customer_id,
       polarSubscriptionId: activeSubscription.id,
-      currentPeriodEnd: activeSubscription.currentPeriodEnd
-        ? new Date(activeSubscription.currentPeriodEnd)
+      currentPeriodEnd: activeSubscription.current_period_end
+        ? new Date(activeSubscription.current_period_end)
         : null,
       updatedAt: now,
     })
@@ -139,10 +127,10 @@ app.get("/api/billing-success", async (c) => {
       set: {
         plan: "pro",
         status: "active",
-        polarCustomerId: checkout.customerId,
+        polarCustomerId: checkout.customer_id,
         polarSubscriptionId: activeSubscription.id,
-        currentPeriodEnd: activeSubscription.currentPeriodEnd
-          ? new Date(activeSubscription.currentPeriodEnd)
+        currentPeriodEnd: activeSubscription.current_period_end
+          ? new Date(activeSubscription.current_period_end)
           : null,
         updatedAt: now,
       },
@@ -174,13 +162,13 @@ app.use("/api/v1/*", async (c, next) => {
       return c.json({ error: "Unauthorized" }, 401);
     }
     c.set("user", {
-      id: result.key.userId,
+      id: result.key.referenceId,
       name: "",
       email: "",
     });
     c.set("session", null);
     c.set("apiKeyData", {
-      userId: result.key.userId,
+      userId: result.key.referenceId,
       permissions: result.key.permissions
         ? typeof result.key.permissions === "string"
           ? (JSON.parse(result.key.permissions as unknown as string) as Record<string, string[]>)

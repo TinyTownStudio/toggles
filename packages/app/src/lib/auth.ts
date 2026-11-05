@@ -1,5 +1,6 @@
 import { createAuthClient } from "better-auth/client";
-import { apiKeyClient, organizationClient } from "better-auth/client/plugins";
+import { apiKeyClient } from "@better-auth/api-key/client";
+import { organizationClient } from "better-auth/client/plugins";
 import { API_BASE_URL } from "./constants";
 
 export const authClient = createAuthClient({
