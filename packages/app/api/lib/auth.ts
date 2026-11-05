@@ -1,21 +1,23 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { eq } from "drizzle-orm";
-import { Polar } from "@polar-sh/sdk";
 import { polar, checkout, portal, webhooks } from "@polar-sh/better-auth";
+import { apiKey } from "@better-auth/api-key";
 import * as schema from "../db/schema";
-import { isProduction } from "../utils/isProduction";
 import { getAppOrigin, polarCheckoutReturnUrl, polarCheckoutSuccessUrl } from "./appOrigin";
-import { apiKey } from "better-auth/plugins";
+import { createPolarClient } from "./polarClient";
+import {
+  handleCustomerCreated,
+  handleSubscriptionActive,
+  handleSubscriptionCanceled,
+  handleSubscriptionRevoked,
+  handleSubscriptionUpdated,
+} from "./polarSubscriptionHandlers";
 import type { AgnosticDatabaseInstance } from "../types";
 
 type Env = Cloudflare.Env;
 
 export function createAuth(env: Env, db: AgnosticDatabaseInstance<typeof schema>) {
-  const polarClient = new Polar({
-    accessToken: env.POLAR_ACCESS_TOKEN,
-    server: isProduction(env) ? "production" : "sandbox",
-  });
+  const polarClient = createPolarClient(env);
 
   return betterAuth({
     database: drizzleAdapter(db, {
@@ -24,6 +26,7 @@ export function createAuth(env: Env, db: AgnosticDatabaseInstance<typeof schema>
         user: schema.user,
         session: schema.session,
         account: schema.account,
+        verification: schema.verification,
         apikey: schema.apikey,
       },
     }),
@@ -36,6 +39,13 @@ export function createAuth(env: Env, db: AgnosticDatabaseInstance<typeof schema>
     plugins: [
       apiKey({
         enableMetadata: true,
+        schema: {
+          apikey: {
+            fields: {
+              referenceId: "userId",
+            },
+          },
+        },
         // Better Auth defaults to 10 requests per 24h per key; we enforce plan limits ourselves.
         rateLimit: {
           enabled: false,
@@ -64,133 +74,19 @@ export function createAuth(env: Env, db: AgnosticDatabaseInstance<typeof schema>
           webhooks({
             secret: env.POLAR_WEBHOOK_SECRET,
             onSubscriptionUpdated: async (payload) => {
-              const customerId = payload.data.customerId;
-              const currentPeriodEnd = payload.data.currentPeriodEnd
-                ? new Date(payload.data.currentPeriodEnd)
-                : null;
-
-              await db
-                .update(schema.subscription)
-                .set({
-                  plan: payload.data.productId === env.POLAR_PRO_PRODUCT_ID ? "pro" : "free",
-                  status: payload.data.status,
-                  currentPeriodEnd,
-                  updatedAt: new Date(),
-                })
-                .where(eq(schema.subscription.polarCustomerId, customerId));
+              await handleSubscriptionUpdated(db, env, payload.data);
             },
             onSubscriptionActive: async (payload) => {
-              const customerId = payload.data.customerId;
-              const subscriptionId = payload.data.id;
-              const currentPeriodEnd = payload.data.currentPeriodEnd
-                ? new Date(payload.data.currentPeriodEnd)
-                : null;
-
-              // Find user by polar customer ID in subscription table
-              const existing = await db
-                .select()
-                .from(schema.subscription)
-                .where(eq(schema.subscription.polarCustomerId, customerId))
-                .get();
-
-              const now = new Date();
-
-              if (existing) {
-                await db
-                  .update(schema.subscription)
-                  .set({
-                    plan: "pro",
-                    status: "active",
-                    polarSubscriptionId: subscriptionId,
-                    currentPeriodEnd,
-                    updatedAt: now,
-                  })
-                  .where(eq(schema.subscription.id, existing.id));
-              } else {
-                // No existing subscription row, create one
-                // First find user ID by customer ID
-                const user = await db
-                  .select()
-                  .from(schema.user)
-                  .where(eq(schema.user.id, payload.data.customer.externalId as string))
-                  .get();
-
-                if (user) {
-                  await db.insert(schema.subscription).values({
-                    id: crypto.randomUUID(),
-                    userId: user.id,
-                    polarCustomerId: customerId,
-                    polarSubscriptionId: subscriptionId,
-                    plan: "pro",
-                    status: "active",
-                    currentPeriodEnd,
-                    createdAt: now,
-                    updatedAt: now,
-                  });
-                }
-              }
+              await handleSubscriptionActive(db, payload.data);
             },
             onSubscriptionCanceled: async (payload) => {
-              const customerId = payload.data.customerId;
-
-              await db
-                .update(schema.subscription)
-                .set({
-                  plan: "free",
-                  status: "canceled",
-                  updatedAt: new Date(),
-                })
-                .where(eq(schema.subscription.polarCustomerId, customerId));
+              await handleSubscriptionCanceled(db, payload.data.customer_id);
             },
             onSubscriptionRevoked: async (payload) => {
-              const customerId = payload.data.customerId;
-
-              await db
-                .update(schema.subscription)
-                .set({
-                  plan: "free",
-                  status: "expired",
-                  updatedAt: new Date(),
-                })
-                .where(eq(schema.subscription.polarCustomerId, customerId));
+              await handleSubscriptionRevoked(db, payload.data.customer_id);
             },
             onCustomerCreated: async (payload) => {
-              const customerId = payload.data.id;
-              const email = payload.data.email;
-
-              // Find user by email and create subscription row
-              const user = await db
-                .select()
-                .from(schema.user)
-                .where(eq(schema.user.email, email))
-                .get();
-
-              if (user) {
-                const existing = await db
-                  .select()
-                  .from(schema.subscription)
-                  .where(eq(schema.subscription.userId, user.id))
-                  .get();
-
-                const now = new Date();
-
-                if (existing) {
-                  await db
-                    .update(schema.subscription)
-                    .set({ polarCustomerId: customerId, updatedAt: now })
-                    .where(eq(schema.subscription.id, existing.id));
-                } else {
-                  await db.insert(schema.subscription).values({
-                    id: crypto.randomUUID(),
-                    userId: user.id,
-                    polarCustomerId: customerId,
-                    plan: "free",
-                    status: "active",
-                    createdAt: now,
-                    updatedAt: now,
-                  });
-                }
-              }
+              await handleCustomerCreated(db, payload.data);
             },
           }),
         ],

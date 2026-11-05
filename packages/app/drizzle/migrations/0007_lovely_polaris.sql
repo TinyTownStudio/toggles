@@ -1,0 +1,1 @@
+ALTER TABLE `apikey` ADD `config_id` text DEFAULT 'default' NOT NULL;
