@@ -175,6 +175,7 @@ export const apikey = sqliteTable(
   "apikey",
   {
     id: text("id").primaryKey(),
+    configId: text("config_id").notNull().default("default"),
     name: text("name"),
     start: text("start"),
     prefix: text("prefix"),

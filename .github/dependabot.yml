@@ -30,9 +30,6 @@ updates:
       - dependency-name: "@eslint/js"
         update-types:
           - version-update:semver-major
-      - dependency-name: "@polar-sh/better-auth"
-        update-types:
-          - version-update:semver-major
 
   - package-ecosystem: github-actions
     directory: "/"

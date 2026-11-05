@@ -1,8 +1,8 @@
 import { Hono } from "hono";
 import { eq } from "drizzle-orm";
-import { Polar } from "@polar-sh/sdk";
+import { createCustomerSessions } from "@polar-sh/sdk/2026-10/services/customer_sessions";
 import * as schema from "../db/schema";
-import { isProduction } from "../utils/isProduction";
+import { createPolarClient } from "../lib/polarClient";
 import type { Bindings, Variables } from "../types";
 
 export const portal = new Hono<{
@@ -29,14 +29,11 @@ portal.get("/", async (c) => {
     return c.json({ error: "No billing account found" }, 404);
   }
 
-  const polarClient = new Polar({
-    accessToken: c.env.POLAR_ACCESS_TOKEN,
-    server: isProduction(c.env) ? "production" : "sandbox",
+  const polarClient = createPolarClient(c.env);
+
+  const customerSession = await createCustomerSessions(polarClient)({
+    customer_id: sub.polarCustomerId,
   });
 
-  const customerSession = await polarClient.customerSessions.create({
-    customerId: sub.polarCustomerId,
-  });
-
-  return c.json({ url: customerSession.customerPortalUrl });
+  return c.json({ url: customerSession.customer_portal_url });
 });
