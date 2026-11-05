@@ -21,7 +21,8 @@
     "format:check": "oxfmt --check .",
     "check": "oxlint && oxfmt --check .",
     "test": "vitest run",
-    "test:ci": "vitest run --coverage"
+    "test:ci": "vitest run --coverage",
+    "test:node": "vitest run --config vitest.config.node.ts"
   },
   "dependencies": {
     "@hono/node-server": "^2.1.5",

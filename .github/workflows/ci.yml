@@ -50,6 +50,36 @@ jobs:
       - name: Build
         run: pnpm run build
 
+  node-sqlite:
+    name: Node + SQLite API tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/app
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: .
+
+      - name: Run Node + SQLite tests
+        run: pnpm run test:node
+        env:
+          BETTER_AUTH_SECRET: ${{ env.CI_TEST_BETTER_AUTH_SECRET }}
+          BETTER_AUTH_URL: http://localhost
+          POLAR_ACCESS_TOKEN: ${{ env.CI_TEST_POLAR_ACCESS_TOKEN }}
+          POLAR_WEBHOOK_SECRET: ${{ env.CI_TEST_POLAR_WEBHOOK_SECRET }}
+          POLAR_PRO_PRODUCT_ID: ${{ env.CI_TEST_POLAR_PRO_PRODUCT_ID }}
+
   docker:
     name: Docker build and smoke test
     runs-on: ubuntu-latest

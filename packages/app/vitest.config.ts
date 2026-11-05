@@ -6,6 +6,7 @@ const migrations = await readD1Migrations(path.join(__dirname, "drizzle/migratio
 
 export default defineConfig({
   test: {
+    exclude: ["**/node_modules/**", "api/tests/node/**"],
     coverage: {
       provider: "istanbul",
     },
