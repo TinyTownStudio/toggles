@@ -40,7 +40,7 @@ function extractCookie(res: Response): string {
 // Fetch wrappers
 // ---------------------------------------------------------------------------
 
-type RequestInit = { cookie?: string; bearer?: string; body?: unknown };
+type RequestInit = { cookie?: string; bearer?: string; body?: unknown; redirect?: RequestRedirect };
 
 function buildHeaders(opts: RequestInit, extra: Record<string, string> = {}): Headers {
   const h = new Headers(extra);
@@ -53,6 +53,7 @@ function buildHeaders(opts: RequestInit, extra: Record<string, string> = {}): He
 export async function apiGet(path: string, opts: RequestInit = {}): Promise<Response> {
   return SELF.fetch(`${BASE}${path}`, {
     headers: buildHeaders(opts),
+    redirect: opts.redirect,
   });
 }
 

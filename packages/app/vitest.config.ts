@@ -17,12 +17,13 @@ const sharedMiniflare = {
     TEST_MIGRATIONS: migrations,
     BETTER_AUTH_SECRET: "test-secret-min-32-chars-long-xxxxxx",
     BETTER_AUTH_URL: "http://localhost",
-    APP_ORIGIN: "http://localhost",
     LOCAL: "true",
     POLAR_ACCESS_TOKEN: "test-polar-token",
     POLAR_WEBHOOK_SECRET: "test-webhook-secret",
     POLAR_PRO_PRODUCT_ID: "test-product-id",
     TOGGLES_BILLING_ENABLED: "true",
+    TEST_POLAR_CHECKOUT_JSON: "",
+    TEST_POLAR_SUBSCRIPTIONS_JSON: "",
   },
 };
 
@@ -69,5 +70,17 @@ export default defineConfig({
         ],
       },
     ],
+  },
+  resolve: {
+    alias: {
+      "@polar-sh/sdk/2026-10/services/checkouts": path.join(
+        __dirname,
+        "api/tests/mocks/polarCheckouts.ts",
+      ),
+      "@polar-sh/sdk/2026-10/services/subscriptions": path.join(
+        __dirname,
+        "api/tests/mocks/polarSubscriptions.ts",
+      ),
+    },
   },
 });
