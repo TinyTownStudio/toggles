@@ -11,6 +11,18 @@ export default defineConfig({
       provider: "istanbul",
     },
   },
+  resolve: {
+    alias: {
+      "@polar-sh/sdk/2026-10/services/checkouts": path.join(
+        __dirname,
+        "api/tests/mocks/polarCheckouts.ts",
+      ),
+      "@polar-sh/sdk/2026-10/services/subscriptions": path.join(
+        __dirname,
+        "api/tests/mocks/polarSubscriptions.ts",
+      ),
+    },
+  },
   plugins: [
     cloudflareTest({
       wrangler: { configPath: "./wrangler.test.jsonc" },
@@ -28,6 +40,8 @@ export default defineConfig({
           BETTER_AUTH_SECRET: "test-secret-min-32-chars-long-xxxxxx",
           BETTER_AUTH_URL: "http://localhost",
           LOCAL: "true",
+          TEST_POLAR_CHECKOUT_JSON: "",
+          TEST_POLAR_SUBSCRIPTIONS_JSON: "",
         },
       },
     }),
