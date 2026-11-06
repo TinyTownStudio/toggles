@@ -11,5 +11,5 @@
     "lib": ["ESNext"]
   },
   "include": ["api"],
-  "exclude": ["**/tests/*.ts", "**/*.test.ts"]
+  "exclude": ["api/tests/**", "**/tests/*.ts", "**/*.test.ts"]
 }
