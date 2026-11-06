@@ -6,6 +6,8 @@
   "vars": {
     "BETTER_AUTH_URL": "http://localhost",
     "LOCAL": "true",
+    "TEST_POLAR_CHECKOUT_JSON": "",
+    "TEST_POLAR_SUBSCRIPTIONS_JSON": "",
   },
   "d1_databases": [
     {
