@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import * as schema from "../db/schema";
 import { getUserPlan, PLAN_LIMITS } from "../lib/plans";
+import { isBillingEnforced } from "../lib/billingEnforcement";
 import type { Bindings, Variables } from "../types";
 import { env } from "hono/adapter";
 
@@ -17,10 +18,12 @@ subscription.get("/", async (c) => {
     return c.json({ error: "Unauthorized" }, 401);
   }
 
+  const bindings = env(c);
   const plan = await getUserPlan(db, userId);
   const limits = PLAN_LIMITS[plan];
+  const billingEnforced = isBillingEnforced(bindings);
   let betaFeatures: Record<string, boolean> = {};
-  if (env(c).PRODUCT_BETA === "true") {
+  if (bindings.PRODUCT_BETA === "true") {
     betaFeatures.product = true;
   }
 
@@ -28,5 +31,6 @@ subscription.get("/", async (c) => {
     plan,
     limits,
     beta: betaFeatures,
+    billingEnforced,
   });
 });

@@ -2,6 +2,10 @@
 
 > web app implementation of toggles the feature flag system
 
+## Workspaces (teams)
+
+Pro users on hosted Toggles can create a workspace, invite members, and scope projects to teams. Self-hosted installs include teams without a Pro subscription. When outbound email is disabled, invitation APIs return a copyable `inviteUrl` for air-gapped or self-hosted installs.
+
 ## Self-hosted email (optional)
 
 Outbound email is **off by default** on the Node/Docker build. Nothing is sent over the network until SMTP is configured. API features that would send mail should check the result and degrade gracefully (for example, returning a copyable invite link).

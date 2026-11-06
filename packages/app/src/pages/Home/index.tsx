@@ -129,9 +129,7 @@ function Pricing({ onGetStarted }: { onGetStarted: () => void }) {
               <li>Everything in Free</li>
               <li>Unlimited projects / environments / flags</li>
               <li>5M API reads / month</li>
-              <li>
-                Teams <span class="text-accent">(Coming soon…)</span>
-              </li>
+              <li>Teams: each member needs Pro</li>
             </ul>
             <Button class="w-full justify-center" onClick={onGetStarted}>
               Get started

@@ -14,6 +14,12 @@ declare namespace Cloudflare {
     POLAR_ACCESS_TOKEN: string;
     POLAR_WEBHOOK_SECRET: string;
     POLAR_PRO_PRODUCT_ID: string;
+    TOGGLES_EMAIL_PROVIDER?: string;
+    TOGGLES_EMAIL_FROM?: string;
+    TOGGLES_EMAIL_FROM_NAME?: string;
+    TOGGLES_BILLING_ENABLED?: string;
+    TOGGLES_ORG_INVITES_PER_HOUR?: string;
+    DATABASE_URL?: string;
     LOCAL: string;
     PRODUCT_BETA: string;
     TOGGLES_EMAIL_PROVIDER?: string;

@@ -2,8 +2,13 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { polar, checkout, portal, webhooks } from "@polar-sh/better-auth";
 import { apiKey } from "@better-auth/api-key";
+import { organization } from "better-auth/plugins";
 import * as schema from "../db/schema";
 import { getAppOrigin, polarCheckoutReturnUrl, polarCheckoutSuccessUrl } from "./appOrigin";
+import { buildInviteAcceptUrl } from "./inviteLinks";
+import { getEmailRuntime } from "./emailRuntime";
+import { sendWorkspaceInvitationEmail } from "./invitationEmail";
+import type { TogglesEmailEnv } from "./email";
 import { createPolarClient } from "./polarClient";
 import {
   handleCustomerCreated,
@@ -28,6 +33,11 @@ export function createAuth(env: Env, db: AgnosticDatabaseInstance<typeof schema>
         account: schema.account,
         verification: schema.verification,
         apikey: schema.apikey,
+        organization: schema.organization,
+        member: schema.member,
+        invitation: schema.invitation,
+        team: schema.team,
+        teamMember: schema.teamMember,
       },
     }),
     secret: env.BETTER_AUTH_SECRET,
@@ -49,6 +59,24 @@ export function createAuth(env: Env, db: AgnosticDatabaseInstance<typeof schema>
         // Better Auth defaults to 10 requests per 24h per key; we enforce plan limits ourselves.
         rateLimit: {
           enabled: false,
+        },
+      }),
+      organization({
+        teams: {
+          enabled: true,
+        },
+        async sendInvitationEmail(data) {
+          const inviteUrl = buildInviteAcceptUrl(env.BETTER_AUTH_URL, data.id);
+          try {
+            await sendWorkspaceInvitationEmail(env as TogglesEmailEnv, getEmailRuntime(env), {
+              to: data.email,
+              inviterName: data.inviter.user.name,
+              workspaceName: data.organization.name,
+              inviteUrl,
+            });
+          } catch (err) {
+            console.error("Failed to send invitation email:", err);
+          }
         },
       }),
       polar({
