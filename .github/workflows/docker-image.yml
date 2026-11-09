@@ -10,6 +10,10 @@ on:
     branches: [ "main" ]
     # Publish semver tags as releases.
     tags: [ 'v*.*.*' ]
+  pull_request:
+    paths:
+      - ".github/workflows/docker-image.yml"
+      - "Dockerfile"
 
 env:
   # Use docker.io for Docker Hub if empty
@@ -36,13 +40,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      # Install the cosign tool except on PR
+      # cosign-installer v4 bootstraps and defaults to cosign v3.0.6.
       # https://github.com/sigstore/cosign-installer
       - name: Install cosign
-        if: github.event_name != 'pull_request'
         uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
-        with:
-          cosign-release: 'v2.2.4'
+
+      - name: Verify cosign installation
+        run: cosign version
 
       # Set up BuildKit Docker container builder to be able to build
       # multi-platform images and export cache
