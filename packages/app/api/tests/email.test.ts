@@ -71,7 +71,7 @@ describe("resolveEmailProvider", () => {
   });
 
   it("treats unknown provider values as none", () => {
-    expect(resolveEmailProvider({ TOGGLES_EMAIL_PROVIDER: "postmark" }, "node")).toBe("none");
+    expect(resolveEmailProvider({ TOGGLES_EMAIL_PROVIDER: "not-a-provider" }, "node")).toBe("none");
   });
 
   it("returns none for explicit cloudflare without an EMAIL binding", () => {

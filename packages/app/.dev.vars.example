@@ -7,6 +7,9 @@ POLAR_WEBHOOK_SECRET=your-polar-webhook-secret
 POLAR_PRO_PRODUCT_ID=your-polar-pro-product-id
 LOCAL=true
 PRODUCT_BETA=false
+# Self-hosted: teams are free (omit Polar secrets or set TOGGLES_BILLING_ENABLED=false).
+# TOGGLES_BILLING_ENABLED=false
+# TOGGLES_ORG_INVITES_PER_HOUR=20
 
 # Email (optional). Default: disabled; invitations return a copyable invite link instead.
 # TOGGLES_EMAIL_PROVIDER=none

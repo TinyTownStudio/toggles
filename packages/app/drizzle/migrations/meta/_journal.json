@@ -57,6 +57,13 @@
       "when": 1793873601457,
       "tag": "0007_lovely_polaris",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1793531120047,
+      "tag": "0008_plain_kree",
+      "breakpoints": true
     }
   ]
 }

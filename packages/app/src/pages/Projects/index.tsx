@@ -3,18 +3,24 @@ import { useModel } from "@preact/signals";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { AuthModel } from "../../models/auth";
 import { ProjectsModel } from "../../models/projects";
+import { OrganizationsModel } from "../../models/organizations";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { Modal } from "../../components/ui/Modal";
+import { createProjectWithOrg } from "../../lib/api";
 
 export function Projects() {
   const auth = useModel(AuthModel);
   const projectsModel = useModel(ProjectsModel);
+  const orgsModel = useModel(OrganizationsModel);
   const { route } = useLocation();
   const [newName, setNewName] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [selectedOrgId, setSelectedOrgId] = useState("");
+  const [selectedTeamId, setSelectedTeamId] = useState("");
+  const [creating, setCreating] = useState(false);
 
   useEffect(() => {
     auth.checkSession().then(() => {
@@ -22,9 +28,18 @@ export function Projects() {
         route("/auth");
       } else {
         projectsModel.fetch();
+        orgsModel.fetchOrgs();
       }
     });
   }, []);
+
+  // Load teams when org selection changes
+  useEffect(() => {
+    if (selectedOrgId) {
+      orgsModel.fetchTeams(selectedOrgId);
+      setSelectedTeamId("");
+    }
+  }, [selectedOrgId]);
 
   if (auth.loading.value || projectsModel.loading.value) {
     return (
@@ -38,9 +53,23 @@ export function Projects() {
     e.preventDefault();
     const name = newName.trim();
     if (!name) return;
-    await projectsModel.create(name);
-    setNewName("");
-    setShowModal(false);
+    setCreating(true);
+    try {
+      const project = await createProjectWithOrg(
+        name,
+        selectedOrgId || undefined,
+        selectedTeamId || undefined,
+      );
+      projectsModel.projects.value = [project, ...projectsModel.projects.value];
+      setNewName("");
+      setSelectedOrgId("");
+      setSelectedTeamId("");
+      setShowModal(false);
+    } catch (err) {
+      projectsModel.error.value = err instanceof Error ? err.message : "Failed to create project";
+    } finally {
+      setCreating(false);
+    }
   };
 
   const handleSearch = (query: string) => {
@@ -50,6 +79,9 @@ export function Projects() {
       projectsModel.search(query);
     }, 300);
   };
+
+  const hasOrgs = orgsModel.orgs.value.length > 0;
+  const teamsForSelectedOrg = selectedOrgId ? orgsModel.teams.value : [];
 
   return (
     <div class="min-h-screen bg-page pt-16">
@@ -78,7 +110,7 @@ export function Projects() {
           </p>
         ) : (
           <ul class="space-y-2">
-            {projectsModel.projects.value.map((project: any) => (
+            {projectsModel.projects.value.map((project: { id: string; name: string }) => (
               <li
                 key={project.id}
                 class="flex items-center justify-between rounded-lg border border-edge bg-page hover:border-edge-hover transition-colors"
@@ -115,15 +147,45 @@ export function Projects() {
               value={newName}
               onInput={(e) => setNewName((e.target as HTMLInputElement).value)}
               placeholder="Project name"
-              disabled={projectsModel.creating.value}
+              disabled={creating}
               autoFocus
             />
+            {hasOrgs && (
+              <select
+                class="h-9 rounded-lg border border-edge bg-page text-content text-sm px-2 focus:outline-none focus:ring-2 focus:ring-accent"
+                value={selectedOrgId}
+                onChange={(e) => setSelectedOrgId((e.target as HTMLSelectElement).value)}
+                disabled={creating}
+              >
+                <option value="">No workspace</option>
+                {orgsModel.orgs.value.map((org) => (
+                  <option key={org.id} value={org.id}>
+                    {org.name}
+                  </option>
+                ))}
+              </select>
+            )}
+            {hasOrgs && selectedOrgId && teamsForSelectedOrg.length > 0 && (
+              <select
+                class="h-9 rounded-lg border border-edge bg-page text-content text-sm px-2 focus:outline-none focus:ring-2 focus:ring-accent"
+                value={selectedTeamId}
+                onChange={(e) => setSelectedTeamId((e.target as HTMLSelectElement).value)}
+                disabled={creating}
+              >
+                <option value="">Org-wide</option>
+                {teamsForSelectedOrg.map((team) => (
+                  <option key={team.id} value={team.id}>
+                    {team.name}
+                  </option>
+                ))}
+              </select>
+            )}
             <div class="flex justify-end gap-2">
               <Button type="button" variant="secondary" onClick={() => setShowModal(false)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={projectsModel.creating.value || !newName.trim()}>
-                {projectsModel.creating.value ? "Creating…" : "Create"}
+              <Button type="submit" disabled={creating || !newName.trim()}>
+                {creating ? "Creating…" : "Create"}
               </Button>
             </div>
           </form>
