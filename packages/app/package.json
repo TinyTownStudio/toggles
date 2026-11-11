@@ -71,7 +71,7 @@
   "optionalDependencies": {
     "better-sqlite3": "^12.8.0",
     "dotenv": "^18.0.9",
-    "nodemailer": "^7.0.6"
+    "nodemailer": "^10.3.1"
   },
   "overrides": {
     "vite": "npm:rolldown-vite@7.2.5"
