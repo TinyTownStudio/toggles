@@ -12,9 +12,12 @@
     "BETTER_AUTH_URL": "https://toggles.tinytown.studio",
     "LOCAL": "false",
     "PRODUCT_BETA": "true",
-    // Optional sender for Cloudflare Email (hosted). Override in dashboard secrets if needed.
+    // Per-workspace invite rate limit (default 20/hour when omitted). Set "0" to disable.
+    // "TOGGLES_ORG_INVITES_PER_HOUR": "20",
+    // Optional sender for Cloudflare Email (workspace invites). Use a verified Email Service address.
     // "TOGGLES_EMAIL_FROM": "noreply@your-verified-domain.example",
     // "TOGGLES_EMAIL_FROM_NAME": "Toggles",
+    // Force email off on hosted Workers (invites still return inviteUrl): "TOGGLES_EMAIL_PROVIDER": "none",
   },
   // Cloudflare Email binding for hosted outbound mail. Requires Email Service on your zone.
   // See packages/app/README.md and https://developers.cloudflare.com/email-service/

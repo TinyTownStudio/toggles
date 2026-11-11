@@ -275,6 +275,10 @@ POLAR_PRO_PRODUCT_ID=
 Optional:
 
 - `VITE_PUBLIC_APP_ORIGIN` — override build-time origin for prerendered meta/docs (defaults from `wrangler.jsonc` `APP_ORIGIN` on production builds unless `TOGGLES_SELF_HOST_BUILD=true`).
+- `PRODUCT_BETA` — when `true` on hosted Workers (`wrangler.jsonc`), workspaces/teams are available without a Pro plan (see `api/lib/billingEnforcement.ts`).
+- `TOGGLES_ORG_INVITES_PER_HOUR` — cap invites per workspace per hour (default `20`; `0` disables the limit).
+- `TOGGLES_BILLING_ENABLED` — set `false` on self-host to enable teams without Polar billing.
+- Workspace invite email (optional; see `packages/app/README.md`): `TOGGLES_EMAIL_PROVIDER`, `TOGGLES_EMAIL_FROM`, `TOGGLES_EMAIL_FROM_NAME`, and self-host SMTP vars. Hosted production uses the `send_email` binding `EMAIL` in `wrangler.jsonc`; missing email config does not fail deploy — invitations degrade to copyable `inviteUrl` links.
 
 Self-hosted installs must set `APP_ORIGIN` and `BETTER_AUTH_URL` to their own
 origin. Runtime code does not hardcode `tinytown.studio`; hosted defaults live
