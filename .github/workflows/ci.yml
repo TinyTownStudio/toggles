@@ -90,7 +90,7 @@ jobs:
           POLAR_PRO_PRODUCT_ID: ${{ env.CI_TEST_POLAR_PRO_PRODUCT_ID }}
 
   docker:
-    name: Docker build and smoke test
+    name: Docker build and e2e
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -110,32 +110,10 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Smoke test self-host container
-        run: |
-          set -euo pipefail
-          docker run -d --name toggles-ci-smoke \
-            -p 127.0.0.1:3000:3000 \
-            -e BETTER_AUTH_SECRET="${{ env.CI_TEST_BETTER_AUTH_SECRET }}" \
-            -e BETTER_AUTH_URL=http://127.0.0.1:3000/api/auth \
-            -e DATABASE_URL=/tmp/toggles-ci.db \
-            -e POLAR_ACCESS_TOKEN="${{ env.CI_TEST_POLAR_ACCESS_TOKEN }}" \
-            -e POLAR_WEBHOOK_SECRET="${{ env.CI_TEST_POLAR_WEBHOOK_SECRET }}" \
-            -e POLAR_PRO_PRODUCT_ID="${{ env.CI_TEST_POLAR_PRO_PRODUCT_ID }}" \
-            -e LOCAL=true \
-            -e PRODUCT_BETA=false \
-            toggles:ci
-
-          cleanup() {
-            docker logs toggles-ci-smoke 2>&1 || true
-            docker rm -f toggles-ci-smoke 2>/dev/null || true
-          }
-          trap cleanup EXIT
-
-          for attempt in $(seq 1 30); do
-            if curl -sf http://127.0.0.1:3000/ping; then
-              exit 0
-            fi
-            sleep 2
-          done
-          echo "Smoke test failed: /ping did not respond in time"
-          exit 1
+      - name: Docker e2e on internal network
+        run: bash packages/app/scripts/docker-e2e-ci.sh
+        env:
+          CI_TEST_BETTER_AUTH_SECRET: ${{ env.CI_TEST_BETTER_AUTH_SECRET }}
+          CI_TEST_POLAR_ACCESS_TOKEN: ${{ env.CI_TEST_POLAR_ACCESS_TOKEN }}
+          CI_TEST_POLAR_WEBHOOK_SECRET: ${{ env.CI_TEST_POLAR_WEBHOOK_SECRET }}
+          CI_TEST_POLAR_PRO_PRODUCT_ID: ${{ env.CI_TEST_POLAR_PRO_PRODUCT_ID }}
