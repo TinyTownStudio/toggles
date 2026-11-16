@@ -18,6 +18,25 @@ BASE_HOST="${APP_NAME}"
 BASE_URL="http://${BASE_HOST}:3000"
 REQUEST_ORIGIN="$BASE_URL"
 
+resolve_better_sqlite3_mount() {
+  local link="${ROOT}/packages/app/node_modules/better-sqlite3"
+  if [ ! -e "$link" ]; then
+    return 1
+  fi
+  readlink -f "$link"
+}
+
+BSQLITE_MOUNT="$(resolve_better_sqlite3_mount || true)"
+if [ -z "$BSQLITE_MOUNT" ]; then
+  echo "Docker e2e failed: better-sqlite3 not found for bind-mount (run pnpm install)"
+  exit 1
+fi
+# The built image may omit optional better-sqlite3; mount from the runner so DATABASE_URL mode works in CI.
+BSQLITE_DOCKER_FLAGS=(
+  -v "${BSQLITE_MOUNT}:/app/packages/app/node_modules/better-sqlite3:ro"
+  -v "${BSQLITE_MOUNT}:/app/node_modules/better-sqlite3:ro"
+)
+
 DB_DIR="${DOCKER_E2E_DB_DIR:-}"
 CREATED_DB_DIR=0
 if [ -z "$DB_DIR" ]; then
@@ -57,6 +76,7 @@ echo "Starting Toggles on internal network ${NET}..."
 docker run -d --name "$APP_NAME" \
   --network "$NET" \
   --network-alias "$APP_NAME" \
+  "${BSQLITE_DOCKER_FLAGS[@]}" \
   -v "${DB_DIR}:/data" \
   -e BETTER_AUTH_SECRET="$BETTER_AUTH_SECRET" \
   -e BETTER_AUTH_URL="${BASE_URL}/api/auth" \
