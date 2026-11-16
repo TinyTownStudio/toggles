@@ -7,7 +7,6 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 IMAGE="${DOCKER_E2E_IMAGE:-toggles:ci}"
 NET="${DOCKER_E2E_NETWORK:-toggles-ci-internal}"
 APP_NAME="${DOCKER_E2E_CONTAINER:-toggles-ci-e2e}"
-DB_VOL="${DOCKER_E2E_DB_VOLUME:-toggles-ci-e2e-db}"
 NODE_RUNNER_IMAGE="${DOCKER_E2E_NODE_IMAGE:-node:26-bookworm-slim}"
 
 BETTER_AUTH_SECRET="${CI_TEST_BETTER_AUTH_SECRET:-ci-test-better-auth-secret}"
@@ -19,39 +18,43 @@ BASE_HOST="${APP_NAME}"
 BASE_URL="http://${BASE_HOST}:3000"
 REQUEST_ORIGIN="$BASE_URL"
 
+DB_DIR="${DOCKER_E2E_DB_DIR:-}"
+CREATED_DB_DIR=0
+if [ -z "$DB_DIR" ]; then
+  DB_DIR="$(mktemp -d)"
+  CREATED_DB_DIR=1
+fi
+DB_FILE="${DB_DIR}/toggles.db"
+
 cleanup() {
   docker logs "$APP_NAME" 2>&1 || true
   docker rm -f "$APP_NAME" 2>/dev/null || true
   docker network rm "$NET" 2>/dev/null || true
-  docker volume rm "$DB_VOL" 2>/dev/null || true
+  if [ "$CREATED_DB_DIR" = 1 ]; then
+    rm -rf "$DB_DIR"
+  fi
 }
 trap cleanup EXIT
 
-docker network inspect "$NET" >/dev/null 2>&1 || docker network create --internal "$NET"
-docker volume create "$DB_VOL" >/dev/null
+if ! command -v node >/dev/null 2>&1; then
+  echo "Docker e2e failed: node is required on the host to apply migrations"
+  exit 1
+fi
+if [ ! -d "${ROOT}/node_modules/better-sqlite3" ]; then
+  echo "Docker e2e failed: install repo dependencies (pnpm install) before running migrations"
+  exit 1
+fi
 
-echo "Applying SQLite migrations via one-off container (image does not migrate on start)..."
-docker run --rm \
-  -v "${DB_VOL}:/data" \
-  -w /app/packages/app \
-  -e DATABASE_URL=/data/toggles.db \
-  "$IMAGE" \
-  node --input-type=module -e '
-import Database from "better-sqlite3";
-import { drizzle } from "drizzle-orm/better-sqlite3";
-import { migrate } from "drizzle-orm/better-sqlite3/migrator";
-import path from "node:path";
-const sqlite = new Database(process.env.DATABASE_URL);
-const db = drizzle(sqlite);
-migrate(db, { migrationsFolder: path.resolve("drizzle/migrations") });
-sqlite.close();
-'
+docker network inspect "$NET" >/dev/null 2>&1 || docker network create --internal "$NET"
+
+echo "Applying SQLite migrations on runner (image does not migrate on start)..."
+DATABASE_URL="$DB_FILE" node "${ROOT}/packages/app/scripts/migrate-sqlite-node.mjs"
 
 echo "Starting Toggles on internal network ${NET}..."
 docker run -d --name "$APP_NAME" \
   --network "$NET" \
   --network-alias "$APP_NAME" \
-  -v "${DB_VOL}:/data" \
+  -v "${DB_DIR}:/data" \
   -e BETTER_AUTH_SECRET="$BETTER_AUTH_SECRET" \
   -e BETTER_AUTH_URL="${BASE_URL}/api/auth" \
   -e APP_ORIGIN="$REQUEST_ORIGIN" \
