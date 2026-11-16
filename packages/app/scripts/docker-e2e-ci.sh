@@ -36,7 +36,16 @@ docker run --rm \
   -w /app/packages/app \
   -e DATABASE_URL=/data/toggles.db \
   "$IMAGE" \
-  pnpm exec drizzle-kit migrate --config ./drizzle.config.node.ts
+  node --input-type=module -e '
+import Database from "better-sqlite3";
+import { drizzle } from "drizzle-orm/better-sqlite3";
+import { migrate } from "drizzle-orm/better-sqlite3/migrator";
+import path from "node:path";
+const sqlite = new Database(process.env.DATABASE_URL);
+const db = drizzle(sqlite);
+migrate(db, { migrationsFolder: path.resolve("drizzle/migrations") });
+sqlite.close();
+'
 
 echo "Starting Toggles on internal network ${NET}..."
 docker run -d --name "$APP_NAME" \
