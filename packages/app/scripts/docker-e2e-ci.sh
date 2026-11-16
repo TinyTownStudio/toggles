@@ -40,7 +40,7 @@ if ! command -v node >/dev/null 2>&1; then
   echo "Docker e2e failed: node is required on the host to apply migrations"
   exit 1
 fi
-if [ ! -d "${ROOT}/node_modules/better-sqlite3" ]; then
+if [ ! -e "${ROOT}/packages/app/node_modules/better-sqlite3" ]; then
   echo "Docker e2e failed: install repo dependencies (pnpm install) before running migrations"
   exit 1
 fi
@@ -48,7 +48,10 @@ fi
 docker network inspect "$NET" >/dev/null 2>&1 || docker network create --internal "$NET"
 
 echo "Applying SQLite migrations on runner (image does not migrate on start)..."
-DATABASE_URL="$DB_FILE" node "${ROOT}/packages/app/scripts/migrate-sqlite-node.mjs"
+(
+  cd "${ROOT}/packages/app"
+  DATABASE_URL="$DB_FILE" pnpm exec node scripts/migrate-sqlite-node.mjs
+)
 
 echo "Starting Toggles on internal network ${NET}..."
 docker run -d --name "$APP_NAME" \
