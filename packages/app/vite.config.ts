@@ -6,6 +6,7 @@ import preact from "@preact/preset-vite";
 import { cloudflare } from "@cloudflare/vite-plugin";
 import { node } from "./plugins/node";
 import tailwindcss from "@tailwindcss/vite";
+import { polarSdkOptionalPeerAliases } from "./vite/polarSdkOptionalPeerAliases";
 
 const appRoot = path.dirname(fileURLToPath(import.meta.url));
 
@@ -61,6 +62,9 @@ export default defineConfig(({ mode }) => {
   }
 
   return {
+    resolve: {
+      alias: polarSdkOptionalPeerAliases(),
+    },
     plugins: [
       preact({
         prerender: {
