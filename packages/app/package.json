@@ -35,7 +35,7 @@
     "@tailwindcss/vite": "^4.3.3",
     "basecoat-css": "^1.1.0",
     "better-auth": "^1.7.18",
-    "better-sqlite3": "^12.8.0",
+    "better-sqlite3": "^13.1.1",
     "dotenv": "^18.0.9",
     "drizzle-orm": "^0.45.4",
     "hono": "^4.13.14",
