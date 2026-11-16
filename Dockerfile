@@ -1,6 +1,6 @@
 FROM node:26
 
-RUN apt -yy update && apt -yy install sqlite3 libsqlite3-0
+RUN apt -yy update && apt -yy install sqlite3 libsqlite3-0 build-essential python3
 
 ENV PORT=3000
 
