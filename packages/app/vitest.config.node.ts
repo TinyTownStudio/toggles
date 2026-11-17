@@ -5,5 +5,9 @@ export default defineConfig({
     environment: "node",
     include: ["api/tests/node/**/*.test.ts"],
     setupFiles: ["api/tests/node/setupEnv.ts"],
+    coverage: {
+      provider: "istanbul",
+      reporter: ["text", "json-summary"],
+    },
   },
 });

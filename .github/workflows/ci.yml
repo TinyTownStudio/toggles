@@ -53,6 +53,18 @@ jobs:
       - name: Run tests
         run: pnpm run test:ci
 
+      - name: Coverage job summary
+        run: >-
+          node scripts/write-coverage-summary.mjs
+          --title "Vitest (Cloudflare Workers pool)"
+
+      - name: Upload coverage summary
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: coverage-workers
+          path: packages/app/coverage/coverage-summary.json
+          if-no-files-found: error
+
       - name: Build
         run: pnpm run build
 
@@ -81,13 +93,52 @@ jobs:
         working-directory: .
 
       - name: Run Node + SQLite tests
-        run: pnpm run test:node
+        run: pnpm run test:node:ci
         env:
           BETTER_AUTH_SECRET: ${{ env.CI_TEST_BETTER_AUTH_SECRET }}
           BETTER_AUTH_URL: http://localhost
           POLAR_ACCESS_TOKEN: ${{ env.CI_TEST_POLAR_ACCESS_TOKEN }}
           POLAR_WEBHOOK_SECRET: ${{ env.CI_TEST_POLAR_WEBHOOK_SECRET }}
           POLAR_PRO_PRODUCT_ID: ${{ env.CI_TEST_POLAR_PRO_PRODUCT_ID }}
+
+      - name: Coverage job summary
+        run: >-
+          node scripts/write-coverage-summary.mjs
+          --title "Node + SQLite API tests"
+
+      - name: Upload coverage summary
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: coverage-node
+          path: packages/app/coverage/coverage-summary.json
+          if-no-files-found: error
+
+  coverage-pr-comment:
+    name: PR coverage comment
+    runs-on: ubuntu-latest
+    needs: [quality, node-sqlite]
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Download coverage summaries
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          path: coverage-artifacts
+
+      - name: Post or update sticky PR comment
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          COVERAGE_WORKERS_SUMMARY: coverage-artifacts/coverage-workers/coverage-summary.json
+          COVERAGE_NODE_SUMMARY: coverage-artifacts/coverage-node/coverage-summary.json
+        run: node packages/app/scripts/coverage-pr-comment.mjs
 
   docker:
     name: Docker build and e2e
