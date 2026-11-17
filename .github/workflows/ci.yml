@@ -119,7 +119,8 @@ jobs:
     needs: [quality, node-sqlite]
     if: >-
       github.event_name == 'pull_request' &&
-      github.event.pull_request.head.repo.full_name == github.repository
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.actor != 'dependabot[bot]'
     permissions:
       contents: read
       pull-requests: write

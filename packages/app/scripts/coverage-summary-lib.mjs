@@ -68,7 +68,6 @@ function formatPct(pct) {
 
 /**
  * @param {string} summaryPath
- * @param {string} appRoot
  */
 export function loadCoverageSummary(summaryPath) {
   const resolved = resolve(summaryPath);
