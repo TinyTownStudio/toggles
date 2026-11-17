@@ -22,7 +22,8 @@
     "check": "oxlint && oxfmt --check .",
     "test": "vitest run",
     "test:ci": "vitest run --coverage",
-    "test:node": "vitest run --config vitest.config.node.ts"
+    "test:node": "vitest run --config vitest.config.node.ts",
+    "test:node:ci": "vitest run --config vitest.config.node.ts --coverage"
   },
   "dependencies": {
     "@better-auth/api-key": "^1.7.22",

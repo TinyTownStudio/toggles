@@ -34,6 +34,7 @@ export default defineConfig({
     exclude: ["**/node_modules/**", "api/tests/node/**"],
     coverage: {
       provider: "istanbul",
+      reporter: ["text", "json-summary"],
     },
     projects: [
       {
