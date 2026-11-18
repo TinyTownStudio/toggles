@@ -14,7 +14,7 @@ export function Auth() {
       try {
         await authClient.organization.acceptInvitation({ invitationId: token });
       } catch {
-        // Ignore acceptance errors — redirect to teams anyway so user can see the state
+        // Ignore acceptance errors; redirect to teams anyway so user can see the state
       }
       route("/app/teams");
     } else {

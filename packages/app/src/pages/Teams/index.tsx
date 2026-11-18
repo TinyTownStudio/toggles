@@ -57,7 +57,7 @@ export function Teams() {
     );
   }
 
-  // Hosted billing gate — self-hosted installs skip this (billingEnforced=false).
+  // Hosted billing gate: self-hosted installs skip this (billingEnforced=false).
   if (!billing.teamsAccessAllowed.value) {
     return (
       <div class="min-h-screen bg-page pt-16">
@@ -75,7 +75,7 @@ export function Teams() {
     );
   }
 
-  // No org yet — onboarding
+  // No org yet: onboarding
   if (orgsModel.orgs.value.length === 0 && !orgsModel.loading.value) {
     const handleCreate = async (e: Event) => {
       e.preventDefault();

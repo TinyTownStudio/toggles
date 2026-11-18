@@ -56,7 +56,7 @@ async function getOrgMembership(
     .get();
 }
 
-// ── GET / — list workspaces the user is a member of ───────────
+// ── GET /: list workspaces the user is a member of ───────────
 
 organizations.get("/", async (c) => {
   const userId = c.get("user")?.id;
@@ -74,7 +74,7 @@ organizations.get("/", async (c) => {
   return c.json(rows.map((r) => ({ ...r.organization, role: r.member.role })));
 });
 
-// ── POST / — create a workspace (pro plan required) ───────────
+// ── POST /: create a workspace (pro plan required) ───────────
 
 organizations.post("/", async (c) => {
   const userId = c.get("user")?.id;
@@ -131,7 +131,7 @@ organizations.post("/", async (c) => {
   return c.json({ ...org, role: "owner" }, 201);
 });
 
-// ── GET /:orgId/members — list members + pending invitations ──
+// ── GET /:orgId/members: list members + pending invitations ──
 
 organizations.get("/:orgId/members", async (c) => {
   const userId = c.get("user")?.id;
@@ -170,7 +170,7 @@ organizations.get("/:orgId/members", async (c) => {
   return c.json({ members, invitations });
 });
 
-// ── POST /:orgId/invite — invite a user by email ──────────────
+// ── POST /:orgId/invite: invite a user by email ──────────────
 
 organizations.post("/:orgId/invite", async (c) => {
   const userId = c.get("user")?.id;
@@ -235,7 +235,7 @@ organizations.post("/:orgId/invite", async (c) => {
     return c.json({ added: true, existing: true });
   }
 
-  // User does not exist — create invitation record and send email
+  // User does not exist: create invitation record and send email
   const inviterUser = await db.select().from(schema.user).where(eq(schema.user.id, userId)).get();
   if (!inviterUser) return c.json({ error: "Inviter not found" }, 500);
 
@@ -292,7 +292,7 @@ organizations.post("/:orgId/invite", async (c) => {
   return c.json({ added: false, existing: false, invitationId, inviteUrl }, 201);
 });
 
-// ── DELETE /:orgId/invitations/:invitationId — revoke a pending invite ──
+// ── DELETE /:orgId/invitations/:invitationId: revoke a pending invite ──
 
 organizations.delete("/:orgId/invitations/:invitationId", async (c) => {
   const userId = c.get("user")?.id;
@@ -369,7 +369,7 @@ organizations.delete("/:orgId/members/:memberId", async (c) => {
   return c.json({ success: true });
 });
 
-// ── PATCH /:orgId/members/:memberId — change member role (owner only) ──
+// ── PATCH /:orgId/members/:memberId: change member role (owner only) ──
 
 organizations.patch("/:orgId/members/:memberId", async (c) => {
   const userId = c.get("user")?.id;
