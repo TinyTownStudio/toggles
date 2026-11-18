@@ -10,7 +10,7 @@ import { polarSdkOptionalPeerAliases } from "./vite/polarSdkOptionalPeerAliases"
 
 const appRoot = path.dirname(fileURLToPath(import.meta.url));
 
-/** Hosted `APP_ORIGIN` from wrangler.jsonc — not used at runtime in self-host builds. */
+/** Hosted `APP_ORIGIN` from wrangler.jsonc, not used at runtime in self-host builds. */
 function readWranglerAppOrigin(): string | undefined {
   try {
     const raw = readFileSync(path.join(appRoot, "wrangler.jsonc"), "utf8");
